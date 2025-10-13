@@ -1,19 +1,27 @@
+mod article;
+mod context;
+mod document;
+mod error;
+mod options;
+mod pipeline;
+mod readability;
+mod stage;
+
 use {
+  context::{CollectedMetadata, Context},
+  document::Document,
   ego_tree::{NodeId, NodeRef},
-  once_cell::sync::Lazy,
+  pipeline::Pipeline,
   regex::Regex,
   scraper::{ElementRef, Html, Node, Selector},
   serde::{Deserialize, Serialize},
-  std::{collections::HashMap, ops::Deref},
+  stage::{
+    ArticleStage, ElementLimitStage, LanguageStage, MetadataStage,
+    SanitizationStage, Stage,
+  },
+  std::{collections::HashMap, ops::Deref, sync::LazyLock},
   url::Url,
 };
-
-mod article;
-mod error;
-mod options;
-mod readability;
-
-pub type Result<T = (), E = Error> = std::result::Result<T, E>;
 
 pub use crate::{
   article::Article,
@@ -21,3 +29,5 @@ pub use crate::{
   options::{ReadabilityOptions, ReadabilityOptionsBuilder},
   readability::Readability,
 };
+
+pub type Result<T = (), E = Error> = std::result::Result<T, E>;
