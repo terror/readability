@@ -1,17 +1,28 @@
 use {
+  context::{CollectedMetadata, Context},
+  document::Document,
   ego_tree::{NodeId, NodeRef},
   once_cell::sync::Lazy,
+  pipeline::Pipeline,
   regex::Regex,
   scraper::{ElementRef, Html, Node, Selector},
   serde::{Deserialize, Serialize},
+  stage::{
+    ArticleStage, ElementLimitStage, LanguageStage, MetadataStage,
+    SanitizationStage, Stage,
+  },
   std::{collections::HashMap, ops::Deref},
   url::Url,
 };
 
 mod article;
+mod context;
+mod document;
 mod error;
 mod options;
+mod pipeline;
 mod readability;
+mod stage;
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
 
