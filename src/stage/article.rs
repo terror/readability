@@ -20,12 +20,12 @@ struct Candidate {
 pub struct ArticleStage;
 
 impl Stage for ArticleStage {
-  fn run(&mut self, ctx: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
     let article =
-      Self::extract(ctx.document()).ok_or(Error::MissingArticleContent)?;
+      Self::extract(context.document()).ok_or(Error::MissingArticleContent)?;
 
-    ctx.set_body_lang(article.body_lang);
-    ctx.set_article_markup(article.markup);
+    context.set_body_lang(article.body_lang);
+    context.set_article_markup(article.markup);
 
     Ok(())
   }

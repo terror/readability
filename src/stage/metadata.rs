@@ -10,14 +10,14 @@ static SELECTOR_ITEMPROP_NAME: LazyLock<Selector> =
 pub struct MetadataStage;
 
 impl Stage for MetadataStage {
-  fn run(&mut self, ctx: &mut Context<'_>) -> Result<()> {
-    let mut metadata = Self::collect_metadata(ctx.document());
+  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+    let mut metadata = Self::collect_metadata(context.document());
 
     if metadata.title.as_ref().is_none_or(String::is_empty) {
-      metadata.title = ctx.document().document_title();
+      metadata.title = context.document().document_title();
     }
 
-    ctx.set_metadata(metadata);
+    context.set_metadata(metadata);
 
     Ok(())
   }

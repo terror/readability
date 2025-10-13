@@ -13,5 +13,5 @@ pub use {
 };
 
 pub(crate) trait Stage {
-  fn run(&mut self, ctx: &mut Context<'_>) -> Result<()>;
+  fn run(&mut self, context: &mut Context<'_>) -> Result<()>;
 }

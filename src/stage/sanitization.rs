@@ -3,8 +3,8 @@ use super::*;
 pub struct SanitizationStage;
 
 impl Stage for SanitizationStage {
-  fn run(&mut self, ctx: &mut Context<'_>) -> Result<()> {
-    let html = ctx.html_mut();
+  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+    let html = context.html_mut();
 
     let mut to_remove = Vec::new();
 
