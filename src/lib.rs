@@ -11,9 +11,10 @@ use {
   context::{CollectedMetadata, Context},
   document::Document,
   ego_tree::{NodeId, NodeRef},
+  html5ever::{LocalName, QualName, ns},
   pipeline::Pipeline,
   regex::Regex,
-  scraper::{ElementRef, Html, Node, Selector},
+  scraper::{ElementRef, Html, Node, Selector, node::Element},
   serde::{Deserialize, Serialize},
   stage::{
     ArticleStage, ElementLimitStage, LanguageStage, MetadataStage,
