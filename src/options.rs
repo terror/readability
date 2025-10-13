@@ -37,49 +37,80 @@ pub struct ReadabilityOptionsBuilder {
 }
 
 impl ReadabilityOptionsBuilder {
-  pub fn debug(mut self, debug: bool) -> Self {
-    self.inner.debug = debug;
-    self
+  pub fn debug(self, debug: bool) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        debug,
+        ..self.inner
+      },
+    }
   }
 
-  pub fn max_elems_to_parse(mut self, max: Option<usize>) -> Self {
-    self.inner.max_elems_to_parse = max;
-    self
+  pub fn max_elems_to_parse(self, max_elems_to_parse: Option<usize>) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        max_elems_to_parse,
+        ..self.inner
+      },
+    }
   }
 
-  pub fn nb_top_candidates(mut self, value: usize) -> Self {
-    self.inner.nb_top_candidates = value;
-    self
+  pub fn nb_top_candidates(self, nb_top_candidates: usize) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        nb_top_candidates,
+        ..self.inner
+      },
+    }
   }
 
-  pub fn char_threshold(mut self, value: usize) -> Self {
-    self.inner.char_threshold = value;
-    self
+  pub fn char_threshold(self, char_threshold: usize) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        char_threshold,
+        ..self.inner
+      },
+    }
   }
 
-  pub fn classes_to_preserve<I, S>(mut self, classes: I) -> Self
+  pub fn classes_to_preserve<I, S>(self, classes: I) -> Self
   where
     I: IntoIterator<Item = S>,
     S: Into<String>,
   {
-    self.inner.classes_to_preserve =
-      classes.into_iter().map(Into::into).collect();
-    self
+    Self {
+      inner: ReadabilityOptions {
+        classes_to_preserve: classes.into_iter().map(Into::into).collect(),
+        ..self.inner
+      },
+    }
   }
 
-  pub fn keep_classes(mut self, keep: bool) -> Self {
-    self.inner.keep_classes = keep;
-    self
+  pub fn keep_classes(self, keep_classes: bool) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        keep_classes,
+        ..self.inner
+      },
+    }
   }
 
-  pub fn disable_json_ld(mut self, disable: bool) -> Self {
-    self.inner.disable_json_ld = disable;
-    self
+  pub fn disable_json_ld(self, disable_json_ld: bool) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        disable_json_ld,
+        ..self.inner
+      },
+    }
   }
 
-  pub fn link_density_modifier(mut self, modifier: f32) -> Self {
-    self.inner.link_density_modifier = modifier;
-    self
+  pub fn link_density_modifier(self, link_density_modifier: f32) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        link_density_modifier,
+        ..self.inner
+      },
+    }
   }
 
   pub fn build(self) -> ReadabilityOptions {
