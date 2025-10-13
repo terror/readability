@@ -19,11 +19,20 @@ struct Candidate {
   score: f64,
 }
 
+#[derive(Debug, Clone, Default)]
+struct CollectedMetadata {
+  title: Option<String>,
+  byline: Option<String>,
+  excerpt: Option<String>,
+  site_name: Option<String>,
+  published_time: Option<String>,
+}
+
 pub struct Readability {
   html: Html,
   options: ReadabilityOptions,
   _base_url: Option<Url>,
-  metadata: ArticleMetadata,
+  metadata: CollectedMetadata,
   article_dir: Option<String>,
   article_lang: Option<String>,
 }
@@ -43,7 +52,7 @@ impl Readability {
       html: Html::parse_document(html),
       options,
       _base_url: base_url,
-      metadata: ArticleMetadata::default(),
+      metadata: CollectedMetadata::default(),
       article_dir: None,
       article_lang: None,
     })
@@ -84,22 +93,20 @@ impl Readability {
       .clone()
       .or_else(|| Self::first_paragraph(&article_html));
 
-    let details = ArticleDetails {
+    let length = text_content.chars().count();
+
+    Ok(Article {
+      title,
       byline: self.metadata.byline.clone(),
       dir: self.article_dir.clone(),
       lang: self.article_lang.clone(),
+      content: article_html,
+      text_content,
+      length,
       excerpt,
       site_name: self.metadata.site_name.clone(),
       published_time: self.metadata.published_time.clone(),
-    };
-
-    Ok(Article::new(
-      title,
-      article_html,
-      text_content,
-      self.metadata.clone(),
-      details,
-    ))
+    })
   }
 
   fn count_elements(&self) -> usize {
@@ -151,8 +158,8 @@ impl Readability {
       .map(|value| value.to_string())
   }
 
-  fn collect_metadata(&self) -> ArticleMetadata {
-    let mut metadata = ArticleMetadata::default();
+  fn collect_metadata(&self) -> CollectedMetadata {
+    let mut metadata = CollectedMetadata::default();
 
     let document_title = self.document_title();
 

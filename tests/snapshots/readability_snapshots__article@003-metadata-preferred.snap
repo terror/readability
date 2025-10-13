@@ -12,12 +12,5 @@ expression: "&article"
   "length": 913,
   "excerpt": "Dublin Core property description",
   "site_name": null,
-  "published_time": null,
-  "metadata": {
-    "title": "Dublin Core property title",
-    "byline": "Dublin Core property author",
-    "excerpt": "Dublin Core property description",
-    "site_name": null,
-    "published_time": null
-  }
+  "published_time": null
 }
