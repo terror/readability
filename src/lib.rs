@@ -1,5 +1,4 @@
 use {
-  anyhow::{Context, Result, anyhow},
   ego_tree::{NodeId, NodeRef},
   once_cell::sync::Lazy,
   regex::Regex,
@@ -10,11 +9,15 @@ use {
 };
 
 mod article;
+mod error;
 mod options;
 mod readability;
 
+pub type Result<T = (), E = Error> = std::result::Result<T, E>;
+
 pub use crate::{
   article::Article,
+  error::Error,
   options::{ReadabilityOptions, ReadabilityOptionsBuilder},
-  readability::{Readability, ReadabilityError},
+  readability::Readability,
 };

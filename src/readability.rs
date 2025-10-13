@@ -1,7 +1,5 @@
 use super::*;
 
-pub type ReadabilityError = anyhow::Error;
-
 const DEFAULT_TAGS_TO_SCORE: &[&str] =
   &["section", "h2", "h3", "h4", "h5", "h6", "p", "td", "pre"];
 
@@ -44,9 +42,8 @@ impl Readability {
     options: ReadabilityOptions,
   ) -> Result<Self> {
     let base_url = base_url
-      .map(Url::parse)
-      .transpose()
-      .context("invalid base url")?;
+      .map(|value| Url::parse(value).map_err(Error::from))
+      .transpose()?;
 
     Ok(Self {
       html: Html::parse_document(html),
@@ -63,9 +60,10 @@ impl Readability {
       let elements = self.count_elements();
 
       if elements > limit {
-        return Err(anyhow!(
-          "Aborting parsing document; {elements} elements found (limit: {limit})"
-        ));
+        return Err(Error::ElementLimitExceeded {
+          found: elements,
+          limit,
+        });
       }
     }
 
@@ -81,9 +79,8 @@ impl Readability {
       .clone()
       .unwrap_or_else(|| self.get_article_title());
 
-    let article_html = self
-      .grab_article()
-      .context("failed to identify article content")?;
+    let article_html =
+      self.grab_article().ok_or(Error::MissingArticleContent)?;
 
     let text_content = Self::text_from_html(&article_html);
 
