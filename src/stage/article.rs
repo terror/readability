@@ -66,8 +66,7 @@ impl ArticleStage {
       let mut score = 1.0;
       score += u32::try_from(REGEX_COMMAS.find_iter(text).count())
         .map_or(0.0, f64::from);
-      score += u32::try_from((text.len() / 100).min(3))
-        .map_or(0.0, f64::from);
+      score += u32::try_from((text.len() / 100).min(3)).map_or(0.0, f64::from);
 
       let mut node = element.deref().parent();
       let mut level = 0;

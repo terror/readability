@@ -52,7 +52,7 @@ fn fixture_dirs() -> Vec<(String, PathBuf)> {
       for entry in walkdir::WalkDir::new(env_path)
         .max_depth(2)
         .into_iter()
-        .filter_map(|e| e.ok())
+        .filter_map(Result::ok)
         .filter(|e| e.file_type().is_dir())
       {
         let dir = entry.path().to_path_buf();

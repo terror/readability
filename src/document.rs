@@ -18,11 +18,7 @@ impl<'a> Document<'a> {
     )
   }
 
-  pub(crate) fn collect_text(
-    self,
-    node_id: NodeId,
-    normalize: bool,
-  ) -> String {
+  pub(crate) fn collect_text(self, node_id: NodeId, normalize: bool) -> String {
     let Some(node) = self.node(node_id) else {
       return String::new();
     };

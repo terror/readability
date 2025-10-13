@@ -4,9 +4,8 @@ static REGEX_BYLINE: LazyLock<Regex> = LazyLock::new(|| {
   Regex::new(r"(?i)byline|author|dateline|writtenby|p-author").unwrap()
 });
 
-static SELECTOR_ITEMPROP_NAME: LazyLock<Selector> = LazyLock::new(|| {
-  Selector::parse("[itemprop*=\"name\"]").unwrap()
-});
+static SELECTOR_ITEMPROP_NAME: LazyLock<Selector> =
+  LazyLock::new(|| Selector::parse("[itemprop*=\"name\"]").unwrap());
 
 pub struct MetadataStage;
 
@@ -225,5 +224,4 @@ impl MetadataStage {
 
     None
   }
-
 }

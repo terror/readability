@@ -38,10 +38,6 @@ impl Readability {
   /// # Errors
   ///
   /// Returns an error when the pipeline cannot resolve article content.
-  ///
-  /// # Panics
-  ///
-  /// Panics if the paragraph selector literal is invalid.
   pub fn parse(&mut self) -> Result<Article> {
     let mut context = Pipeline::with_default_stages(Context::new(
       &mut self.html,
@@ -86,7 +82,8 @@ impl Readability {
       .trim()
       .to_string();
 
-    let selector = Selector::parse("p").unwrap();
+    let selector = Selector::parse("p")
+      .map_err(|error| Error::InvalidSelector(error.to_string()))?;
 
     let fragment = Html::parse_fragment(&markup);
 
