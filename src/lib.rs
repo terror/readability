@@ -1,14 +1,20 @@
-pub fn add(left: u64, right: u64) -> u64 {
-  left + right
-}
+use {
+  anyhow::{Context, Result, anyhow},
+  ego_tree::{NodeId, NodeRef},
+  once_cell::sync::Lazy,
+  regex::Regex,
+  scraper::{ElementRef, Html, Node, Selector},
+  serde::{Deserialize, Serialize},
+  std::{collections::HashMap, ops::Deref},
+  url::Url,
+};
 
-#[cfg(test)]
-mod tests {
-  use super::*;
+mod article;
+mod options;
+mod readability;
 
-  #[test]
-  fn it_works() {
-    let result = add(2, 2);
-    assert_eq!(result, 4);
-  }
-}
+pub use crate::{
+  article::{Article, ArticleMetadata},
+  options::{ReadabilityOptions, ReadabilityOptionsBuilder},
+  readability::{Readability, ReadabilityError},
+};
