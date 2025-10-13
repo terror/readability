@@ -11,6 +11,13 @@ static REGEX_COMMAS: Lazy<Regex> =
 
 static REGEX_HASH_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r"^#.+").unwrap());
 
+static REGEX_BYLINE: Lazy<Regex> = Lazy::new(|| {
+  Regex::new(r"(?i)byline|author|dateline|writtenby|p-author").unwrap()
+});
+
+static SELECTOR_ITEMPROP_NAME: Lazy<Selector> =
+  Lazy::new(|| Selector::parse("[itemprop*=\"name\"]").unwrap());
+
 #[derive(Debug, Clone)]
 struct Candidate {
   node: NodeId,
@@ -224,6 +231,15 @@ impl Readability {
       ],
     );
 
+    if metadata
+      .byline
+      .as_ref()
+      .map(|value| value.trim().is_empty())
+      .unwrap_or(true)
+    {
+      metadata.byline = self.find_byline();
+    }
+
     metadata.excerpt = Self::pick_meta_value(
       &values,
       &[
@@ -252,6 +268,70 @@ impl Readability {
     );
 
     metadata
+  }
+
+  fn find_byline(&self) -> Option<String> {
+    for node in self.html.tree.root().descendants() {
+      let element = match ElementRef::wrap(node) {
+        Some(element) => element,
+        None => continue,
+      };
+
+      let text = self.collect_text(node.id(), true);
+      let trimmed = text.trim();
+
+      if trimmed.is_empty() || trimmed.chars().count() >= 100 {
+        continue;
+      }
+
+      let rel_author = element
+        .value()
+        .attr("rel")
+        .map(|value| {
+          value
+            .split_whitespace()
+            .any(|token| token.eq_ignore_ascii_case("author"))
+        })
+        .unwrap_or(false);
+
+      let itemprop_author = element
+        .value()
+        .attr("itemprop")
+        .map(|value| value.to_ascii_lowercase().contains("author"))
+        .unwrap_or(false);
+
+      let mut match_parts = Vec::new();
+
+      if let Some(class_name) = element.value().attr("class") {
+        match_parts.push(class_name);
+      }
+
+      if let Some(id) = element.value().attr("id") {
+        match_parts.push(id);
+      }
+
+      let match_string = match_parts.join(" ");
+
+      let class_match =
+        !match_string.is_empty() && REGEX_BYLINE.is_match(&match_string);
+
+      if !(rel_author || itemprop_author || class_match) {
+        continue;
+      }
+
+      if let Some(name_el) = element.select(&SELECTOR_ITEMPROP_NAME).next() {
+        let name = self.collect_text(name_el.id(), true);
+        let trimmed_name = name.trim();
+
+        if !trimmed_name.is_empty() && trimmed_name.chars().count() < 100 {
+          return Some(trimmed_name.to_string());
+        }
+      }
+
+      return Some(trimmed.to_string());
+    }
+
+    None
   }
 
   fn document_title(&self) -> Option<String> {
