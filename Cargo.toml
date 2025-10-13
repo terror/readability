@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.100"
 ego-tree = "0.10.0"
+html5ever = "0.35.0"
 regex = "1.12.2"
 scraper = "0.24.0"
 serde = { version = "1.0.228", features = ["derive"] }
