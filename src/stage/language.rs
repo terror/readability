@@ -9,7 +9,7 @@ impl Stage for LanguageStage {
       .html_element()
       .and_then(ElementRef::wrap)
       .and_then(|el| el.value().attr("lang"))
-      .map(|value| value.to_string());
+      .map(str::to_string);
 
     ctx.set_document_lang(lang);
 

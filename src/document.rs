@@ -1,9 +1,10 @@
 use super::*;
 
-static REGEX_NORMALIZE: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r"\s{2,}").unwrap());
+static REGEX_NORMALIZE: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"\s{2,}").unwrap());
 
-static REGEX_HASH_URL: Lazy<Regex> = Lazy::new(|| Regex::new(r"^#.+").unwrap());
+static REGEX_HASH_URL: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"^#.+").unwrap());
 
 #[derive(Clone, Copy)]
 pub(crate) struct Document<'a> {
@@ -11,42 +12,14 @@ pub(crate) struct Document<'a> {
 }
 
 impl<'a> Document<'a> {
-  pub(crate) fn new(html: &'a Html) -> Self {
-    Self { html }
-  }
-
-  pub(crate) fn count_elements(&self) -> usize {
-    self
-      .html
-      .tree
-      .root()
-      .descendants()
-      .filter(|node| node.value().is_element())
-      .count()
-  }
-
-  pub(crate) fn root(&self) -> NodeRef<'a, Node> {
-    self.html.tree.root()
-  }
-
-  pub(crate) fn html_element(&self) -> Option<NodeRef<'a, Node>> {
-    self.root().children().find(
-      |child| matches!(child.value(), Node::Element(el) if el.name() == "html"),
-    )
-  }
-
-  pub(crate) fn body_element(&self) -> Option<NodeRef<'a, Node>> {
+  pub(crate) fn body_element(self) -> Option<NodeRef<'a, Node>> {
     self.html_element()?.children().find(
       |child| matches!(child.value(), Node::Element(el) if el.name() == "body"),
     )
   }
 
-  pub(crate) fn node(&self, id: NodeId) -> Option<NodeRef<'a, Node>> {
-    self.html.tree.get(id)
-  }
-
   pub(crate) fn collect_text(
-    &self,
+    self,
     node_id: NodeId,
     normalize: bool,
   ) -> String {
@@ -71,8 +44,40 @@ impl<'a> Document<'a> {
     }
   }
 
-  pub(crate) fn link_density(&self, node_id: NodeId) -> f64 {
-    let text_length = self.collect_text(node_id, true).len() as f64;
+  pub(crate) fn count_elements(self) -> usize {
+    self
+      .html
+      .tree
+      .root()
+      .descendants()
+      .filter(|node| node.value().is_element())
+      .count()
+  }
+
+  pub(crate) fn document_title(self) -> Option<String> {
+    self
+      .html_element()
+      .and_then(|html| {
+        html.children()
+          .find(|child| matches!(child.value(), Node::Element(el) if el.name() == "head"))
+      })
+      .and_then(|head| {
+        head.children()
+          .find(|child| matches!(child.value(), Node::Element(el) if el.name() == "title"))
+      })
+      .map(|title_node| self.collect_text(title_node.id(), true))
+      .filter(|title| !title.is_empty())
+  }
+
+  pub(crate) fn html_element(self) -> Option<NodeRef<'a, Node>> {
+    self.root().children().find(
+      |child| matches!(child.value(), Node::Element(el) if el.name() == "html"),
+    )
+  }
+
+  pub(crate) fn link_density(self, node_id: NodeId) -> f64 {
+    let text_length = u32::try_from(self.collect_text(node_id, true).len())
+      .map_or(0.0, f64::from);
 
     if text_length == 0.0 {
       return 0.0;
@@ -95,7 +100,8 @@ impl<'a> Document<'a> {
             1.0
           };
 
-          link_length += text.trim().len() as f64 * weight;
+          link_length +=
+            u32::try_from(text.trim().len()).map_or(0.0, f64::from) * weight;
         }
       }
     }
@@ -103,18 +109,15 @@ impl<'a> Document<'a> {
     link_length / text_length
   }
 
-  pub(crate) fn document_title(&self) -> Option<String> {
-    self
-      .html_element()
-      .and_then(|html| {
-        html.children()
-          .find(|child| matches!(child.value(), Node::Element(el) if el.name() == "head"))
-      })
-      .and_then(|head| {
-        head.children()
-          .find(|child| matches!(child.value(), Node::Element(el) if el.name() == "title"))
-      })
-      .map(|title_node| self.collect_text(title_node.id(), true))
-      .filter(|title| !title.is_empty())
+  pub(crate) fn new(html: &'a Html) -> Self {
+    Self { html }
+  }
+
+  pub(crate) fn node(self, id: NodeId) -> Option<NodeRef<'a, Node>> {
+    self.html.tree.get(id)
+  }
+
+  pub(crate) fn root(self) -> NodeRef<'a, Node> {
+    self.html.tree.root()
   }
 }

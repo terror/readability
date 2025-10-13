@@ -1,11 +1,12 @@
 use super::*;
 
-static REGEX_BYLINE: Lazy<Regex> = Lazy::new(|| {
+static REGEX_BYLINE: LazyLock<Regex> = LazyLock::new(|| {
   Regex::new(r"(?i)byline|author|dateline|writtenby|p-author").unwrap()
 });
 
-static SELECTOR_ITEMPROP_NAME: Lazy<Selector> =
-  Lazy::new(|| Selector::parse("[itemprop*=\"name\"]").unwrap());
+static SELECTOR_ITEMPROP_NAME: LazyLock<Selector> = LazyLock::new(|| {
+  Selector::parse("[itemprop*=\"name\"]").unwrap()
+});
 
 pub struct MetadataStage;
 
@@ -13,7 +14,7 @@ impl Stage for MetadataStage {
   fn run(&mut self, ctx: &mut Context<'_>) -> Result<()> {
     let mut metadata = Self::collect_metadata(ctx.document());
 
-    if metadata.title.as_ref().is_none_or(|value| value.is_empty()) {
+    if metadata.title.as_ref().is_none_or(String::is_empty) {
       metadata.title = ctx.document().document_title();
     }
 
@@ -24,6 +25,73 @@ impl Stage for MetadataStage {
 }
 
 impl MetadataStage {
+  fn collect_metadata(document: Document<'_>) -> CollectedMetadata {
+    let mut metadata = CollectedMetadata::default();
+
+    let values = Self::collect_values(document);
+
+    metadata.title = Self::pick_meta_value(
+      &values,
+      &[
+        "dc:title",
+        "dcterm:title",
+        "dcterms:title",
+        "title",
+        "og:title",
+        "twitter:title",
+      ],
+    );
+
+    metadata.byline = Self::pick_meta_value(
+      &values,
+      &[
+        "dc:creator",
+        "dcterm:creator",
+        "dcterms:creator",
+        "dc:author",
+        "author",
+        "parsely:author",
+      ],
+    );
+
+    if metadata
+      .byline
+      .as_ref()
+      .is_none_or(|value| value.trim().is_empty())
+    {
+      metadata.byline = Self::find_byline(document);
+    }
+
+    metadata.excerpt = Self::pick_meta_value(
+      &values,
+      &[
+        "dc:description",
+        "dcterm:description",
+        "dcterms:description",
+        "description",
+        "og:description",
+        "twitter:description",
+      ],
+    );
+
+    metadata.site_name = Self::pick_meta_value(
+      &values,
+      &["og:site_name", "parsely:site_name", "parsely:site"],
+    );
+
+    metadata.published_time = Self::pick_meta_value(
+      &values,
+      &[
+        "article:published_time",
+        "parsely:pub-date",
+        "parsely:publish_date",
+        "publish_date",
+      ],
+    );
+
+    metadata
+  }
+
   fn collect_values(document: Document<'_>) -> HashMap<String, String> {
     let mut values = HashMap::new();
 
@@ -35,10 +103,13 @@ impl MetadataStage {
       })
     {
       for meta in head.children() {
-        let element = match ElementRef::wrap(meta) {
-          Some(element) if element.value().name() == "meta" => element,
-          _ => continue,
+        let Some(element) = ElementRef::wrap(meta) else {
+          continue;
         };
+
+        if element.value().name() != "meta" {
+          continue;
+        }
 
         let content = element.value().attr("content").unwrap_or_default().trim();
 
@@ -67,41 +138,10 @@ impl MetadataStage {
     values
   }
 
-  fn normalize_meta_key(raw: &str) -> String {
-    raw
-      .trim()
-      .chars()
-      .filter(|ch| !ch.is_whitespace())
-      .map(|ch| {
-        if ch == '.' {
-          ':'
-        } else {
-          ch.to_ascii_lowercase()
-        }
-      })
-      .collect()
-  }
-
-  fn pick_meta_value(
-    values: &HashMap<String, String>,
-    keys: &[&str],
-  ) -> Option<String> {
-    for key in keys {
-      let normalized = Self::normalize_meta_key(key);
-
-      if let Some(value) = values.get(&normalized) {
-        return Some(value.clone());
-      }
-    }
-
-    None
-  }
-
   fn find_byline(document: Document<'_>) -> Option<String> {
     for node in document.root().descendants() {
-      let element = match ElementRef::wrap(node) {
-        Some(element) => element,
-        None => continue,
+      let Some(element) = ElementRef::wrap(node) else {
+        continue;
       };
 
       let text = document.collect_text(node.id(), true);
@@ -111,21 +151,16 @@ impl MetadataStage {
         continue;
       }
 
-      let rel_author = element
-        .value()
-        .attr("rel")
-        .map(|value| {
-          value
-            .split_whitespace()
-            .any(|token| token.eq_ignore_ascii_case("author"))
-        })
-        .unwrap_or(false);
+      let rel_author = element.value().attr("rel").is_some_and(|value| {
+        value
+          .split_whitespace()
+          .any(|token| token.eq_ignore_ascii_case("author"))
+      });
 
       let itemprop_author = element
         .value()
         .attr("itemprop")
-        .map(|value| value.to_ascii_lowercase().contains("author"))
-        .unwrap_or(false);
+        .is_some_and(|value| value.to_ascii_lowercase().contains("author"));
 
       let mut match_parts = Vec::new();
 
@@ -161,71 +196,34 @@ impl MetadataStage {
     None
   }
 
-  fn collect_metadata(document: Document<'_>) -> CollectedMetadata {
-    let mut metadata = CollectedMetadata::default();
+  fn normalize_meta_key(raw: &str) -> String {
+    raw
+      .trim()
+      .chars()
+      .filter(|ch| !ch.is_whitespace())
+      .map(|ch| {
+        if ch == '.' {
+          ':'
+        } else {
+          ch.to_ascii_lowercase()
+        }
+      })
+      .collect()
+  }
 
-    let values = Self::collect_values(document);
+  fn pick_meta_value(
+    values: &HashMap<String, String>,
+    keys: &[&str],
+  ) -> Option<String> {
+    for key in keys {
+      let normalized = Self::normalize_meta_key(key);
 
-    metadata.title = Self::pick_meta_value(
-      &values,
-      &[
-        "dc:title",
-        "dcterm:title",
-        "dcterms:title",
-        "title",
-        "og:title",
-        "twitter:title",
-      ],
-    );
-
-    metadata.byline = Self::pick_meta_value(
-      &values,
-      &[
-        "dc:creator",
-        "dcterm:creator",
-        "dcterms:creator",
-        "dc:author",
-        "author",
-        "parsely:author",
-      ],
-    );
-
-    if metadata
-      .byline
-      .as_ref()
-      .map(|value| value.trim().is_empty())
-      .unwrap_or(true)
-    {
-      metadata.byline = Self::find_byline(document);
+      if let Some(value) = values.get(&normalized) {
+        return Some(value.clone());
+      }
     }
 
-    metadata.excerpt = Self::pick_meta_value(
-      &values,
-      &[
-        "dc:description",
-        "dcterm:description",
-        "dcterms:description",
-        "description",
-        "og:description",
-        "twitter:description",
-      ],
-    );
-
-    metadata.site_name = Self::pick_meta_value(
-      &values,
-      &["og:site_name", "parsely:site_name", "parsely:site"],
-    );
-
-    metadata.published_time = Self::pick_meta_value(
-      &values,
-      &[
-        "article:published_time",
-        "parsely:pub-date",
-        "parsely:publish_date",
-        "publish_date",
-      ],
-    );
-
-    metadata
+    None
   }
+
 }

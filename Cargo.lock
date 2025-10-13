@@ -510,7 +510,6 @@ dependencies = [
  "anyhow",
  "ego-tree",
  "insta",
- "once_cell",
  "regex",
  "scraper",
  "serde",

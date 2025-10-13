@@ -1,31 +1,32 @@
 #[derive(Debug, Clone)]
 pub struct ReadabilityOptions {
-  pub debug: bool,
-  pub max_elems_to_parse: Option<usize>,
-  pub nb_top_candidates: usize,
   pub char_threshold: usize,
   pub classes_to_preserve: Vec<String>,
-  pub keep_classes: bool,
+  pub debug: bool,
   pub disable_json_ld: bool,
+  pub keep_classes: bool,
   pub link_density_modifier: f32,
+  pub max_elems_to_parse: Option<usize>,
+  pub nb_top_candidates: usize,
 }
 
 impl Default for ReadabilityOptions {
   fn default() -> Self {
     Self {
-      debug: false,
-      max_elems_to_parse: None,
-      nb_top_candidates: 5,
       char_threshold: 500,
       classes_to_preserve: vec!["page".to_string()],
-      keep_classes: false,
+      debug: false,
       disable_json_ld: false,
+      keep_classes: false,
       link_density_modifier: 0.0,
+      max_elems_to_parse: None,
+      nb_top_candidates: 5,
     }
   }
 }
 
 impl ReadabilityOptions {
+  #[must_use]
   pub fn builder() -> ReadabilityOptionsBuilder {
     ReadabilityOptionsBuilder::default()
   }
@@ -37,33 +38,12 @@ pub struct ReadabilityOptionsBuilder {
 }
 
 impl ReadabilityOptionsBuilder {
-  pub fn debug(self, debug: bool) -> Self {
-    Self {
-      inner: ReadabilityOptions {
-        debug,
-        ..self.inner
-      },
-    }
+  #[must_use]
+  pub fn build(self) -> ReadabilityOptions {
+    self.inner
   }
 
-  pub fn max_elems_to_parse(self, max_elems_to_parse: Option<usize>) -> Self {
-    Self {
-      inner: ReadabilityOptions {
-        max_elems_to_parse,
-        ..self.inner
-      },
-    }
-  }
-
-  pub fn nb_top_candidates(self, nb_top_candidates: usize) -> Self {
-    Self {
-      inner: ReadabilityOptions {
-        nb_top_candidates,
-        ..self.inner
-      },
-    }
-  }
-
+  #[must_use]
   pub fn char_threshold(self, char_threshold: usize) -> Self {
     Self {
       inner: ReadabilityOptions {
@@ -73,6 +53,7 @@ impl ReadabilityOptionsBuilder {
     }
   }
 
+  #[must_use]
   pub fn classes_to_preserve<I, S>(self, classes: I) -> Self
   where
     I: IntoIterator<Item = S>,
@@ -86,15 +67,17 @@ impl ReadabilityOptionsBuilder {
     }
   }
 
-  pub fn keep_classes(self, keep_classes: bool) -> Self {
+  #[must_use]
+  pub fn debug(self, debug: bool) -> Self {
     Self {
       inner: ReadabilityOptions {
-        keep_classes,
+        debug,
         ..self.inner
       },
     }
   }
 
+  #[must_use]
   pub fn disable_json_ld(self, disable_json_ld: bool) -> Self {
     Self {
       inner: ReadabilityOptions {
@@ -104,6 +87,17 @@ impl ReadabilityOptionsBuilder {
     }
   }
 
+  #[must_use]
+  pub fn keep_classes(self, keep_classes: bool) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        keep_classes,
+        ..self.inner
+      },
+    }
+  }
+
+  #[must_use]
   pub fn link_density_modifier(self, link_density_modifier: f32) -> Self {
     Self {
       inner: ReadabilityOptions {
@@ -113,7 +107,23 @@ impl ReadabilityOptionsBuilder {
     }
   }
 
-  pub fn build(self) -> ReadabilityOptions {
-    self.inner
+  #[must_use]
+  pub fn max_elems_to_parse(self, max_elems_to_parse: Option<usize>) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        max_elems_to_parse,
+        ..self.inner
+      },
+    }
+  }
+
+  #[must_use]
+  pub fn nb_top_candidates(self, nb_top_candidates: usize) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        nb_top_candidates,
+        ..self.inner
+      },
+    }
   }
 }

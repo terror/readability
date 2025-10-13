@@ -3,12 +3,12 @@ use super::*;
 const DEFAULT_TAGS_TO_SCORE: &[&str] =
   &["section", "h2", "h3", "h4", "h5", "h6", "p", "td", "pre"];
 
-static REGEX_COMMAS: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r"[,،﹐︐﹑⹀⸲，]").unwrap());
+static REGEX_COMMAS: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"[,،﹐︐﹑⹀⸲，]").unwrap());
 
 struct ArticleContent {
-  markup: String,
   body_lang: Option<String>,
+  markup: String,
 }
 
 #[derive(Debug, Clone)]
@@ -41,16 +41,15 @@ impl ArticleStage {
       .node(body_id)
       .and_then(ElementRef::wrap)
       .and_then(|el| el.value().attr("lang"))
-      .map(|value| value.to_string());
+      .map(str::to_string);
 
     let body = document.node(body_id)?;
 
     let mut candidates: HashMap<NodeId, Candidate> = HashMap::new();
 
     for node in body.descendants() {
-      let element = match ElementRef::wrap(node) {
-        Some(element) => element,
-        None => continue,
+      let Some(element) = ElementRef::wrap(node) else {
+        continue;
       };
 
       if !DEFAULT_TAGS_TO_SCORE.contains(&element.value().name()) {
@@ -65,8 +64,10 @@ impl ArticleStage {
       }
 
       let mut score = 1.0;
-      score += REGEX_COMMAS.find_iter(text).count() as f64;
-      score += (text.len() / 100).min(3) as f64;
+      score += u32::try_from(REGEX_COMMAS.find_iter(text).count())
+        .map_or(0.0, f64::from);
+      score += u32::try_from((text.len() / 100).min(3))
+        .map_or(0.0, f64::from);
 
       let mut node = element.deref().parent();
       let mut level = 0;
@@ -80,7 +81,7 @@ impl ArticleStage {
         let divider = match level {
           0 => 1.0,
           1 => 2.0,
-          _ => (level as f64 + 1.0) * 3.0,
+          _ => (f64::from(level) + 1.0) * 3.0,
         };
 
         entry.score += score / divider;
@@ -104,7 +105,10 @@ impl ArticleStage {
 
     top_candidates.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
 
-    let top_score = top_candidates.first().map(|c| c.score).unwrap_or(0.0);
+    let top_score = top_candidates
+      .first()
+      .map_or(0.0, |candidate| candidate.score);
+
     let sibling_score_threshold = (top_score * 0.2).max(10.0);
     let top_candidate = top_candidates.first()?.node;
 
@@ -122,8 +126,9 @@ impl ArticleStage {
         let append = if child.id() == top_candidate {
           true
         } else {
-          let candidate_score =
-            candidates.get(&child.id()).map(|c| c.score).unwrap_or(0.0);
+          let candidate_score = candidates
+            .get(&child.id())
+            .map_or(0.0, |candidate| candidate.score);
 
           if candidate_score >= sibling_score_threshold {
             true
@@ -159,6 +164,6 @@ impl ArticleStage {
       article_parts.join("")
     );
 
-    Some(ArticleContent { markup, body_lang })
+    Some(ArticleContent { body_lang, markup })
   }
 }

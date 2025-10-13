@@ -1,16 +1,21 @@
 use super::*;
 
-static REGEX_NORMALIZE: Lazy<Regex> =
-  Lazy::new(|| Regex::new(r"\s{2,}").unwrap());
+static REGEX_NORMALIZE: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"\s{2,}").unwrap());
 
 pub struct Readability {
-  html: Html,
-  options: ReadabilityOptions,
   _base_url: Option<Url>,
   article_dir: Option<String>,
+  html: Html,
+  options: ReadabilityOptions,
 }
 
 impl Readability {
+  /// Creates a new readability parser instance.
+  ///
+  /// # Errors
+  ///
+  /// Returns an error when the optional `base_url` cannot be parsed.
   pub fn new(
     html: &str,
     base_url: Option<&str>,
@@ -21,13 +26,22 @@ impl Readability {
       .transpose()?;
 
     Ok(Self {
-      html: Html::parse_document(html),
-      options,
       _base_url: base_url,
       article_dir: None,
+      html: Html::parse_document(html),
+      options,
     })
   }
 
+  /// Extracts the article contents using the configured pipeline.
+  ///
+  /// # Errors
+  ///
+  /// Returns an error when the pipeline cannot resolve article content.
+  ///
+  /// # Panics
+  ///
+  /// Panics if the paragraph selector literal is invalid.
   pub fn parse(&mut self) -> Result<Article> {
     let mut context = Pipeline::with_default_stages(Context::new(
       &mut self.html,
