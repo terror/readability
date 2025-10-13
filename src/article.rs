@@ -16,28 +16,43 @@ pub struct Article {
   pub metadata: ArticleMetadata,
 }
 
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ArticleDetails {
+  pub byline: Option<String>,
+  pub dir: Option<String>,
+  pub lang: Option<String>,
+  pub excerpt: Option<String>,
+  pub site_name: Option<String>,
+  pub published_time: Option<String>,
+}
+
 impl Article {
   pub fn new(
     title: String,
-    byline: Option<String>,
-    dir: Option<String>,
-    lang: Option<String>,
     content: String,
     text_content: String,
-    excerpt: Option<String>,
-    site_name: Option<String>,
-    published_time: Option<String>,
     metadata: ArticleMetadata,
+    details: ArticleDetails,
   ) -> Self {
+    let ArticleDetails {
+      byline,
+      dir,
+      lang,
+      excerpt,
+      site_name,
+      published_time,
+    } = details;
+
     let length = text_content.chars().count();
+
     Self {
       title,
       byline,
       dir,
       lang,
-      length,
       content,
       text_content,
+      length,
       excerpt,
       site_name,
       published_time,

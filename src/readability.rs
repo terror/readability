@@ -84,17 +84,21 @@ impl Readability {
       .clone()
       .or_else(|| Self::first_paragraph(&article_html));
 
+    let details = ArticleDetails {
+      byline: self.metadata.byline.clone(),
+      dir: self.article_dir.clone(),
+      lang: self.article_lang.clone(),
+      excerpt,
+      site_name: self.metadata.site_name.clone(),
+      published_time: self.metadata.published_time.clone(),
+    };
+
     Ok(Article::new(
       title,
-      self.metadata.byline.clone(),
-      self.article_dir.clone(),
-      self.article_lang.clone(),
       article_html,
       text_content,
-      excerpt,
-      self.metadata.site_name.clone(),
-      self.metadata.published_time.clone(),
       self.metadata.clone(),
+      details,
     ))
   }
 
@@ -142,7 +146,7 @@ impl Readability {
   fn infer_lang(&self) -> Option<String> {
     self
       .html_element()
-      .and_then(|node| ElementRef::wrap(node))
+      .and_then(ElementRef::wrap)
       .and_then(|el| el.value().attr("lang"))
       .map(|value| value.to_string())
   }
@@ -200,9 +204,7 @@ impl Readability {
       ],
     );
 
-    if metadata.title.is_none() {
-      metadata.title = document_title;
-    } else if metadata.title.as_ref() == Some(&String::new()) {
+    if metadata.title.as_ref().is_none_or(|value| value.is_empty()) {
       metadata.title = document_title;
     }
 
@@ -279,7 +281,7 @@ impl Readability {
       .html
       .tree
       .get(body_id)
-      .and_then(|node| ElementRef::wrap(node))
+      .and_then(ElementRef::wrap)
       .and_then(|el| el.value().attr("lang"))
     {
       self.article_lang = Some(body_lang.to_string());
@@ -444,20 +446,20 @@ impl Readability {
 
     if let Some(node) = self.html.tree.get(node_id) {
       for descendant in node.descendants() {
-        if let Some(element) = ElementRef::wrap(descendant) {
-          if element.value().name() == "a" {
-            let text = element.text().collect::<Vec<_>>().join(" ");
+        if let Some(element) = ElementRef::wrap(descendant)
+          && element.value().name() == "a"
+        {
+          let text = element.text().collect::<Vec<_>>().join(" ");
 
-            let href = element.value().attr("href").unwrap_or_default();
+          let href = element.value().attr("href").unwrap_or_default();
 
-            let weight = if REGEX_HASH_URL.is_match(href) {
-              0.3
-            } else {
-              1.0
-            };
+          let weight = if REGEX_HASH_URL.is_match(href) {
+            0.3
+          } else {
+            1.0
+          };
 
-            link_length += text.trim().len() as f64 * weight;
-          }
+          link_length += text.trim().len() as f64 * weight;
         }
       }
     }

@@ -14,7 +14,7 @@ mod options;
 mod readability;
 
 pub use crate::{
-  article::{Article, ArticleMetadata},
+  article::{Article, ArticleDetails, ArticleMetadata},
   options::{ReadabilityOptions, ReadabilityOptionsBuilder},
   readability::{Readability, ReadabilityError},
 };
