@@ -43,7 +43,6 @@ impl ReadabilityOptionsBuilder {
         debug,
         ..self.inner
       },
-      ..self
     }
   }
 
@@ -53,7 +52,6 @@ impl ReadabilityOptionsBuilder {
         max_elems_to_parse,
         ..self.inner
       },
-      ..self
     }
   }
 
@@ -63,7 +61,6 @@ impl ReadabilityOptionsBuilder {
         nb_top_candidates,
         ..self.inner
       },
-      ..self
     }
   }
 
@@ -73,7 +70,6 @@ impl ReadabilityOptionsBuilder {
         char_threshold,
         ..self.inner
       },
-      ..self
     }
   }
 
@@ -87,7 +83,6 @@ impl ReadabilityOptionsBuilder {
         classes_to_preserve: classes.into_iter().map(Into::into).collect(),
         ..self.inner
       },
-      ..self
     }
   }
 
@@ -97,7 +92,6 @@ impl ReadabilityOptionsBuilder {
         keep_classes,
         ..self.inner
       },
-      ..self
     }
   }
 
@@ -107,7 +101,6 @@ impl ReadabilityOptionsBuilder {
         disable_json_ld,
         ..self.inner
       },
-      ..self
     }
   }
 
@@ -117,7 +110,6 @@ impl ReadabilityOptionsBuilder {
         link_density_modifier,
         ..self.inner
       },
-      ..self
     }
   }
 
