@@ -45,7 +45,7 @@ impl Readability {
       .clone()
       .filter(|value| !value.is_empty())
       .or(context.document().document_title())
-      .unwrap_or_else(|| String::new());
+      .unwrap_or(String::new());
 
     let lang = context
       .body_lang()
