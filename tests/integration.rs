@@ -129,5 +129,8 @@ test!("003-metadata-preferred");
 test!("004-metadata-space-separated-properties");
 test!("005-unescape-html-entities");
 test!("metadata-content-missing");
+test!("rtl-1");
+test!("rtl-2");
+test!("rtl-3");
 test!("rtl-4");
 test!("salon-1");

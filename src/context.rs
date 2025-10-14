@@ -2,6 +2,7 @@ use super::*;
 
 #[derive(Debug)]
 pub(crate) struct Context<'a> {
+  article_dir: Option<String>,
   article_fragment: Option<ArticleFragment>,
   article_markup: Option<String>,
   body_lang: Option<String>,
@@ -12,6 +13,10 @@ pub(crate) struct Context<'a> {
 }
 
 impl<'a> Context<'a> {
+  pub(crate) fn article_dir(&self) -> Option<&String> {
+    self.article_dir.as_ref()
+  }
+
   pub(crate) fn article_fragment_mut(
     &mut self,
   ) -> Option<&mut ArticleFragment> {
@@ -44,6 +49,7 @@ impl<'a> Context<'a> {
   ) -> Self {
     Self {
       article_fragment: None,
+      article_dir: None,
       html,
       options,
       metadata: Metadata::default(),
@@ -55,6 +61,10 @@ impl<'a> Context<'a> {
 
   pub(crate) fn options(&self) -> &ReadabilityOptions {
     self.options
+  }
+
+  pub(crate) fn set_article_dir(&mut self, dir: Option<String>) {
+    self.article_dir = dir;
   }
 
   pub(crate) fn set_article_fragment(&mut self, fragment: ArticleFragment) {
