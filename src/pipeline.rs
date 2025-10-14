@@ -47,9 +47,9 @@ impl<'a> Pipeline<'a> {
       Box::new(EnforceVoidSelfClosingStage),
     ];
 
-    stages
-      .into_iter()
-      .for_each(|stage| pipeline.add_stage(stage));
+    for stage in stages {
+      pipeline.add_stage(stage)
+    }
 
     pipeline
   }
