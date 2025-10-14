@@ -61,8 +61,10 @@ impl ArticleStage {
     top_candidate: NodeId,
     candidates: &HashMap<NodeId, Candidate>,
   ) -> Option<String> {
-    let top_node = document.node(top_candidate)?;
-    let top_score = candidates.get(&top_candidate)?.score;
+    let (top_node, top_score) = (
+      document.node(top_candidate)?,
+      candidates.get(&top_candidate)?.score,
+    );
 
     let threshold = (top_score * SIBLING_SCORE_RATIO).max(MIN_SIBLING_SCORE);
 
