@@ -4,7 +4,6 @@ static REGEX_NORMALIZE: LazyLock<Regex> =
   LazyLock::new(|| Regex::new(r"\s{2,}").unwrap());
 
 pub struct Readability {
-  article_dir: Option<String>,
   base_url: Option<Url>,
   html: Html,
   options: ReadabilityOptions,
@@ -26,7 +25,6 @@ impl Readability {
       .transpose()?;
 
     Ok(Self {
-      article_dir: None,
       base_url,
       html: Html::parse_document(html),
       options,
@@ -86,7 +84,7 @@ impl Readability {
     Ok(Article {
       title: context.metadata().title.clone().unwrap_or(String::new()),
       byline: context.metadata().byline.clone(),
-      dir: self.article_dir.clone(),
+      dir: context.article_dir().cloned(),
       lang: context
         .body_lang()
         .cloned()

@@ -24,6 +24,8 @@ const MAX_PARENT_DEPTH: usize = 5;
 struct ArticleContent {
   /// Language code taken from the document's `<body lang>` attribute.
   body_lang: Option<String>,
+  /// Text direction derived from the article container hierarchy.
+  dir: Option<String>,
   /// HTML fragment representing the primary article content.
   fragment: ArticleFragment,
 }
@@ -43,11 +45,16 @@ impl Stage for ArticleStage {
   /// Runs the extraction pipeline and stores the resulting fragment and language
   /// hints into the shared context.
   fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
-    let article =
+    let ArticleContent {
+      body_lang,
+      dir,
+      fragment,
+    } =
       Self::extract(context.document()).ok_or(Error::MissingArticleContent)?;
 
-    context.set_body_lang(article.body_lang);
-    context.set_article_fragment(article.fragment);
+    context.set_body_lang(body_lang);
+    context.set_article_dir(dir);
+    context.set_article_fragment(fragment);
 
     Ok(())
   }
@@ -133,6 +140,7 @@ impl ArticleStage {
 
     Some(ArticleContent {
       body_lang: Self::extract_body_lang(document, body_id),
+      dir: Self::find_article_dir(document, top_candidate),
       fragment: ArticleFragment::from(article_html.as_str()),
     })
   }
@@ -165,8 +173,41 @@ impl ArticleStage {
 
     Some(ArticleContent {
       body_lang: Self::extract_body_lang(document, body_id),
+      dir: Self::find_article_dir(document, body_id),
       fragment: ArticleFragment::from(markup.as_str()),
     })
+  }
+
+  /// Traverses the candidate's ancestor chain to find a `dir` attribute hint.
+  fn find_article_dir(
+    document: Document<'_>,
+    node_id: NodeId,
+  ) -> Option<String> {
+    let node = document.node(node_id)?;
+
+    if let Some(parent) = node.parent() {
+      if let Some(dir) = Self::node_dir(parent) {
+        return Some(dir);
+      }
+
+      if let Some(dir) = Self::node_dir(node) {
+        return Some(dir);
+      }
+
+      let mut ancestor = parent.parent();
+
+      while let Some(current) = ancestor {
+        if let Some(dir) = Self::node_dir(current) {
+          return Some(dir);
+        }
+
+        ancestor = current.parent();
+      }
+    } else if let Some(dir) = Self::node_dir(node) {
+      return Some(dir);
+    }
+
+    None
   }
 
   /// Returns the identifier associated with the highest scoring candidate node.
@@ -191,6 +232,13 @@ impl ArticleStage {
 
     (len > 80 && link_density < 0.25)
       || (len > 0 && len <= 80 && link_density == 0.0 && text.contains('.'))
+  }
+
+  fn node_dir(node: NodeRef<'_, Node>) -> Option<String> {
+    match node.value() {
+      Node::Element(element) => element.attr("dir").map(str::to_string),
+      _ => None,
+    }
   }
 
   /// Produces HTML for a sibling node when it meets the inclusion heuristics.
