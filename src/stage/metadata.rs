@@ -24,8 +24,8 @@ impl Stage for MetadataStage {
 }
 
 impl MetadataStage {
-  fn collect_metadata(document: Document<'_>) -> CollectedMetadata {
-    let mut metadata = CollectedMetadata::default();
+  fn collect_metadata(document: Document<'_>) -> Metadata {
+    let mut metadata = Metadata::default();
 
     let values = Self::collect_values(document);
 

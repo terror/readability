@@ -4,8 +4,8 @@ static REGEX_NORMALIZE: LazyLock<Regex> =
   LazyLock::new(|| Regex::new(r"\s{2,}").unwrap());
 
 pub struct Readability {
-  _base_url: Option<Url>,
   article_dir: Option<String>,
+  base_url: Option<Url>,
   html: Html,
   options: ReadabilityOptions,
 }
@@ -26,8 +26,8 @@ impl Readability {
       .transpose()?;
 
     Ok(Self {
-      _base_url: base_url,
       article_dir: None,
+      base_url,
       html: Html::parse_document(html),
       options,
     })
@@ -39,10 +39,10 @@ impl Readability {
   ///
   /// Returns an error when the pipeline cannot resolve article content.
   pub fn parse(&mut self) -> Result<Article> {
-    let mut context = Pipeline::with_default_stages(Context::new(
-      &mut self.html,
-      &self.options,
-    ))
+    let mut context = Pipeline::with_default_stages(
+      Context::new(&mut self.html, &self.options),
+      self.base_url.as_ref(),
+    )
     .run()?;
 
     let markup = context
