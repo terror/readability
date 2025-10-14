@@ -31,19 +31,25 @@ impl<'a> Pipeline<'a> {
   ) -> Self {
     let mut pipeline = Self::new(context);
 
-    pipeline.add_stage(Box::new(ElementLimitStage));
-    pipeline.add_stage(Box::new(RemoveDisallowedNodesStage));
-    pipeline.add_stage(Box::new(RewriteFontTagsStage));
-    pipeline.add_stage(Box::new(RemoveUnlikelyCandidatesStage));
-    pipeline.add_stage(Box::new(ReplaceBreakSequencesStage));
-    pipeline.add_stage(Box::new(NormalizeContainersStage));
-    pipeline.add_stage(Box::new(LanguageStage));
-    pipeline.add_stage(Box::new(MetadataStage));
-    pipeline.add_stage(Box::new(ArticleStage));
-    pipeline.add_stage(Box::new(FixRelativeUrisStage::new(base_url)));
-    pipeline.add_stage(Box::new(CleanClassAttributesStage));
-    pipeline.add_stage(Box::new(NormalizeArticleWhitespaceStage));
-    pipeline.add_stage(Box::new(EnforceVoidSelfClosingStage));
+    let stages: Vec<Box<dyn Stage>> = vec![
+      Box::new(ElementLimitStage),
+      Box::new(RemoveDisallowedNodesStage),
+      Box::new(RewriteFontTagsStage),
+      Box::new(RemoveUnlikelyCandidatesStage),
+      Box::new(ReplaceBreakSequencesStage),
+      Box::new(NormalizeContainersStage),
+      Box::new(LanguageStage),
+      Box::new(MetadataStage),
+      Box::new(ArticleStage),
+      Box::new(FixRelativeUrisStage::new(base_url)),
+      Box::new(CleanClassAttributesStage),
+      Box::new(NormalizeArticleWhitespaceStage),
+      Box::new(EnforceVoidSelfClosingStage),
+    ];
+
+    stages
+      .into_iter()
+      .for_each(|stage| pipeline.add_stage(stage));
 
     pipeline
   }
