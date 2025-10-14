@@ -30,6 +30,9 @@ impl Stage for MetadataStage {
 }
 
 impl MetadataStage {
+  const REPLACEMENT_CHAR: char = '\u{FFFD}';
+  const REPLACEMENT_CODEPOINT: u32 = 0xFFFD;
+
   fn collect_metadata(document: Document<'_>) -> Metadata {
     let mut metadata = Metadata::default();
 
@@ -135,6 +138,60 @@ impl MetadataStage {
     }
 
     values
+  }
+
+  fn decode_html_entities(input: &str) -> String {
+    if !input.contains('&') {
+      return input.to_string();
+    }
+
+    let named_decoded = REGEX_BASIC_HTML_ENTITIES.replace_all(
+      input,
+      |captures: &regex::Captures<'_>| -> String {
+        match &captures["name"] {
+          "quot" => "\"".to_string(),
+          "amp" => "&".to_string(),
+          "apos" => "'".to_string(),
+          "lt" => "<".to_string(),
+          "gt" => ">".to_string(),
+          _ => captures
+            .get(0)
+            .map_or(String::new(), |m| m.as_str().to_string()),
+        }
+      },
+    );
+
+    REGEX_NUMERIC_HTML_ENTITIES
+      .replace_all(&named_decoded, |captures: &regex::Captures<'_>| {
+        let (value, radix) = if let Some(hex) = captures.get(1) {
+          (hex.as_str(), 16)
+        } else if let Some(num) = captures.get(2) {
+          (num.as_str(), 10)
+        } else {
+          return captures.get(0).map_or(String::new(), |m| m.as_str().into());
+        };
+
+        let parsed = u32::from_str_radix(value, radix)
+          .unwrap_or(Self::REPLACEMENT_CODEPOINT);
+
+        Self::decode_numeric_codepoint(parsed).to_string()
+      })
+      .into_owned()
+  }
+
+  fn decode_numeric_codepoint(value: u32) -> char {
+    const SURROGATE_START: u32 = 0xD800;
+    const SURROGATE_END: u32 = 0xDFFF;
+    const MAX_CODEPOINT: u32 = 0x0010_FFFF;
+
+    if value == 0
+      || value > MAX_CODEPOINT
+      || (SURROGATE_START..=SURROGATE_END).contains(&value)
+    {
+      Self::REPLACEMENT_CHAR
+    } else {
+      char::from_u32(value).unwrap_or(Self::REPLACEMENT_CHAR)
+    }
   }
 
   fn find_byline(document: Document<'_>) -> Option<String> {
@@ -256,61 +313,4 @@ impl MetadataStage {
     metadata.published_time =
       Self::unescape_html_entities(metadata.published_time.take());
   }
-
-  fn decode_html_entities(input: &str) -> String {
-    if !input.contains('&') {
-      return input.to_string();
-    }
-
-    let named_decoded = REGEX_BASIC_HTML_ENTITIES.replace_all(
-      input,
-      |captures: &regex::Captures<'_>| -> String {
-        match &captures["name"] {
-          "quot" => "\"".to_string(),
-          "amp" => "&".to_string(),
-          "apos" => "'".to_string(),
-          "lt" => "<".to_string(),
-          "gt" => ">".to_string(),
-          _ => captures
-            .get(0)
-            .map_or(String::new(), |m| m.as_str().to_string()),
-        }
-      },
-    );
-
-    REGEX_NUMERIC_HTML_ENTITIES
-      .replace_all(&named_decoded, |captures: &regex::Captures<'_>| {
-        let (value, radix) = if let Some(hex) = captures.get(1) {
-          (hex.as_str(), 16)
-        } else if let Some(num) = captures.get(2) {
-          (num.as_str(), 10)
-        } else {
-          return captures.get(0).map_or(String::new(), |m| m.as_str().into());
-        };
-
-        let parsed = u32::from_str_radix(value, radix)
-          .unwrap_or(Self::REPLACEMENT_CODEPOINT);
-
-        Self::decode_numeric_codepoint(parsed).to_string()
-      })
-      .into_owned()
-  }
-
-  fn decode_numeric_codepoint(value: u32) -> char {
-    const SURROGATE_START: u32 = 0xD800;
-    const SURROGATE_END: u32 = 0xDFFF;
-    const MAX_CODEPOINT: u32 = 0x10FFFF;
-
-    if value == 0
-      || value > MAX_CODEPOINT
-      || (SURROGATE_START..=SURROGATE_END).contains(&value)
-    {
-      Self::REPLACEMENT_CHAR
-    } else {
-      char::from_u32(value).unwrap_or(Self::REPLACEMENT_CHAR)
-    }
-  }
-
-  const REPLACEMENT_CHAR: char = '\u{FFFD}';
-  const REPLACEMENT_CODEPOINT: u32 = 0xFFFD;
 }

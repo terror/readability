@@ -137,6 +137,18 @@ impl ArticleStage {
     })
   }
 
+  /// Reads the language specified on the `<body>` element, if any.
+  fn extract_body_lang(
+    document: Document<'_>,
+    body_id: NodeId,
+  ) -> Option<String> {
+    document
+      .node(body_id)
+      .and_then(ElementRef::wrap)
+      .and_then(|el| el.value().attr("lang"))
+      .map(str::to_string)
+  }
+
   /// Provides a fallback article fragment using the `<body>` contents when no
   /// suitable candidate could be scored.
   fn fallback_article(
@@ -155,34 +167,6 @@ impl ArticleStage {
       body_lang: Self::extract_body_lang(document, body_id),
       fragment: ArticleFragment::from_markup(&markup),
     })
-  }
-
-  /// Reads the language specified on the `<body>` element, if any.
-  fn extract_body_lang(
-    document: Document<'_>,
-    body_id: NodeId,
-  ) -> Option<String> {
-    document
-      .node(body_id)
-      .and_then(ElementRef::wrap)
-      .and_then(|el| el.value().attr("lang"))
-      .map(str::to_string)
-  }
-
-  fn serialize_children(node: NodeRef<'_, Node>) -> Option<String> {
-    let opts = SerializeOpts {
-      scripting_enabled: false,
-      traversal_scope: TraversalScope::ChildrenOnly(None),
-      create_missing_parent: false,
-    };
-
-    let mut buffer = Vec::new();
-
-    let serializer = SerializableNode { node };
-
-    serialize(&mut buffer, &serializer, opts).ok()?;
-
-    String::from_utf8(buffer).ok()
   }
 
   /// Returns the identifier associated with the highest scoring candidate node.
@@ -329,6 +313,22 @@ impl ArticleStage {
           });
         acc
       })
+  }
+
+  fn serialize_children(node: NodeRef<'_, Node>) -> Option<String> {
+    let opts = SerializeOpts {
+      scripting_enabled: false,
+      traversal_scope: TraversalScope::ChildrenOnly(None),
+      create_missing_parent: false,
+    };
+
+    let mut buffer = Vec::new();
+
+    let serializer = SerializableNode { node };
+
+    serialize(&mut buffer, &serializer, opts).ok()?;
+
+    String::from_utf8(buffer).ok()
   }
 
   /// Determines whether a sibling element should be merged into the article
