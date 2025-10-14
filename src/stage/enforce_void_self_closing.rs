@@ -16,42 +16,9 @@ impl Stage for EnforceVoidSelfClosingStage {
 
 impl EnforceVoidSelfClosingStage {
   fn enforce_void_self_closing(markup: String) -> String {
-    const BR_PLACEHOLDER: &str = "__readability_br_placeholder__";
-
-    let intermediate = markup
-      .replace("<br />", BR_PLACEHOLDER)
-      .replace("<br>", "<br />")
-      .replace(BR_PLACEHOLDER, "<br />");
-
-    let mut result = String::with_capacity(intermediate.len());
-
-    let mut remainder = intermediate.as_str();
-
-    while let Some(idx) = remainder.find("<img") {
-      let (before, after) = remainder.split_at(idx);
-
-      result.push_str(before);
-
-      if let Some(end) = after.find('>') {
-        let (tag, rest) = after.split_at(end + 1);
-
-        if tag.trim_end().ends_with("/>") {
-          result.push_str(tag);
-        } else {
-          let trimmed = tag.trim_end_matches('>');
-          result.push_str(trimmed);
-          result.push_str(" />");
-        }
-        remainder = rest;
-      } else {
-        result.push_str(after);
-        remainder = "";
-        break;
-      }
-    }
-
-    result.push_str(remainder);
-
-    result
+    Regex::new(r"<img([^>]*[^/])>")
+      .unwrap()
+      .replace_all(&markup.replace("<br>", "<br />"), "<img$1 />")
+      .to_string()
   }
 }
