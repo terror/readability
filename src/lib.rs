@@ -32,7 +32,7 @@ use {
     RemoveDisallowedNodesStage, RemoveUnlikelyCandidatesStage,
     ReplaceBreakSequencesStage, RewriteFontTagsStage, Stage,
   },
-  std::{collections::HashMap, io, ops::Deref, sync::LazyLock},
+  std::{collections::HashMap, io, sync::LazyLock},
   url::Url,
 };
 

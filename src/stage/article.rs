@@ -6,6 +6,11 @@ const DEFAULT_TAGS_TO_SCORE: &[&str] =
 static REGEX_COMMAS: LazyLock<Regex> =
   LazyLock::new(|| Regex::new(r"[,،﹐︐﹑⹀⸲，]").unwrap());
 
+const MIN_TEXT_LENGTH: usize = 25;
+const SIBLING_SCORE_RATIO: f64 = 0.2;
+const MIN_SIBLING_SCORE: f64 = 10.0;
+const MAX_PARENT_DEPTH: usize = 5;
+
 struct ArticleContent {
   body_lang: Option<String>,
   fragment: ArticleFragment,
@@ -32,152 +37,203 @@ impl Stage for ArticleStage {
 }
 
 impl ArticleStage {
+  fn calculate_element_score(element: ElementRef<'_>) -> Option<f64> {
+    let text = element.text().collect::<Vec<_>>().join(" ");
+
+    let text = text.trim();
+
+    if text.len() < MIN_TEXT_LENGTH {
+      return None;
+    }
+
+    let comma_count = REGEX_COMMAS.find_iter(text).count() as f64;
+
+    let length_bonus = ((text.len() / 100).min(3)) as f64;
+
+    Some(1.0 + comma_count + length_bonus)
+  }
+
+  fn collect_article_parts(
+    document: Document<'_>,
+    top_candidate: NodeId,
+    candidates: &HashMap<NodeId, Candidate>,
+  ) -> Option<String> {
+    let top_node = document.node(top_candidate)?;
+    let top_score = candidates.get(&top_candidate)?.score;
+
+    let threshold = (top_score * SIBLING_SCORE_RATIO).max(MIN_SIBLING_SCORE);
+
+    let parts = top_node
+      .parent()
+      .map(|parent| {
+        parent
+          .children()
+          .filter_map(|child| {
+            Self::process_sibling(
+              document,
+              child,
+              top_candidate,
+              candidates,
+              threshold,
+            )
+          })
+          .collect::<String>()
+      })
+      .or_else(|| ElementRef::wrap(top_node).map(|el| el.html()))?;
+
+    if parts.is_empty() { None } else { Some(parts) }
+  }
+
   fn extract(document: Document<'_>) -> Option<ArticleContent> {
     let body_id = document.body_element()?.id();
 
-    let body_lang = document
+    let candidates = Self::score_candidates(document, body_id);
+
+    let top_candidate = Self::find_top_candidate(&candidates)?;
+
+    let article_html =
+      Self::collect_article_parts(document, top_candidate, &candidates)?;
+
+    Some(ArticleContent {
+      body_lang: Self::extract_body_lang(document, body_id),
+      fragment: ArticleFragment::from_markup(&article_html),
+    })
+  }
+
+  fn extract_body_lang(
+    document: Document<'_>,
+    body_id: NodeId,
+  ) -> Option<String> {
+    document
       .node(body_id)
       .and_then(ElementRef::wrap)
       .and_then(|el| el.value().attr("lang"))
-      .map(str::to_string);
+      .map(str::to_string)
+  }
 
-    let body = document.node(body_id)?;
+  fn find_top_candidate(
+    candidates: &HashMap<NodeId, Candidate>,
+  ) -> Option<NodeId> {
+    candidates
+      .values()
+      .max_by(|a, b| a.score.partial_cmp(&b.score).unwrap())
+      .map(|c| c.node)
+  }
 
-    let mut candidates: HashMap<NodeId, Candidate> = HashMap::new();
+  fn is_valid_paragraph(document: Document<'_>, node_id: NodeId) -> bool {
+    let (text, link_density) = (
+      document.collect_text(node_id, true),
+      document.link_density(node_id),
+    );
 
-    for node in body.descendants() {
-      let Some(element) = ElementRef::wrap(node) else {
-        continue;
-      };
+    let len = text.len();
 
-      if !DEFAULT_TAGS_TO_SCORE.contains(&element.value().name()) {
-        continue;
+    (len > 80 && link_density < 0.25)
+      || (len > 0 && len <= 80 && link_density == 0.0 && text.contains('.'))
+  }
+
+  fn process_sibling(
+    document: Document<'_>,
+    child: ego_tree::NodeRef<'_, Node>,
+    top_candidate: NodeId,
+    candidates: &HashMap<NodeId, Candidate>,
+    threshold: f64,
+  ) -> Option<String> {
+    match child.value() {
+      Node::Text(text) => {
+        let text = text.to_string();
+
+        if text.is_empty() { None } else { Some(text) }
       }
+      Node::Element(_) => {
+        let element = ElementRef::wrap(child)?;
 
-      let text = element.text().collect::<Vec<_>>().join(" ");
-
-      let text = text.trim();
-
-      if text.len() < 25 {
-        continue;
+        if Self::should_include_sibling(
+          document,
+          element,
+          child.id(),
+          top_candidate,
+          candidates,
+          threshold,
+        ) {
+          Some(element.html())
+        } else {
+          None
+        }
       }
+      _ => None,
+    }
+  }
 
-      let mut score = 1.0;
-
-      score += u32::try_from(REGEX_COMMAS.find_iter(text).count())
-        .map_or(0.0, f64::from);
-
-      score += u32::try_from((text.len() / 100).min(3)).map_or(0.0, f64::from);
-
-      let mut node = element.deref().parent();
-
-      let mut level = 0;
-
-      while let Some(parent) = node {
-        let entry = candidates.entry(parent.id()).or_insert(Candidate {
-          node: parent.id(),
-          score: 0.0,
-        });
-
+  fn propagate_score_to_parents<'a>(
+    node: &'a ego_tree::NodeRef<'a, Node>,
+    score: f64,
+  ) -> impl Iterator<Item = (NodeId, f64)> + 'a {
+    std::iter::successors(node.parent(), NodeRef::parent)
+      .take(MAX_PARENT_DEPTH)
+      .enumerate()
+      .map(move |(level, parent)| {
         let divider = match level {
           0 => 1.0,
           1 => 2.0,
-          _ => (f64::from(level) + 1.0) * 3.0,
+          _ => (level as f64 + 1.0) * 3.0,
         };
+        (parent.id(), score / divider)
+      })
+  }
 
-        entry.score += score / divider;
+  fn score_candidates(
+    document: Document<'_>,
+    body_id: NodeId,
+  ) -> HashMap<NodeId, Candidate> {
+    let Some(body) = document.node(body_id) else {
+      return HashMap::new();
+    };
 
-        level += 1;
+    body
+      .descendants()
+      .filter_map(ElementRef::wrap)
+      .filter(|el| DEFAULT_TAGS_TO_SCORE.contains(&el.value().name()))
+      .filter_map(|el| {
+        Self::calculate_element_score(el).map(|score| (el, score))
+      })
+      .flat_map(|(el, score)| {
+        Self::propagate_score_to_parents(&el, score).collect::<Vec<_>>()
+      })
+      .fold(HashMap::new(), |mut acc, (node_id, score)| {
+        acc
+          .entry(node_id)
+          .and_modify(|c| c.score += score)
+          .or_insert(Candidate {
+            node: node_id,
+            score,
+          });
+        acc
+      })
+  }
 
-        if level >= 5 {
-          break;
-        }
-
-        node = parent.parent();
-      }
+  fn should_include_sibling(
+    document: Document<'_>,
+    element: ElementRef<'_>,
+    child_id: NodeId,
+    top_candidate: NodeId,
+    candidates: &HashMap<NodeId, Candidate>,
+    threshold: f64,
+  ) -> bool {
+    if child_id == top_candidate {
+      return true;
     }
 
-    if candidates.is_empty() {
-      return None;
+    let candidate_score = candidates.get(&child_id).map_or(0.0, |c| c.score);
+
+    if candidate_score >= threshold {
+      return true;
     }
 
-    let mut top_candidates: Vec<Candidate> =
-      candidates.values().cloned().collect();
-
-    top_candidates.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
-
-    let top_score = top_candidates
-      .first()
-      .map_or(0.0, |candidate| candidate.score);
-
-    let sibling_score_threshold = (top_score * 0.2).max(10.0);
-    let top_candidate = top_candidates.first()?.node;
-
-    let mut article_parts = Vec::new();
-
-    let top_node = document.node(top_candidate)?;
-    let parent = top_node.parent();
-
-    if let Some(parent) = parent {
-      for child in parent.children() {
-        match child.value() {
-          Node::Text(text) => {
-            let text = text.to_string();
-
-            if text.is_empty() {
-              continue;
-            }
-
-            article_parts.push(text);
-            continue;
-          }
-          Node::Element(_) => {}
-          _ => continue,
-        }
-
-        let Some(element) = ElementRef::wrap(child) else {
-          continue;
-        };
-
-        let append = if child.id() == top_candidate {
-          true
-        } else {
-          let candidate_score = candidates
-            .get(&child.id())
-            .map_or(0.0, |candidate| candidate.score);
-
-          if candidate_score >= sibling_score_threshold {
-            true
-          } else if element.value().name() == "p" {
-            let text = document.collect_text(child.id(), true);
-            let link_density = document.link_density(child.id());
-            let len = text.len();
-
-            (len > 80 && link_density < 0.25)
-              || (len > 0
-                && len <= 80
-                && link_density == 0.0
-                && text.contains('.'))
-          } else {
-            false
-          }
-        };
-
-        if append {
-          article_parts.push(element.html());
-        }
-      }
-    } else if let Some(element) = ElementRef::wrap(top_node) {
-      article_parts.push(element.html());
+    if element.value().name() == "p" {
+      Self::is_valid_paragraph(document, child_id)
+    } else {
+      false
     }
-
-    if article_parts.is_empty() {
-      return None;
-    }
-
-    Some(ArticleContent {
-      body_lang,
-      fragment: ArticleFragment::from_markup(&article_parts.join("")),
-    })
   }
 }
