@@ -98,12 +98,11 @@ impl<'a> FixRelativeUrisStage<'a> {
       return value.to_string();
     }
 
-    if Url::parse(value).is_ok() {
-      value.to_string()
-    } else {
-      base_url
+    match Url::parse(value) {
+      Ok(url) => url.to_string(),
+      Err(_) => base_url
         .join(value)
-        .map_or_else(|_| value.to_string(), |url| url.to_string())
+        .map_or_else(|_| value.to_string(), |url| url.to_string()),
     }
   }
 

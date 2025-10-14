@@ -41,9 +41,14 @@ impl<'a> Pipeline<'a> {
       Box::new(LanguageStage),
       Box::new(MetadataStage),
       Box::new(ArticleStage),
+      Box::new(NormalizeArticleRootStage),
+      Box::new(FlattenSimpleTablesStage),
+      Box::new(RemoveNonContentElementsStage),
+      Box::new(StripPresentationalAttributesStage),
       Box::new(FixRelativeUrisStage::new(base_url)),
       Box::new(CleanClassAttributesStage),
       Box::new(NormalizeArticleWhitespaceStage),
+      Box::new(EnsureParagraphTrailingNewlineStage),
       Box::new(EnforceVoidSelfClosingStage),
     ];
 
