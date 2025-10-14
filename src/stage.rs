@@ -10,6 +10,7 @@ mod flatten_simple_tables;
 mod language;
 mod metadata;
 mod normalize_article_root;
+mod normalize_article_headings;
 mod normalize_article_whitespace;
 mod normalize_containers;
 mod remove_disallowed_nodes;
@@ -27,6 +28,7 @@ pub use {
   fix_relative_uris::FixRelativeUrisStage,
   flatten_simple_tables::FlattenSimpleTablesStage, language::LanguageStage,
   metadata::MetadataStage, normalize_article_root::NormalizeArticleRootStage,
+  normalize_article_headings::NormalizeArticleHeadingsStage,
   normalize_article_whitespace::NormalizeArticleWhitespaceStage,
   normalize_containers::NormalizeContainersStage,
   remove_disallowed_nodes::RemoveDisallowedNodesStage,

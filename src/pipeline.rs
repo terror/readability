@@ -42,6 +42,7 @@ impl<'a> Pipeline<'a> {
       Box::new(MetadataStage),
       Box::new(ArticleStage),
       Box::new(NormalizeArticleRootStage),
+      Box::new(NormalizeArticleHeadingsStage),
       Box::new(FlattenSimpleTablesStage),
       Box::new(RemoveNonContentElementsStage),
       Box::new(StripPresentationalAttributesStage),
