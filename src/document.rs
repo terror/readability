@@ -73,9 +73,7 @@ impl<'a> Document<'a> {
       .map(|title_node| self.collect_text(title_node.id(), true))
       .filter(|title| !title.is_empty());
 
-    let Some(mut cur_title) = title else {
-      return None;
-    };
+    let mut cur_title = title?;
 
     let orig_title = cur_title.clone();
 
@@ -107,18 +105,19 @@ impl<'a> Document<'a> {
         .map(|element| self.collect_text(element.id(), true))
         .any(|heading| heading.trim() == trimmed_title);
 
-      if !has_matching_heading {
-        if let Some((_, after)) = orig_title.rsplit_once(':') {
+      if !has_matching_heading
+        && let Some((_, after)) = orig_title.rsplit_once(':')
+        && !has_matching_heading
+      {
+        cur_title = after.to_string();
+
+        if let Some((before, after)) = orig_title.split_once(':')
+          && Self::word_count(&cur_title) < 3
+        {
           cur_title = after.to_string();
 
-          if Self::word_count(&cur_title) < 3 {
-            if let Some((before, after)) = orig_title.split_once(':') {
-              cur_title = after.to_string();
-
-              if Self::word_count(before) > 5 {
-                cur_title = orig_title.clone();
-              }
-            }
+          if Self::word_count(before) > 5 {
+            cur_title.clone_from(&orig_title);
           }
         }
       }

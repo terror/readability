@@ -11,54 +11,6 @@ pub struct PostProcessStage<'a> {
 }
 
 impl<'a> PostProcessStage<'a> {
-  pub fn new(base_url: Option<&'a Url>) -> Self {
-    Self { base_url }
-  }
-
-  fn process_markup(&self, markup: String) -> String {
-    let mut fragment = Html::parse_fragment(&markup);
-
-    let target_id = fragment
-      .tree
-      .root()
-      .descendants()
-      .find(|node| {
-        matches!(node.value(), Node::Element(element) if element.name() == "body")
-      })
-      .map(|node| node.id())
-      .unwrap_or_else(|| fragment.tree.root().id());
-
-    if let Some(base_url) = self.base_url {
-      Self::fix_relative_uris(&mut fragment, target_id, base_url);
-    }
-
-    Self::clean_classes(&mut fragment, target_id);
-    Self::normalize_whitespace_nodes(&mut fragment, target_id);
-
-    if let Ok(selector) = Selector::parse("#readability-page-1") {
-      if let Some(element) = fragment.select(&selector).next() {
-        let inner = element.inner_html();
-        let markup = format!(
-          "<div id=\"readability-page-1\" class=\"page\">{inner}</div>"
-        );
-
-        return Self::enforce_void_self_closing(markup);
-      }
-    }
-
-    let Some(target) = fragment.tree.get(target_id) else {
-      return markup;
-    };
-
-    let processed = Self::serialize_children(target);
-
-    if processed.is_empty() {
-      markup
-    } else {
-      Self::enforce_void_self_closing(processed)
-    }
-  }
-
   fn clean_classes(fragment: &mut Html, root_id: NodeId) {
     let Some(root) = fragment.tree.get(root_id) else {
       return;
@@ -208,6 +160,25 @@ impl<'a> PostProcessStage<'a> {
       .starts_with("javascript:")
   }
 
+  fn is_preserved_whitespace_context(mut node: NodeRef<'_, Node>) -> bool {
+    while let Some(parent) = node.parent() {
+      if let Node::Element(element) = parent.value() {
+        match element.name() {
+          "pre" | "code" | "textarea" | "script" | "style" => return true,
+          _ => {}
+        }
+      }
+
+      node = parent;
+    }
+
+    false
+  }
+
+  pub fn new(base_url: Option<&'a Url>) -> Self {
+    Self { base_url }
+  }
+
   fn normalize_whitespace_nodes(fragment: &mut Html, root_id: NodeId) {
     let Some(root) = fragment.tree.get(root_id) else {
       return;
@@ -267,19 +238,45 @@ impl<'a> PostProcessStage<'a> {
     }
   }
 
-  fn is_preserved_whitespace_context(mut node: NodeRef<'_, Node>) -> bool {
-    while let Some(parent) = node.parent() {
-      if let Node::Element(element) = parent.value() {
-        match element.name() {
-          "pre" | "code" | "textarea" | "script" | "style" => return true,
-          _ => {}
-        }
-      }
+  fn process_markup(&self, markup: String) -> String {
+    let mut fragment = Html::parse_fragment(&markup);
 
-      node = parent;
+    let target_id = fragment
+      .tree
+      .root()
+      .descendants()
+      .find(|node| {
+        matches!(node.value(), Node::Element(element) if element.name() == "body")
+      }).map_or_else(|| fragment.tree.root().id(), |node| node.id());
+
+    if let Some(base_url) = self.base_url {
+      Self::fix_relative_uris(&mut fragment, target_id, base_url);
     }
 
-    false
+    Self::clean_classes(&mut fragment, target_id);
+    Self::normalize_whitespace_nodes(&mut fragment, target_id);
+
+    if let Ok(selector) = Selector::parse("#readability-page-1")
+      && let Some(element) = fragment.select(&selector).next()
+    {
+      let inner = element.inner_html();
+      let markup =
+        format!("<div id=\"readability-page-1\" class=\"page\">{inner}</div>");
+
+      return Self::enforce_void_self_closing(markup);
+    }
+
+    let Some(target) = fragment.tree.get(target_id) else {
+      return markup;
+    };
+
+    let processed = Self::serialize_children(target);
+
+    if processed.is_empty() {
+      markup
+    } else {
+      Self::enforce_void_self_closing(processed)
+    }
   }
 
   fn resolve_uri(base_url: &Url, value: &str) -> String {
@@ -292,8 +289,7 @@ impl<'a> PostProcessStage<'a> {
     } else {
       base_url
         .join(value)
-        .map(|url| url.to_string())
-        .unwrap_or_else(|_| value.to_string())
+        .map_or_else(|_| value.to_string(), |url| url.to_string())
     }
   }
 
@@ -362,7 +358,7 @@ struct SerializableNode<'a> {
   node: NodeRef<'a, Node>,
 }
 
-impl<'a> Serialize for SerializableNode<'a> {
+impl Serialize for SerializableNode<'_> {
   fn serialize<S: Serializer>(
     &self,
     serializer: &mut S,
