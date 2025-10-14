@@ -4,11 +4,11 @@ pub struct EnforceVoidSelfClosingStage;
 
 impl Stage for EnforceVoidSelfClosingStage {
   fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
-    let Some(fragment) = context.take_article_fragment() else {
+    let Some(markup) = context.take_article_markup() else {
       return Ok(());
     };
 
-    context.set_article_markup(Self::finalize_fragment(fragment));
+    context.set_article_markup(Self::enforce_void_self_closing(markup));
 
     Ok(())
   }
@@ -53,26 +53,5 @@ impl EnforceVoidSelfClosingStage {
     result.push_str(remainder);
 
     result
-  }
-
-  fn finalize_fragment(fragment: ArticleFragment) -> String {
-    let markup = fragment.serialize().unwrap_or_default();
-
-    if markup.is_empty() {
-      return markup;
-    }
-
-    if let Ok(selector) = Selector::parse("#readability-page-1")
-      && let Some(element) = fragment.html().select(&selector).next()
-    {
-      let inner = element.inner_html();
-
-      let markup =
-        format!("<div id=\"readability-page-1\" class=\"page\">{inner}</div>");
-
-      return Self::enforce_void_self_closing(markup);
-    }
-
-    Self::enforce_void_self_closing(markup)
   }
 }

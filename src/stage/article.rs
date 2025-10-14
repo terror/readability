@@ -177,10 +177,7 @@ impl ArticleStage {
       return None;
     }
 
-    let markup = format!(
-      "<div id=\"readability-page-1\" class=\"page\">{}</div>",
-      article_parts.join("")
-    );
+    let markup = article_parts.join("");
 
     let fragment = ArticleFragment::from_markup(&markup);
 

@@ -79,10 +79,6 @@ impl<'a> Context<'a> {
     self.metadata = metadata;
   }
 
-  pub(crate) fn take_article_fragment(&mut self) -> Option<ArticleFragment> {
-    self.article_fragment.take()
-  }
-
   pub(crate) fn take_article_markup(&mut self) -> Option<String> {
     match self.article_markup.take() {
       Some(markup) => Some(markup),
