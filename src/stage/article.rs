@@ -117,7 +117,10 @@ impl ArticleStage {
 
     let candidates = Self::score_candidates(document, body_id);
 
-    let top_candidate = Self::find_top_candidate(&candidates)?;
+    let top_candidate = Self::promote_single_child_parent(
+      document,
+      Self::find_top_candidate(&candidates)?,
+    );
 
     let article_html =
       Self::collect_article_parts(document, top_candidate, &candidates)?;
@@ -274,5 +277,42 @@ impl ArticleStage {
     } else {
       false
     }
+  }
+
+  /// Promotes a candidate node to its parent when it is the only element child.
+  fn promote_single_child_parent(
+    document: Document<'_>,
+    mut node_id: NodeId,
+  ) -> NodeId {
+    loop {
+      let Some(node) = document.node(node_id) else {
+        break;
+      };
+
+      let Some(parent) = node.parent() else {
+        break;
+      };
+
+      let Node::Element(element) = parent.value() else {
+        break;
+      };
+
+      if element.name() == "body" {
+        break;
+      }
+
+      let element_children = parent
+        .children()
+        .filter(|child| child.value().is_element())
+        .count();
+
+      if element_children == 1 {
+        node_id = parent.id();
+      } else {
+        break;
+      }
+    }
+
+    node_id
   }
 }
