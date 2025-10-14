@@ -48,8 +48,18 @@ impl MetadataStage {
     "twitter:description",
   ];
 
+  const PUBLISHED_TIME_KEYS: [&'static str; 4] = [
+    "article:published_time",
+    "parsely:pub-date",
+    "parsely:publish_date",
+    "publish_date",
+  ];
+
   const REPLACEMENT_CHAR: char = '\u{FFFD}';
   const REPLACEMENT_CODEPOINT: u32 = 0xFFFD;
+
+  const SITE_NAME_KEYS: [&'static str; 3] =
+    ["og:site_name", "parsely:site_name", "parsely:site"];
 
   const TITLE_KEYS: [&'static str; 6] = [
     "dc:title",
@@ -61,42 +71,20 @@ impl MetadataStage {
   ];
 
   fn collect_metadata(document: Document<'_>) -> Metadata {
-    let mut metadata = Metadata::default();
-
     let values = Self::collect_values(document);
 
-    metadata.title = Self::pick_meta_value(&values, &Self::TITLE_KEYS);
-
-    metadata.byline = Self::pick_meta_value(&values, &Self::BYLINE_KEYS);
-
-    if metadata
-      .byline
-      .as_ref()
-      .is_none_or(|value| value.trim().is_empty())
-    {
-      metadata.byline = Self::find_byline(document);
+    Metadata {
+      title: Self::pick_meta_value(&values, &Self::TITLE_KEYS),
+      byline: Self::pick_meta_value(&values, &Self::BYLINE_KEYS)
+        .filter(|value| !value.trim().is_empty())
+        .or_else(|| Self::find_byline(document)),
+      excerpt: Self::pick_meta_value(&values, &Self::EXCERPT_KEYS),
+      site_name: Self::pick_meta_value(&values, &Self::SITE_NAME_KEYS),
+      published_time: Self::pick_meta_value(
+        &values,
+        &Self::PUBLISHED_TIME_KEYS,
+      ),
     }
-
-    metadata.excerpt = Self::pick_meta_value(&values, &Self::EXCERPT_KEYS);
-
-    metadata.site_name = Self::pick_meta_value(
-      &values,
-      &["og:site_name", "parsely:site_name", "parsely:site"],
-    );
-
-    metadata.published_time = Self::pick_meta_value(
-      &values,
-      &[
-        "article:published_time",
-        "parsely:pub-date",
-        "parsely:publish_date",
-        "publish_date",
-      ],
-    );
-
-    Self::unescape_metadata(&mut metadata);
-
-    metadata
   }
 
   fn collect_values(document: Document<'_>) -> HashMap<String, String> {
@@ -198,6 +186,7 @@ impl MetadataStage {
       };
 
       let text = document.collect_text(node.id(), true);
+
       let trimmed = text.trim();
 
       if trimmed.is_empty() || trimmed.chars().count() >= 100 {
@@ -236,14 +225,15 @@ impl MetadataStage {
 
       if let Some(name_el) = element.select(&SELECTOR_ITEMPROP_NAME).next() {
         let name = document.collect_text(name_el.id(), true);
+
         let trimmed_name = name.trim();
 
         if !trimmed_name.is_empty() && trimmed_name.chars().count() < 100 {
-          return Some(trimmed_name.to_string());
+          return Some(Self::decode_html_entities(trimmed_name));
         }
       }
 
-      return Some(trimmed.to_string());
+      return Some(Self::decode_html_entities(trimmed));
     }
 
     None
@@ -290,24 +280,10 @@ impl MetadataStage {
       let normalized = Self::normalize_meta_key(key);
 
       if let Some(value) = values.get(&normalized) {
-        return Some(value.clone());
+        return Some(Self::decode_html_entities(value));
       }
     }
 
     None
-  }
-
-  fn unescape_html_entities(value: Option<String>) -> Option<String> {
-    value.map(|value| Self::decode_html_entities(&value))
-  }
-
-  fn unescape_metadata(metadata: &mut Metadata) {
-    metadata.title = Self::unescape_html_entities(metadata.title.take());
-    metadata.byline = Self::unescape_html_entities(metadata.byline.take());
-    metadata.excerpt = Self::unescape_html_entities(metadata.excerpt.take());
-    metadata.site_name =
-      Self::unescape_html_entities(metadata.site_name.take());
-    metadata.published_time =
-      Self::unescape_html_entities(metadata.published_time.take());
   }
 }
