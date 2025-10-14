@@ -49,14 +49,6 @@ impl Readability {
       .take_article_markup()
       .ok_or(Error::MissingArticleContent)?;
 
-    let title = context
-      .metadata()
-      .title
-      .clone()
-      .filter(|value| !value.is_empty())
-      .or(context.document().document_title())
-      .unwrap_or(String::new());
-
     let lang = context
       .body_lang()
       .cloned()
@@ -64,45 +56,47 @@ impl Readability {
 
     let fragment = Html::parse_fragment(&markup);
 
-    let mut text = String::new();
-
-    for node in fragment.tree.root().descendants() {
-      if let Node::Text(value) = node.value() {
-        if !text.is_empty() {
-          text.push(' ');
-        }
-
-        text.push_str(value.trim());
-      }
-    }
-
     let text_content = REGEX_NORMALIZE
-      .replace_all(&text, " ")
-      .into_owned()
+      .replace_all(
+        &fragment
+          .tree
+          .root()
+          .descendants()
+          .filter_map(|node| match node.value() {
+            Node::Text(value) => Some(value.trim()),
+            _ => None,
+          })
+          .collect::<Vec<_>>()
+          .join(" "),
+        " ",
+      )
       .trim()
       .to_string();
 
-    let selector = Selector::parse("p")
-      .map_err(|error| Error::InvalidSelector(error.to_string()))?;
-
-    let fragment = Html::parse_fragment(&markup);
-
     let first_paragraph = fragment
-      .select(&selector)
-      .map(|el| el.text().collect::<Vec<_>>().join(" ").trim().to_string())
+      .select(
+        &Selector::parse("p")
+          .map_err(|error| Error::InvalidSelector(error.to_string()))?,
+      )
+      .map(|element| {
+        element
+          .text()
+          .collect::<Vec<_>>()
+          .join(" ")
+          .trim()
+          .to_string()
+      })
       .find(|text| !text.is_empty());
 
-    let excerpt = context.metadata().excerpt.clone().or(first_paragraph);
-
     Ok(Article {
-      title,
+      title: context.metadata().title.clone().unwrap_or(String::new()),
       byline: context.metadata().byline.clone(),
       dir: self.article_dir.clone(),
       lang,
       content: markup,
       text_content: text_content.clone(),
       length: text_content.chars().count(),
-      excerpt,
+      excerpt: context.metadata().excerpt.clone().or(first_paragraph),
       site_name: context.metadata().site_name.clone(),
       published_time: context.metadata().published_time.clone(),
     })

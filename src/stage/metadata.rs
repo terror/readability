@@ -69,7 +69,7 @@ impl MetadataStage {
     Metadata {
       title: Self::pick_meta_value(&values, &Self::TITLE_KEYS)
         .filter(|value| !value.trim().is_empty())
-        .or_else(|| document.document_title()),
+        .or_else(|| document.title()),
       byline: Self::pick_meta_value(&values, &Self::BYLINE_KEYS)
         .filter(|value| !value.trim().is_empty())
         .or_else(|| Self::find_byline(document)),
@@ -85,13 +85,14 @@ impl MetadataStage {
   fn collect_values(document: Document<'_>) -> HashMap<String, String> {
     let mut values = HashMap::new();
 
-    if let Some(head) = document
+    let head = document
       .html_element()
       .and_then(|html| {
         html.children()
           .find(|child| matches!(child.value(), Node::Element(el) if el.name() == "head"))
-      })
-    {
+      });
+
+    if let Some(head) = head {
       for meta in head.children() {
         let Some(element) = ElementRef::wrap(meta) else {
           continue;
@@ -101,7 +102,8 @@ impl MetadataStage {
           continue;
         }
 
-        let content = element.value().attr("content").unwrap_or_default().trim();
+        let content =
+          element.value().attr("content").unwrap_or_default().trim();
 
         if content.is_empty() {
           continue;
