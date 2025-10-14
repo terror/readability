@@ -33,13 +33,13 @@ impl<'a> Pipeline<'a> {
 
     let stages: Vec<Box<dyn Stage>> = vec![
       Box::new(ElementLimitStage),
+      Box::new(LanguageStage),
+      Box::new(MetadataStage),
       Box::new(RemoveDisallowedNodesStage),
       Box::new(RewriteFontTagsStage),
       Box::new(RemoveUnlikelyCandidatesStage),
       Box::new(ReplaceBreakSequencesStage),
       Box::new(NormalizeContainersStage),
-      Box::new(LanguageStage),
-      Box::new(MetadataStage),
       Box::new(ArticleStage),
       Box::new(NormalizeArticleRootStage),
       Box::new(NormalizeArticleHeadingsStage),
