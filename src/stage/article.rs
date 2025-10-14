@@ -113,17 +113,23 @@ impl ArticleStage {
   /// Extracts the highest scoring article fragment and its metadata from the
   /// provided document.
   fn extract(document: Document<'_>) -> Option<ArticleContent> {
-    let body_id = document.body_element()?.id();
+    let body = document.body_element()?;
+    let body_id = body.id();
 
     let candidates = Self::score_candidates(document, body_id);
 
-    let top_candidate = Self::promote_single_child_parent(
-      document,
-      Self::find_top_candidate(&candidates)?,
-    );
+    let Some(top_candidate_raw) = Self::find_top_candidate(&candidates) else {
+      return Self::fallback_article(document, body);
+    };
+
+    let top_candidate =
+      Self::promote_single_child_parent(document, top_candidate_raw);
 
     let article_html =
-      Self::collect_article_parts(document, top_candidate, &candidates)?;
+      match Self::collect_article_parts(document, top_candidate, &candidates) {
+        Some(html) if !html.trim().is_empty() => html,
+        _ => return Self::fallback_article(document, body),
+      };
 
     Some(ArticleContent {
       body_lang: Self::extract_body_lang(document, body_id),
@@ -141,6 +147,26 @@ impl ArticleStage {
       .and_then(ElementRef::wrap)
       .and_then(|el| el.value().attr("lang"))
       .map(str::to_string)
+  }
+
+  /// Provides a fallback article fragment using the `<body>` contents when no
+  /// suitable candidate could be scored.
+  fn fallback_article(
+    document: Document<'_>,
+    body: NodeRef<'_, Node>,
+  ) -> Option<ArticleContent> {
+    let markup = Self::serialize_children(body)?;
+
+    if markup.trim().is_empty() {
+      return None;
+    }
+
+    let body_id = body.id();
+
+    Some(ArticleContent {
+      body_lang: Self::extract_body_lang(document, body_id),
+      fragment: ArticleFragment::from_markup(&markup),
+    })
   }
 
   /// Returns the identifier associated with the highest scoring candidate node.
@@ -287,6 +313,22 @@ impl ArticleStage {
           });
         acc
       })
+  }
+
+  fn serialize_children(node: NodeRef<'_, Node>) -> Option<String> {
+    let opts = SerializeOpts {
+      scripting_enabled: false,
+      traversal_scope: TraversalScope::ChildrenOnly(None),
+      create_missing_parent: false,
+    };
+
+    let mut buffer = Vec::new();
+
+    let serializer = SerializableNode { node };
+
+    serialize(&mut buffer, &serializer, opts).ok()?;
+
+    String::from_utf8(buffer).ok()
   }
 
   /// Determines whether a sibling element should be merged into the article
