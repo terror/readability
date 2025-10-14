@@ -33,9 +33,7 @@ impl Stage for ArticleStage {
 
 impl ArticleStage {
   fn extract(document: Document<'_>) -> Option<ArticleContent> {
-    let body = document.body_element()?;
-
-    let body_id = body.id();
+    let body_id = document.body_element()?.id();
 
     let body_lang = document
       .node(body_id)
@@ -177,13 +175,9 @@ impl ArticleStage {
       return None;
     }
 
-    let markup = article_parts.join("");
-
-    let fragment = ArticleFragment::from_markup(&markup);
-
     Some(ArticleContent {
       body_lang,
-      fragment,
+      fragment: ArticleFragment::from_markup(&article_parts.join("")),
     })
   }
 }
