@@ -133,7 +133,7 @@ impl ArticleStage {
 
     Some(ArticleContent {
       body_lang: Self::extract_body_lang(document, body_id),
-      fragment: ArticleFragment::from_markup(&article_html),
+      fragment: ArticleFragment::from(article_html.as_str()),
     })
   }
 
@@ -165,7 +165,7 @@ impl ArticleStage {
 
     Some(ArticleContent {
       body_lang: Self::extract_body_lang(document, body_id),
-      fragment: ArticleFragment::from_markup(&markup),
+      fragment: ArticleFragment::from(markup.as_str()),
     })
   }
 

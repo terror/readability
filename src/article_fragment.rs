@@ -9,10 +9,10 @@ pub(crate) struct ArticleFragment {
   pub(crate) root_id: NodeId,
 }
 
-impl ArticleFragment {
-  pub(crate) fn from_markup(markup: &str) -> Self {
+impl From<&str> for ArticleFragment {
+  fn from(value: &str) -> Self {
     let wrapped = format!(
-      "<div id=\"{WRAPPER_ID}\" class=\"{WRAPPER_CLASS}\">{markup}</div>"
+      "<div id=\"{WRAPPER_ID}\" class=\"{WRAPPER_CLASS}\">{value}</div>"
     );
 
     let html = Html::parse_fragment(&wrapped);
@@ -31,7 +31,9 @@ impl ArticleFragment {
 
     Self::new(html, root_id)
   }
+}
 
+impl ArticleFragment {
   pub(crate) fn into_markup(self) -> Option<String> {
     self
       .html

@@ -59,7 +59,59 @@ impl<'a> Document<'a> {
       .count()
   }
 
-  pub(crate) fn document_title(self) -> Option<String> {
+  pub(crate) fn html_element(self) -> Option<NodeRef<'a, Node>> {
+    self.root().children().find(
+      |child| matches!(child.value(), Node::Element(el) if el.name() == "html"),
+    )
+  }
+
+  pub(crate) fn link_density(self, node_id: NodeId) -> f64 {
+    let text_length = u32::try_from(self.collect_text(node_id, true).len())
+      .map_or(0.0, f64::from);
+
+    if text_length == 0.0 {
+      return 0.0;
+    }
+
+    let mut link_length = 0.0;
+
+    if let Some(node) = self.node(node_id) {
+      for descendant in node.descendants() {
+        if let Some(element) = ElementRef::wrap(descendant)
+          && element.value().name() == "a"
+        {
+          let text = element.text().collect::<Vec<_>>().join(" ");
+
+          let href = element.value().attr("href").unwrap_or_default();
+
+          let weight = if REGEX_HASH_URL.is_match(href) {
+            0.3
+          } else {
+            1.0
+          };
+
+          link_length +=
+            u32::try_from(text.trim().len()).map_or(0.0, f64::from) * weight;
+        }
+      }
+    }
+
+    link_length / text_length
+  }
+
+  pub(crate) fn new(html: &'a Html) -> Self {
+    Self { html }
+  }
+
+  pub(crate) fn node(self, id: NodeId) -> Option<NodeRef<'a, Node>> {
+    self.html.tree.get(id)
+  }
+
+  pub(crate) fn root(self) -> NodeRef<'a, Node> {
+    self.html.tree.root()
+  }
+
+  pub(crate) fn title(self) -> Option<String> {
     let title = self
       .html_element()
       .and_then(|html| {
@@ -166,58 +218,6 @@ impl<'a> Document<'a> {
     } else {
       Some(cur_title)
     }
-  }
-
-  pub(crate) fn html_element(self) -> Option<NodeRef<'a, Node>> {
-    self.root().children().find(
-      |child| matches!(child.value(), Node::Element(el) if el.name() == "html"),
-    )
-  }
-
-  pub(crate) fn link_density(self, node_id: NodeId) -> f64 {
-    let text_length = u32::try_from(self.collect_text(node_id, true).len())
-      .map_or(0.0, f64::from);
-
-    if text_length == 0.0 {
-      return 0.0;
-    }
-
-    let mut link_length = 0.0;
-
-    if let Some(node) = self.node(node_id) {
-      for descendant in node.descendants() {
-        if let Some(element) = ElementRef::wrap(descendant)
-          && element.value().name() == "a"
-        {
-          let text = element.text().collect::<Vec<_>>().join(" ");
-
-          let href = element.value().attr("href").unwrap_or_default();
-
-          let weight = if REGEX_HASH_URL.is_match(href) {
-            0.3
-          } else {
-            1.0
-          };
-
-          link_length +=
-            u32::try_from(text.trim().len()).map_or(0.0, f64::from) * weight;
-        }
-      }
-    }
-
-    link_length / text_length
-  }
-
-  pub(crate) fn new(html: &'a Html) -> Self {
-    Self { html }
-  }
-
-  pub(crate) fn node(self, id: NodeId) -> Option<NodeRef<'a, Node>> {
-    self.html.tree.get(id)
-  }
-
-  pub(crate) fn root(self) -> NodeRef<'a, Node> {
-    self.html.tree.root()
   }
 
   fn word_count(value: &str) -> usize {

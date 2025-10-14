@@ -10,8 +10,7 @@ macro_rules! test {
     paste::paste! {
       #[test]
       fn [<test_ $name>]() {
-        let fixture = TestFixture::load($name);
-        fixture.run_test();
+        TestFixture::load($name).run();
       }
     }
   };
@@ -73,7 +72,7 @@ impl TestFixture {
       .join("\n")
   }
 
-  fn run_test(&self) {
+  fn run(&self) {
     let mut readability = Readability::new(
       &self.source_html,
       Some("http://fakehost/"),
