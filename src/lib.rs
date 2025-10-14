@@ -18,7 +18,7 @@ use {
   serde::{Deserialize, Serialize},
   stage::{
     ArticleStage, ElementLimitStage, LanguageStage, MetadataStage,
-    SanitizationStage, Stage,
+    PostProcessStage, SanitizationStage, Stage,
   },
   std::{collections::HashMap, ops::Deref, sync::LazyLock},
   url::Url,

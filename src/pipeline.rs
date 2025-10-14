@@ -25,7 +25,10 @@ impl<'a> Pipeline<'a> {
     Ok(self.context)
   }
 
-  pub(crate) fn with_default_stages(context: Context<'a>) -> Self {
+  pub(crate) fn with_default_stages(
+    context: Context<'a>,
+    base_url: Option<&'a Url>,
+  ) -> Self {
     let mut pipeline = Self::new(context);
 
     pipeline.add_stage(Box::new(ElementLimitStage));
@@ -33,6 +36,7 @@ impl<'a> Pipeline<'a> {
     pipeline.add_stage(Box::new(LanguageStage));
     pipeline.add_stage(Box::new(MetadataStage));
     pipeline.add_stage(Box::new(ArticleStage));
+    pipeline.add_stage(Box::new(PostProcessStage::new(base_url)));
 
     pipeline
   }
