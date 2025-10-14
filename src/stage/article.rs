@@ -1,30 +1,47 @@
+//! Extracts the most relevant article fragment from a parsed document by
+//! scoring candidate nodes and assembling the best matching content.
+
 use super::*;
 
+/// HTML tags considered strong indicators of readable article content.
 const DEFAULT_TAGS_TO_SCORE: &[&str] =
   &["section", "h2", "h3", "h4", "h5", "h6", "p", "td", "pre"];
 
+/// Regular expression that captures comma-like punctuation in multiple locales.
 static REGEX_COMMAS: LazyLock<Regex> =
   LazyLock::new(|| Regex::new(r"[,،﹐︐﹑⹀⸲，]").unwrap());
 
+/// Minimum amount of trimmed text a node must contain to be scored.
 const MIN_TEXT_LENGTH: usize = 25;
+/// Ratio of the top candidate score used to decide if a sibling is included.
 const SIBLING_SCORE_RATIO: f64 = 0.2;
+/// Absolute sibling score floor to prevent including very weak candidates.
 const MIN_SIBLING_SCORE: f64 = 10.0;
+/// Maximum depth when propagating scores to ancestor nodes.
 const MAX_PARENT_DEPTH: usize = 5;
 
+/// Article fragment paired with the language discovered in the `<body>` tag.
 struct ArticleContent {
+  /// Language code taken from the document's `<body lang>` attribute.
   body_lang: Option<String>,
+  /// HTML fragment representing the primary article content.
   fragment: ArticleFragment,
 }
 
 #[derive(Debug, Clone)]
 struct Candidate {
+  /// Identifier of the DOM node that produced the score.
   node: NodeId,
+  /// Aggregated readability score for the candidate node.
   score: f64,
 }
 
+/// Stage responsible for selecting the best article fragment from the document.
 pub struct ArticleStage;
 
 impl Stage for ArticleStage {
+  /// Runs the extraction pipeline and stores the resulting fragment and language
+  /// hints into the shared context.
   fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
     let article =
       Self::extract(context.document()).ok_or(Error::MissingArticleContent)?;
@@ -37,6 +54,8 @@ impl Stage for ArticleStage {
 }
 
 impl ArticleStage {
+  /// Assigns a readability score to a candidate element based on length and
+  /// punctuation density heuristics.
   fn calculate_element_score(element: ElementRef<'_>) -> Option<f64> {
     let text = element.text().collect::<Vec<_>>().join(" ");
 
@@ -56,6 +75,8 @@ impl ArticleStage {
     Some(1.0 + comma_count + length_bonus)
   }
 
+  /// Assembles the HTML representing the main article by merging the top
+  /// candidate with qualifying sibling nodes.
   fn collect_article_parts(
     document: Document<'_>,
     top_candidate: NodeId,
@@ -89,6 +110,8 @@ impl ArticleStage {
     if parts.is_empty() { None } else { Some(parts) }
   }
 
+  /// Extracts the highest scoring article fragment and its metadata from the
+  /// provided document.
   fn extract(document: Document<'_>) -> Option<ArticleContent> {
     let body_id = document.body_element()?.id();
 
@@ -105,6 +128,7 @@ impl ArticleStage {
     })
   }
 
+  /// Reads the language specified on the `<body>` element, if any.
   fn extract_body_lang(
     document: Document<'_>,
     body_id: NodeId,
@@ -116,6 +140,7 @@ impl ArticleStage {
       .map(str::to_string)
   }
 
+  /// Returns the identifier associated with the highest scoring candidate node.
   fn find_top_candidate(
     candidates: &HashMap<NodeId, Candidate>,
   ) -> Option<NodeId> {
@@ -125,6 +150,8 @@ impl ArticleStage {
       .map(|c| c.node)
   }
 
+  /// Checks whether a paragraph contains enough natural language text and low
+  /// link density to be incorporated into the article.
   fn is_valid_paragraph(document: Document<'_>, node_id: NodeId) -> bool {
     let (text, link_density) = (
       document.collect_text(node_id, true),
@@ -137,6 +164,7 @@ impl ArticleStage {
       || (len > 0 && len <= 80 && link_density == 0.0 && text.contains('.'))
   }
 
+  /// Produces HTML for a sibling node when it meets the inclusion heuristics.
   fn process_sibling(
     document: Document<'_>,
     child: ego_tree::NodeRef<'_, Node>,
@@ -170,6 +198,7 @@ impl ArticleStage {
     }
   }
 
+  /// Generates weighted score contributions for the ancestors of a scored node.
   fn propagate_score_to_parents<'a>(
     node: &'a ego_tree::NodeRef<'a, Node>,
     score: f64,
@@ -189,6 +218,7 @@ impl ArticleStage {
       })
   }
 
+  /// Computes readability scores for nodes in the `<body>` subtree.
   fn score_candidates(
     document: Document<'_>,
     body_id: NodeId,
@@ -219,6 +249,8 @@ impl ArticleStage {
       })
   }
 
+  /// Determines whether a sibling element should be merged into the article
+  /// output based on scoring and structural heuristics.
   fn should_include_sibling(
     document: Document<'_>,
     element: ElementRef<'_>,

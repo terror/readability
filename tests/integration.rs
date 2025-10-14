@@ -19,10 +19,22 @@ struct ExpectedMetadata {
   title: String,
 }
 
+macro_rules! test {
+  ($name:expr) => {
+    paste::paste! {
+      #[test]
+      fn [<test_ $name>]() {
+        let fixture = TestFixture::load($name);
+        fixture.run_test();
+      }
+    }
+  };
+}
+
 struct TestFixture {
-  source_html: String,
   expected_html: String,
   expected_metadata: ExpectedMetadata,
+  source_html: String,
 }
 
 impl TestFixture {
@@ -110,18 +122,6 @@ impl TestFixture {
       "HTML content mismatch"
     );
   }
-}
-
-macro_rules! test {
-  ($name:expr) => {
-    paste::paste! {
-      #[test]
-      fn [<test_ $name>]() {
-        let fixture = TestFixture::load($name);
-        fixture.run_test();
-      }
-    }
-  };
 }
 
 test!("001");
