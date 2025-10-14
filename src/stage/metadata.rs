@@ -187,21 +187,6 @@ impl MetadataStage {
     None
   }
 
-  fn normalize_meta_key(raw: &str) -> String {
-    raw
-      .trim()
-      .chars()
-      .filter(|ch| !ch.is_whitespace())
-      .map(|ch| {
-        if ch == '.' {
-          ':'
-        } else {
-          ch.to_ascii_lowercase()
-        }
-      })
-      .collect()
-  }
-
   fn insert_meta_keys(
     values: &mut HashMap<String, String>,
     raw_keys: &str,
@@ -218,6 +203,21 @@ impl MetadataStage {
 
       values.insert(key, content.clone());
     }
+  }
+
+  fn normalize_meta_key(raw: &str) -> String {
+    raw
+      .trim()
+      .chars()
+      .filter(|ch| !ch.is_whitespace())
+      .map(|ch| {
+        if ch == '.' {
+          ':'
+        } else {
+          ch.to_ascii_lowercase()
+        }
+      })
+      .collect()
   }
 
   fn pick_meta_value(
