@@ -8,15 +8,15 @@ use {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ExpectedMetadata {
-  title: String,
   byline: Option<String>,
   dir: Option<String>,
-  lang: Option<String>,
   excerpt: Option<String>,
-  site_name: Option<String>,
+  lang: Option<String>,
   published_time: Option<String>,
   #[serde(default)]
   readerable: bool,
+  site_name: Option<String>,
+  title: String,
 }
 
 struct TestFixture {
