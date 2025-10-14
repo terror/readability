@@ -17,14 +17,7 @@ pub struct MetadataStage;
 
 impl Stage for MetadataStage {
   fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
-    let mut metadata = Self::collect_metadata(context.document());
-
-    if metadata.title.as_ref().is_none_or(String::is_empty) {
-      metadata.title = context.document().document_title();
-    }
-
-    context.set_metadata(metadata);
-
+    context.set_metadata(Self::collect_metadata(context.document()));
     Ok(())
   }
 }
@@ -74,7 +67,9 @@ impl MetadataStage {
     let values = Self::collect_values(document);
 
     Metadata {
-      title: Self::pick_meta_value(&values, &Self::TITLE_KEYS),
+      title: Self::pick_meta_value(&values, &Self::TITLE_KEYS)
+        .filter(|value| !value.trim().is_empty())
+        .or_else(|| document.document_title()),
       byline: Self::pick_meta_value(&values, &Self::BYLINE_KEYS)
         .filter(|value| !value.trim().is_empty())
         .or_else(|| Self::find_byline(document)),
