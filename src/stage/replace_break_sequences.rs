@@ -11,20 +11,6 @@ impl Stage for ReplaceBreakSequencesStage {
 }
 
 impl ReplaceBreakSequencesStage {
-  fn replace_break_sequences(html: &mut Html) {
-    let mut chain_starts = Vec::new();
-
-    for node in html.tree.root().descendants() {
-      if Self::is_br_element(&node) && Self::is_break_chain_start(node) {
-        chain_starts.push(node.id());
-      }
-    }
-
-    for id in chain_starts {
-      Self::convert_br_chain(html, id);
-    }
-  }
-
   fn convert_br_chain(html: &mut Html, br_id: NodeId) {
     let Some(br_ref) = html.tree.get(br_id) else {
       return;
@@ -116,6 +102,10 @@ impl ReplaceBreakSequencesStage {
     ))
   }
 
+  fn is_br_element(node: &NodeRef<'_, Node>) -> bool {
+    matches!(node.value(), Node::Element(element) if element.name() == "br")
+  }
+
   fn is_break_chain_start(node: NodeRef<'_, Node>) -> bool {
     let mut next = node.next_sibling();
 
@@ -129,10 +119,6 @@ impl ReplaceBreakSequencesStage {
     }
 
     false
-  }
-
-  fn is_br_element(node: &NodeRef<'_, Node>) -> bool {
-    matches!(node.value(), Node::Element(element) if element.name() == "br")
   }
 
   fn is_phrasing_element(tag: &str) -> bool {
@@ -203,6 +189,20 @@ impl ReplaceBreakSequencesStage {
       node.value(),
       Node::Text(text) if text.trim().is_empty()
     )
+  }
+
+  fn replace_break_sequences(html: &mut Html) {
+    let mut chain_starts = Vec::new();
+
+    for node in html.tree.root().descendants() {
+      if Self::is_br_element(&node) && Self::is_break_chain_start(node) {
+        chain_starts.push(node.id());
+      }
+    }
+
+    for id in chain_starts {
+      Self::convert_br_chain(html, id);
+    }
   }
 
   fn set_element_tag(element: &mut Element, tag: &str) {

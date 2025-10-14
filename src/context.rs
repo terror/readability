@@ -1,25 +1,23 @@
 use super::*;
 
-#[derive(Debug, Clone, Default)]
-pub(crate) struct CollectedMetadata {
-  pub(crate) byline: Option<String>,
-  pub(crate) excerpt: Option<String>,
-  pub(crate) published_time: Option<String>,
-  pub(crate) site_name: Option<String>,
-  pub(crate) title: Option<String>,
-}
-
 #[derive(Debug)]
 pub(crate) struct Context<'a> {
+  article_fragment: Option<ArticleFragment>,
   article_markup: Option<String>,
   body_lang: Option<String>,
   document_lang: Option<String>,
   html: &'a mut Html,
-  metadata: CollectedMetadata,
+  metadata: Metadata,
   options: &'a ReadabilityOptions,
 }
 
 impl<'a> Context<'a> {
+  pub(crate) fn article_fragment_mut(
+    &mut self,
+  ) -> Option<&mut ArticleFragment> {
+    self.article_fragment.as_mut()
+  }
+
   pub(crate) fn body_lang(&self) -> Option<&String> {
     self.body_lang.as_ref()
   }
@@ -36,7 +34,7 @@ impl<'a> Context<'a> {
     self.html
   }
 
-  pub(crate) fn metadata(&self) -> &CollectedMetadata {
+  pub(crate) fn metadata(&self) -> &Metadata {
     &self.metadata
   }
 
@@ -45,9 +43,10 @@ impl<'a> Context<'a> {
     options: &'a ReadabilityOptions,
   ) -> Self {
     Self {
+      article_fragment: None,
       html,
       options,
-      metadata: CollectedMetadata::default(),
+      metadata: Metadata::default(),
       document_lang: None,
       body_lang: None,
       article_markup: None,
@@ -58,8 +57,14 @@ impl<'a> Context<'a> {
     self.options
   }
 
+  pub(crate) fn set_article_fragment(&mut self, fragment: ArticleFragment) {
+    self.article_fragment = Some(fragment);
+    self.article_markup = None;
+  }
+
   pub(crate) fn set_article_markup(&mut self, markup: String) {
     self.article_markup = Some(markup);
+    self.article_fragment = None;
   }
 
   pub(crate) fn set_body_lang(&mut self, lang: Option<String>) {
@@ -70,11 +75,21 @@ impl<'a> Context<'a> {
     self.document_lang = lang;
   }
 
-  pub(crate) fn set_metadata(&mut self, metadata: CollectedMetadata) {
+  pub(crate) fn set_metadata(&mut self, metadata: Metadata) {
     self.metadata = metadata;
   }
 
+  pub(crate) fn take_article_fragment(&mut self) -> Option<ArticleFragment> {
+    self.article_fragment.take()
+  }
+
   pub(crate) fn take_article_markup(&mut self) -> Option<String> {
-    self.article_markup.take()
+    match self.article_markup.take() {
+      Some(markup) => Some(markup),
+      None => self
+        .article_fragment
+        .take()
+        .and_then(ArticleFragment::into_markup),
+    }
   }
 }

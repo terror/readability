@@ -1,7 +1,9 @@
 mod article;
+mod article_fragment;
 mod context;
 mod document;
 mod error;
+mod metadata;
 mod options;
 mod pipeline;
 mod readability;
@@ -9,13 +11,15 @@ mod serializable_node;
 mod stage;
 
 use {
-  context::{CollectedMetadata, Context},
+  article_fragment::ArticleFragment,
+  context::Context,
   document::Document,
   ego_tree::{NodeId, NodeRef, iter::Edge},
   html5ever::{
     LocalName, QualName, ns,
     serialize::{SerializeOpts, Serializer, TraversalScope, serialize},
   },
+  metadata::Metadata,
   pipeline::Pipeline,
   regex::Regex,
   scraper::{ElementRef, Html, Node, Selector, node::Element},
@@ -23,7 +27,7 @@ use {
   serializable_node::SerializableNode,
   stage::{
     ArticleStage, CleanClassAttributesStage, ElementLimitStage,
-    FinalizeArticleMarkupStage, FixRelativeUrisStage, LanguageStage,
+    EnforceVoidSelfClosingStage, FixRelativeUrisStage, LanguageStage,
     MetadataStage, NormalizeArticleWhitespaceStage, NormalizeContainersStage,
     RemoveDisallowedNodesStage, RemoveUnlikelyCandidatesStage,
     ReplaceBreakSequencesStage, RewriteFontTagsStage, Stage,

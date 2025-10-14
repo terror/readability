@@ -26,6 +26,62 @@ impl Stage for RemoveUnlikelyCandidatesStage {
 }
 
 impl RemoveUnlikelyCandidatesStage {
+  fn has_ancestor_tag(node: NodeRef<'_, Node>, tags: &[&str]) -> bool {
+    let mut parent = node.parent();
+
+    while let Some(current) = parent {
+      if let Node::Element(element) = current.value()
+        && tags.contains(&element.name())
+      {
+        return true;
+      }
+
+      parent = current.parent();
+    }
+
+    false
+  }
+
+  fn is_empty_container(node: NodeRef<'_, Node>) -> bool {
+    let Node::Element(element) = node.value() else {
+      return false;
+    };
+
+    let mut has_text = false;
+    let mut allowed_children_only = true;
+
+    for descendant in node.children() {
+      match descendant.value() {
+        Node::Text(text) => {
+          if !text.trim().is_empty() {
+            has_text = true;
+            break;
+          }
+        }
+        Node::Element(child_element) => {
+          if !matches!(child_element.name(), "br" | "hr") {
+            allowed_children_only = false;
+            break;
+          }
+        }
+        _ => {}
+      }
+    }
+
+    if has_text {
+      return false;
+    }
+
+    if !allowed_children_only {
+      return false;
+    }
+
+    matches!(
+      element.name(),
+      "div" | "section" | "header" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
+    )
+  }
+
   fn remove_unlikely_candidates(html: &mut Html) {
     let mut to_remove = Vec::new();
 
@@ -87,61 +143,5 @@ impl RemoveUnlikelyCandidatesStage {
         node.detach();
       }
     }
-  }
-
-  fn has_ancestor_tag(node: NodeRef<'_, Node>, tags: &[&str]) -> bool {
-    let mut parent = node.parent();
-
-    while let Some(current) = parent {
-      if let Node::Element(element) = current.value()
-        && tags.contains(&element.name())
-      {
-        return true;
-      }
-
-      parent = current.parent();
-    }
-
-    false
-  }
-
-  fn is_empty_container(node: NodeRef<'_, Node>) -> bool {
-    let Node::Element(element) = node.value() else {
-      return false;
-    };
-
-    let mut has_text = false;
-    let mut allowed_children_only = true;
-
-    for descendant in node.children() {
-      match descendant.value() {
-        Node::Text(text) => {
-          if !text.trim().is_empty() {
-            has_text = true;
-            break;
-          }
-        }
-        Node::Element(child_element) => {
-          if !matches!(child_element.name(), "br" | "hr") {
-            allowed_children_only = false;
-            break;
-          }
-        }
-        _ => {}
-      }
-    }
-
-    if has_text {
-      return false;
-    }
-
-    if !allowed_children_only {
-      return false;
-    }
-
-    matches!(
-      element.name(),
-      "div" | "section" | "header" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
-    )
   }
 }

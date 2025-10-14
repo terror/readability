@@ -11,36 +11,6 @@ impl Stage for NormalizeContainersStage {
 }
 
 impl NormalizeContainersStage {
-  fn normalize_containers(html: &mut Html) {
-    let mut to_convert = Vec::new();
-
-    for node in html.tree.root().descendants() {
-      let Node::Element(element) = node.value() else {
-        continue;
-      };
-
-      match element.name() {
-        "div" if !Self::has_block_child(node) => {
-          to_convert.push((node.id(), "p"));
-        }
-        "section" | "header" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
-          if Self::is_empty_container(node) =>
-        {
-          to_convert.push((node.id(), "div"));
-        }
-        _ => {}
-      }
-    }
-
-    for (id, tag) in to_convert {
-      if let Some(mut node) = html.tree.get_mut(id)
-        && let Node::Element(element) = node.value()
-      {
-        Self::set_element_tag(element, tag);
-      }
-    }
-  }
-
   fn has_block_child(node: NodeRef<'_, Node>) -> bool {
     let mut child = node.first_child();
 
@@ -108,6 +78,36 @@ impl NormalizeContainersStage {
       element.name(),
       "div" | "section" | "header" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
     )
+  }
+
+  fn normalize_containers(html: &mut Html) {
+    let mut to_convert = Vec::new();
+
+    for node in html.tree.root().descendants() {
+      let Node::Element(element) = node.value() else {
+        continue;
+      };
+
+      match element.name() {
+        "div" if !Self::has_block_child(node) => {
+          to_convert.push((node.id(), "p"));
+        }
+        "section" | "header" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
+          if Self::is_empty_container(node) =>
+        {
+          to_convert.push((node.id(), "div"));
+        }
+        _ => {}
+      }
+    }
+
+    for (id, tag) in to_convert {
+      if let Some(mut node) = html.tree.get_mut(id)
+        && let Node::Element(element) = node.value()
+      {
+        Self::set_element_tag(element, tag);
+      }
+    }
   }
 
   fn set_element_tag(element: &mut Element, tag: &str) {

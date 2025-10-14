@@ -8,7 +8,7 @@ static REGEX_COMMAS: LazyLock<Regex> =
 
 struct ArticleContent {
   body_lang: Option<String>,
-  markup: String,
+  fragment: ArticleFragment,
 }
 
 #[derive(Debug, Clone)]
@@ -25,7 +25,7 @@ impl Stage for ArticleStage {
       Self::extract(context.document()).ok_or(Error::MissingArticleContent)?;
 
     context.set_body_lang(article.body_lang);
-    context.set_article_markup(article.markup);
+    context.set_article_fragment(article.fragment);
 
     Ok(())
   }
@@ -57,6 +57,7 @@ impl ArticleStage {
       }
 
       let text = element.text().collect::<Vec<_>>().join(" ");
+
       let text = text.trim();
 
       if text.len() < 25 {
@@ -64,11 +65,14 @@ impl ArticleStage {
       }
 
       let mut score = 1.0;
+
       score += u32::try_from(REGEX_COMMAS.find_iter(text).count())
         .map_or(0.0, f64::from);
+
       score += u32::try_from((text.len() / 100).min(3)).map_or(0.0, f64::from);
 
       let mut node = element.deref().parent();
+
       let mut level = 0;
 
       while let Some(parent) = node {
@@ -178,6 +182,11 @@ impl ArticleStage {
       article_parts.join("")
     );
 
-    Some(ArticleContent { body_lang, markup })
+    let fragment = ArticleFragment::from_markup(&markup);
+
+    Some(ArticleContent {
+      body_lang,
+      fragment,
+    })
   }
 }

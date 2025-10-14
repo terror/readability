@@ -43,7 +43,7 @@ impl<'a> Pipeline<'a> {
     pipeline.add_stage(Box::new(FixRelativeUrisStage::new(base_url)));
     pipeline.add_stage(Box::new(CleanClassAttributesStage));
     pipeline.add_stage(Box::new(NormalizeArticleWhitespaceStage));
-    pipeline.add_stage(Box::new(FinalizeArticleMarkupStage));
+    pipeline.add_stage(Box::new(EnforceVoidSelfClosingStage));
 
     pipeline
   }
