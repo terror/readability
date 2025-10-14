@@ -379,12 +379,14 @@ pub struct FinalizeArticleMarkupStage;
 impl FinalizeArticleMarkupStage {
   fn finalize_markup(&self, markup: String) -> String {
     let original = markup;
+
     let (fragment, target_id) = parse_fragment(&original);
 
     if let Ok(selector) = Selector::parse("#readability-page-1")
       && let Some(element) = fragment.select(&selector).next()
     {
       let inner = element.inner_html();
+
       let markup =
         format!("<div id=\"readability-page-1\" class=\"page\">{inner}</div>");
 
