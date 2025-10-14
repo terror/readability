@@ -30,37 +30,44 @@ impl Stage for MetadataStage {
 }
 
 impl MetadataStage {
+  const BYLINE_KEYS: [&'static str; 6] = [
+    "dc:creator",
+    "dcterm:creator",
+    "dcterms:creator",
+    "dc:author",
+    "author",
+    "parsely:author",
+  ];
+
+  const EXCERPT_KEYS: [&'static str; 6] = [
+    "dc:description",
+    "dcterm:description",
+    "dcterms:description",
+    "description",
+    "og:description",
+    "twitter:description",
+  ];
+
   const REPLACEMENT_CHAR: char = '\u{FFFD}';
   const REPLACEMENT_CODEPOINT: u32 = 0xFFFD;
+
+  const TITLE_KEYS: [&'static str; 6] = [
+    "dc:title",
+    "dcterm:title",
+    "dcterms:title",
+    "title",
+    "og:title",
+    "twitter:title",
+  ];
 
   fn collect_metadata(document: Document<'_>) -> Metadata {
     let mut metadata = Metadata::default();
 
     let values = Self::collect_values(document);
 
-    metadata.title = Self::pick_meta_value(
-      &values,
-      &[
-        "dc:title",
-        "dcterm:title",
-        "dcterms:title",
-        "title",
-        "og:title",
-        "twitter:title",
-      ],
-    );
+    metadata.title = Self::pick_meta_value(&values, &Self::TITLE_KEYS);
 
-    metadata.byline = Self::pick_meta_value(
-      &values,
-      &[
-        "dc:creator",
-        "dcterm:creator",
-        "dcterms:creator",
-        "dc:author",
-        "author",
-        "parsely:author",
-      ],
-    );
+    metadata.byline = Self::pick_meta_value(&values, &Self::BYLINE_KEYS);
 
     if metadata
       .byline
@@ -70,17 +77,7 @@ impl MetadataStage {
       metadata.byline = Self::find_byline(document);
     }
 
-    metadata.excerpt = Self::pick_meta_value(
-      &values,
-      &[
-        "dc:description",
-        "dcterm:description",
-        "dcterms:description",
-        "description",
-        "og:description",
-        "twitter:description",
-      ],
-    );
+    metadata.excerpt = Self::pick_meta_value(&values, &Self::EXCERPT_KEYS);
 
     metadata.site_name = Self::pick_meta_value(
       &values,
