@@ -118,6 +118,21 @@ impl ArticleStage {
 
     if let Some(parent) = parent {
       for child in parent.children() {
+        match child.value() {
+          Node::Text(text) => {
+            let text = text.to_string();
+
+            if text.is_empty() {
+              continue;
+            }
+
+            article_parts.push(text);
+            continue;
+          }
+          Node::Element(_) => {}
+          _ => continue,
+        }
+
         let Some(element) = ElementRef::wrap(child) else {
           continue;
         };
@@ -159,7 +174,7 @@ impl ArticleStage {
     }
 
     let markup = format!(
-      "<div id=\"readability-content\"><div id=\"readability-page-1\" class=\"page\">{}</div></div>",
+      "<div id=\"readability-page-1\" class=\"page\">{}</div>",
       article_parts.join("")
     );
 

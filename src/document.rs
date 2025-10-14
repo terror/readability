@@ -6,6 +6,15 @@ static REGEX_NORMALIZE: LazyLock<Regex> =
 static REGEX_HASH_URL: LazyLock<Regex> =
   LazyLock::new(|| Regex::new(r"^#.+").unwrap());
 
+static REGEX_TITLE_SEPARATORS: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"\s[\|\-–—\\\/>»]\s").unwrap());
+
+static REGEX_TITLE_FIRST_SEPARATOR: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"^[^\|\-–—\\\/>»]*[\|\-–—\\\/>»]").unwrap());
+
+static REGEX_TITLE_HIERARCHICAL_SEPARATORS: LazyLock<Regex> =
+  LazyLock::new(|| Regex::new(r"\s[\\\/>»]\s").unwrap());
+
 #[derive(Clone, Copy)]
 pub(crate) struct Document<'a> {
   html: &'a Html,
@@ -51,7 +60,7 @@ impl<'a> Document<'a> {
   }
 
   pub(crate) fn document_title(self) -> Option<String> {
-    self
+    let title = self
       .html_element()
       .and_then(|html| {
         html.children()
@@ -62,7 +71,102 @@ impl<'a> Document<'a> {
           .find(|child| matches!(child.value(), Node::Element(el) if el.name() == "title"))
       })
       .map(|title_node| self.collect_text(title_node.id(), true))
-      .filter(|title| !title.is_empty())
+      .filter(|title| !title.is_empty());
+
+    let Some(mut cur_title) = title else {
+      return None;
+    };
+
+    let orig_title = cur_title.clone();
+
+    let mut title_had_hierarchical_separators = false;
+
+    if REGEX_TITLE_SEPARATORS.is_match(&cur_title) {
+      title_had_hierarchical_separators =
+        REGEX_TITLE_HIERARCHICAL_SEPARATORS.is_match(&cur_title);
+
+      if let Some(last_match) =
+        REGEX_TITLE_SEPARATORS.find_iter(&orig_title).last()
+      {
+        cur_title = orig_title[..last_match.start()].to_string();
+      }
+
+      if Self::word_count(&cur_title) < 3 {
+        cur_title = REGEX_TITLE_FIRST_SEPARATOR
+          .replace(&orig_title, "")
+          .to_string();
+      }
+    } else if cur_title.contains(": ") {
+      let trimmed_title = cur_title.trim();
+
+      let has_matching_heading = self
+        .root()
+        .descendants()
+        .filter_map(ElementRef::wrap)
+        .filter(|element| matches!(element.value().name(), "h1" | "h2"))
+        .map(|element| self.collect_text(element.id(), true))
+        .any(|heading| heading.trim() == trimmed_title);
+
+      if !has_matching_heading {
+        if let Some((_, after)) = orig_title.rsplit_once(':') {
+          cur_title = after.to_string();
+
+          if Self::word_count(&cur_title) < 3 {
+            if let Some((before, after)) = orig_title.split_once(':') {
+              cur_title = after.to_string();
+
+              if Self::word_count(before) > 5 {
+                cur_title = orig_title.clone();
+              }
+            }
+          }
+        }
+      }
+    } else if cur_title.len() > 150 || cur_title.len() < 15 {
+      let mut h1_nodes = Vec::new();
+
+      for node in self.root().descendants() {
+        if let Some(element) = ElementRef::wrap(node)
+          && element.value().name() == "h1"
+        {
+          h1_nodes.push(node.id());
+
+          if h1_nodes.len() > 1 {
+            break;
+          }
+        }
+      }
+
+      if h1_nodes.len() == 1 {
+        cur_title = self.collect_text(h1_nodes[0], true);
+      }
+    }
+
+    cur_title = REGEX_NORMALIZE
+      .replace_all(cur_title.trim(), " ")
+      .into_owned();
+
+    let cur_title_word_count = Self::word_count(&cur_title);
+
+    let normalized_orig = REGEX_TITLE_SEPARATORS
+      .replace_all(&orig_title, "")
+      .into_owned();
+
+    let normalized_word_count =
+      Self::word_count(&normalized_orig).saturating_sub(1);
+
+    if cur_title_word_count <= 4
+      && (!title_had_hierarchical_separators
+        || cur_title_word_count != normalized_word_count)
+    {
+      cur_title = orig_title;
+    }
+
+    if cur_title.is_empty() {
+      None
+    } else {
+      Some(cur_title)
+    }
   }
 
   pub(crate) fn html_element(self) -> Option<NodeRef<'a, Node>> {
@@ -115,5 +219,12 @@ impl<'a> Document<'a> {
 
   pub(crate) fn root(self) -> NodeRef<'a, Node> {
     self.html.tree.root()
+  }
+
+  fn word_count(value: &str) -> usize {
+    value
+      .split_whitespace()
+      .filter(|token| !token.is_empty())
+      .count()
   }
 }
