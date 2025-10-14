@@ -24,14 +24,17 @@ impl EnforceVoidSelfClosingStage {
       .replace(BR_PLACEHOLDER, "<br />");
 
     let mut result = String::with_capacity(intermediate.len());
+
     let mut remainder = intermediate.as_str();
 
     while let Some(idx) = remainder.find("<img") {
       let (before, after) = remainder.split_at(idx);
+
       result.push_str(before);
 
       if let Some(end) = after.find('>') {
         let (tag, rest) = after.split_at(end + 1);
+
         if tag.trim_end().ends_with("/>") {
           result.push_str(tag);
         } else {
@@ -48,6 +51,7 @@ impl EnforceVoidSelfClosingStage {
     }
 
     result.push_str(remainder);
+
     result
   }
 
