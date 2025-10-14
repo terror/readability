@@ -32,11 +32,18 @@ impl<'a> Pipeline<'a> {
     let mut pipeline = Self::new(context);
 
     pipeline.add_stage(Box::new(ElementLimitStage));
-    pipeline.add_stage(Box::new(SanitizationStage));
+    pipeline.add_stage(Box::new(RemoveDisallowedNodesStage));
+    pipeline.add_stage(Box::new(RewriteFontTagsStage));
+    pipeline.add_stage(Box::new(RemoveUnlikelyCandidatesStage));
+    pipeline.add_stage(Box::new(ReplaceBreakSequencesStage));
+    pipeline.add_stage(Box::new(NormalizeContainersStage));
     pipeline.add_stage(Box::new(LanguageStage));
     pipeline.add_stage(Box::new(MetadataStage));
     pipeline.add_stage(Box::new(ArticleStage));
-    pipeline.add_stage(Box::new(PostProcessStage::new(base_url)));
+    pipeline.add_stage(Box::new(FixRelativeUrisStage::new(base_url)));
+    pipeline.add_stage(Box::new(CleanClassAttributesStage));
+    pipeline.add_stage(Box::new(NormalizeArticleWhitespaceStage));
+    pipeline.add_stage(Box::new(FinalizeArticleMarkupStage));
 
     pipeline
   }

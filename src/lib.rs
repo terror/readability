@@ -22,8 +22,11 @@ use {
   serde::{Deserialize, Serialize},
   serializable_node::SerializableNode,
   stage::{
-    ArticleStage, ElementLimitStage, LanguageStage, MetadataStage,
-    PostProcessStage, SanitizationStage, Stage,
+    ArticleStage, CleanClassAttributesStage, ElementLimitStage,
+    FinalizeArticleMarkupStage, FixRelativeUrisStage, LanguageStage,
+    MetadataStage, NormalizeArticleWhitespaceStage, NormalizeContainersStage,
+    RemoveDisallowedNodesStage, RemoveUnlikelyCandidatesStage,
+    ReplaceBreakSequencesStage, RewriteFontTagsStage, Stage,
   },
   std::{collections::HashMap, io, ops::Deref, sync::LazyLock},
   url::Url,
