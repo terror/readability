@@ -5,6 +5,18 @@ use {
   std::{fs, path::PathBuf},
 };
 
+macro_rules! test {
+  ($name:expr) => {
+    paste::paste! {
+      #[test]
+      fn [<test_ $name>]() {
+        let fixture = TestFixture::load($name);
+        fixture.run_test();
+      }
+    }
+  };
+}
+
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ExpectedMetadata {
@@ -17,18 +29,6 @@ struct ExpectedMetadata {
   readerable: bool,
   site_name: Option<String>,
   title: String,
-}
-
-macro_rules! test {
-  ($name:expr) => {
-    paste::paste! {
-      #[test]
-      fn [<test_ $name>]() {
-        let fixture = TestFixture::load($name);
-        fixture.run_test();
-      }
-    }
-  };
 }
 
 struct TestFixture {
