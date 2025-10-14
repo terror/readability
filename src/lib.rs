@@ -25,7 +25,7 @@ use {
     ArticleStage, ElementLimitStage, LanguageStage, MetadataStage,
     PostProcessStage, SanitizationStage, Stage,
   },
-  std::{collections::HashMap, ops::Deref, sync::LazyLock},
+  std::{collections::HashMap, io, ops::Deref, sync::LazyLock},
   url::Url,
 };
 

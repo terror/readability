@@ -18,7 +18,7 @@ fn serialize_node<S: Serializer>(
   root: NodeRef<'_, Node>,
   serializer: &mut S,
   traversal_scope: TraversalScope,
-) -> std::io::Result<()> {
+) -> io::Result<()> {
   for edge in root.traverse() {
     match edge {
       Edge::Open(node) => {
