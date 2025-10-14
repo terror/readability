@@ -35,11 +35,11 @@ impl NormalizeArticleWhitespaceStage {
       return;
     };
 
-    let text_nodes: Vec<NodeId> = root
+    let text_nodes = root
       .descendants()
       .filter(|node| matches!(node.value(), Node::Text(_)))
       .map(|node| node.id())
-      .collect();
+      .collect::<Vec<NodeId>>();
 
     for node_id in text_nodes {
       let Some(node_ref) = fragment.html.tree.get(node_id) else {
