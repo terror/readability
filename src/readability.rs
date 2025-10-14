@@ -49,11 +49,6 @@ impl Readability {
       .take_article_markup()
       .ok_or(Error::MissingArticleContent)?;
 
-    let lang = context
-      .body_lang()
-      .cloned()
-      .or(context.document_lang().cloned());
-
     let fragment = Html::parse_fragment(&markup);
 
     let text_content = REGEX_NORMALIZE
@@ -92,7 +87,10 @@ impl Readability {
       title: context.metadata().title.clone().unwrap_or(String::new()),
       byline: context.metadata().byline.clone(),
       dir: self.article_dir.clone(),
-      lang,
+      lang: context
+        .body_lang()
+        .cloned()
+        .or(context.document_lang().cloned()),
       content: markup,
       text_content: text_content.clone(),
       length: text_content.chars().count(),
