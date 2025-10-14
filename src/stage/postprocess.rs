@@ -1,13 +1,23 @@
 use super::*;
-use ego_tree::iter::Edge;
-use html5ever::serialize::{
-  Serialize, SerializeOpts, Serializer, TraversalScope, serialize,
-};
 
 const CLASSES_TO_PRESERVE: &[&str] = &["page"];
 
 pub struct PostProcessStage<'a> {
   base_url: Option<&'a Url>,
+}
+
+impl Stage for PostProcessStage<'_> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+    let Some(markup) = context.take_article_markup() else {
+      return Ok(());
+    };
+
+    let processed = self.process_markup(markup);
+
+    context.set_article_markup(processed);
+
+    Ok(())
+  }
 }
 
 impl<'a> PostProcessStage<'a> {
@@ -41,6 +51,7 @@ impl<'a> PostProcessStage<'a> {
       };
 
       let class_value = element.attrs[index].1.to_string();
+
       let preserved: Vec<&str> = class_value
         .split_whitespace()
         .filter(|class_name| CLASSES_TO_PRESERVE.contains(class_name))
@@ -331,6 +342,7 @@ impl<'a> PostProcessStage<'a> {
     };
 
     let mut buffer = Vec::new();
+
     let serializer = SerializableNode { node };
 
     if serialize(&mut buffer, &serializer, opts).is_ok() {
@@ -339,72 +351,4 @@ impl<'a> PostProcessStage<'a> {
       String::new()
     }
   }
-}
-
-impl Stage for PostProcessStage<'_> {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
-    let Some(markup) = context.take_article_markup() else {
-      return Ok(());
-    };
-
-    let processed = self.process_markup(markup);
-    context.set_article_markup(processed);
-
-    Ok(())
-  }
-}
-
-struct SerializableNode<'a> {
-  node: NodeRef<'a, Node>,
-}
-
-impl Serialize for SerializableNode<'_> {
-  fn serialize<S: Serializer>(
-    &self,
-    serializer: &mut S,
-    traversal_scope: TraversalScope,
-  ) -> std::io::Result<()> {
-    serialize_node(self.node, serializer, traversal_scope)
-  }
-}
-
-fn serialize_node<S: Serializer>(
-  root: NodeRef<'_, Node>,
-  serializer: &mut S,
-  traversal_scope: TraversalScope,
-) -> std::io::Result<()> {
-  for edge in root.traverse() {
-    match edge {
-      Edge::Open(node) => {
-        if node == root && traversal_scope == TraversalScope::ChildrenOnly(None)
-        {
-          continue;
-        }
-
-        match node.value() {
-          Node::Doctype(doctype) => serializer.write_doctype(doctype.name())?,
-          Node::Comment(comment) => serializer.write_comment(comment)?,
-          Node::Text(text) => serializer.write_text(text)?,
-          Node::Element(element) => {
-            let attrs =
-              element.attrs.iter().map(|(name, value)| (name, &value[..]));
-            serializer.start_elem(element.name.clone(), attrs)?;
-          }
-          _ => {}
-        }
-      }
-      Edge::Close(node) => {
-        if node == root && traversal_scope == TraversalScope::ChildrenOnly(None)
-        {
-          continue;
-        }
-
-        if let Some(element) = node.value().as_element() {
-          serializer.end_elem(element.name.clone())?;
-        }
-      }
-    }
-  }
-
-  Ok(())
 }

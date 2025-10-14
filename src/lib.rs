@@ -5,17 +5,22 @@ mod error;
 mod options;
 mod pipeline;
 mod readability;
+mod serializable_node;
 mod stage;
 
 use {
   context::{CollectedMetadata, Context},
   document::Document,
-  ego_tree::{NodeId, NodeRef},
-  html5ever::{LocalName, QualName, ns},
+  ego_tree::{NodeId, NodeRef, iter::Edge},
+  html5ever::{
+    LocalName, QualName, ns,
+    serialize::{SerializeOpts, Serializer, TraversalScope, serialize},
+  },
   pipeline::Pipeline,
   regex::Regex,
   scraper::{ElementRef, Html, Node, Selector, node::Element},
   serde::{Deserialize, Serialize},
+  serializable_node::SerializableNode,
   stage::{
     ArticleStage, ElementLimitStage, LanguageStage, MetadataStage,
     PostProcessStage, SanitizationStage, Stage,
