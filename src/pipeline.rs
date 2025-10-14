@@ -48,7 +48,7 @@ impl<'a> Pipeline<'a> {
     ];
 
     for stage in stages {
-      pipeline.add_stage(stage)
+      pipeline.add_stage(stage);
     }
 
     pipeline
