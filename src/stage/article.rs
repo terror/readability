@@ -201,6 +201,43 @@ impl ArticleStage {
     }
   }
 
+  /// Promotes a candidate node to its parent when it is the only element child.
+  fn promote_single_child_parent(
+    document: Document<'_>,
+    mut node_id: NodeId,
+  ) -> NodeId {
+    loop {
+      let Some(node) = document.node(node_id) else {
+        break;
+      };
+
+      let Some(parent) = node.parent() else {
+        break;
+      };
+
+      let Node::Element(element) = parent.value() else {
+        break;
+      };
+
+      if element.name() == "body" {
+        break;
+      }
+
+      let element_children = parent
+        .children()
+        .filter(|child| child.value().is_element())
+        .count();
+
+      if element_children == 1 {
+        node_id = parent.id();
+      } else {
+        break;
+      }
+    }
+
+    node_id
+  }
+
   /// Generates weighted score contributions for the ancestors of a scored node.
   fn propagate_score_to_parents<'a>(
     node: &'a ego_tree::NodeRef<'a, Node>,
@@ -277,42 +314,5 @@ impl ArticleStage {
     } else {
       false
     }
-  }
-
-  /// Promotes a candidate node to its parent when it is the only element child.
-  fn promote_single_child_parent(
-    document: Document<'_>,
-    mut node_id: NodeId,
-  ) -> NodeId {
-    loop {
-      let Some(node) = document.node(node_id) else {
-        break;
-      };
-
-      let Some(parent) = node.parent() else {
-        break;
-      };
-
-      let Node::Element(element) = parent.value() else {
-        break;
-      };
-
-      if element.name() == "body" {
-        break;
-      }
-
-      let element_children = parent
-        .children()
-        .filter(|child| child.value().is_element())
-        .count();
-
-      if element_children == 1 {
-        node_id = parent.id();
-      } else {
-        break;
-      }
-    }
-
-    node_id
   }
 }

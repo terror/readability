@@ -91,6 +91,29 @@ impl FlattenSimpleTablesStage {
     }
   }
 
+  fn lift_children_to_parent(fragment: &mut ArticleFragment, node_id: NodeId) {
+    let Some(children_owner) = fragment.html.tree.get(node_id) else {
+      return;
+    };
+
+    if children_owner.parent().is_none() {
+      return;
+    }
+
+    let children: Vec<NodeId> =
+      children_owner.children().map(|child| child.id()).collect();
+
+    for child_id in children {
+      if let Some(mut current) = fragment.html.tree.get_mut(node_id) {
+        current.insert_id_before(child_id);
+      }
+    }
+
+    if let Some(mut current) = fragment.html.tree.get_mut(node_id) {
+      current.detach();
+    }
+  }
+
   fn move_children(
     fragment: &mut ArticleFragment,
     parent_id: NodeId,
@@ -159,29 +182,6 @@ impl FlattenSimpleTablesStage {
       };
 
       Self::move_children(fragment, table_id, child_id);
-    }
-  }
-
-  fn lift_children_to_parent(fragment: &mut ArticleFragment, node_id: NodeId) {
-    let Some(children_owner) = fragment.html.tree.get(node_id) else {
-      return;
-    };
-
-    if children_owner.parent().is_none() {
-      return;
-    }
-
-    let children: Vec<NodeId> =
-      children_owner.children().map(|child| child.id()).collect();
-
-    for child_id in children {
-      if let Some(mut current) = fragment.html.tree.get_mut(node_id) {
-        current.insert_id_before(child_id);
-      }
-    }
-
-    if let Some(mut current) = fragment.html.tree.get_mut(node_id) {
-      current.detach();
     }
   }
 }
