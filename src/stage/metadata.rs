@@ -117,19 +117,11 @@ impl MetadataStage {
         }
 
         if let Some(name) = element.value().attr("name") {
-          let key = Self::normalize_meta_key(name);
-
-          if !key.is_empty() {
-            values.insert(key, content.to_string());
-          }
+          Self::insert_meta_keys(&mut values, name, content);
         }
 
         if let Some(property) = element.value().attr("property") {
-          let key = Self::normalize_meta_key(property);
-
-          if !key.is_empty() {
-            values.insert(key, content.to_string());
-          }
+          Self::insert_meta_keys(&mut values, property, content);
         }
       }
     }
@@ -208,6 +200,24 @@ impl MetadataStage {
         }
       })
       .collect()
+  }
+
+  fn insert_meta_keys(
+    values: &mut HashMap<String, String>,
+    raw_keys: &str,
+    content: &str,
+  ) {
+    let content = content.to_string();
+
+    for raw_key in raw_keys.split_whitespace() {
+      let key = Self::normalize_meta_key(raw_key);
+
+      if key.is_empty() {
+        continue;
+      }
+
+      values.insert(key, content.clone());
+    }
   }
 
   fn pick_meta_value(
