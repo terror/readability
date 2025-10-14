@@ -58,9 +58,9 @@ impl TestFixture {
         .expect("Failed to parse metadata JSON");
 
     Self {
-      source_html,
       expected_html,
       expected_metadata,
+      source_html,
     }
   }
 
