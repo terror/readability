@@ -128,3 +128,4 @@ test!("001");
 test!("002");
 test!("003-metadata-preferred");
 test!("004-metadata-space-separated-properties");
+test!("005-unescape-html-entities");
