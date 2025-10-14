@@ -46,9 +46,12 @@ impl ArticleStage {
       return None;
     }
 
-    let comma_count = REGEX_COMMAS.find_iter(text).count() as f64;
+    let comma_count = f64::from(
+      u32::try_from(REGEX_COMMAS.find_iter(text).count()).unwrap_or(u32::MAX),
+    );
 
-    let length_bonus = ((text.len() / 100).min(3)) as f64;
+    let length_bonus =
+      f64::from(u32::try_from((text.len() / 100).min(3)).unwrap_or(3));
 
     Some(1.0 + comma_count + length_bonus)
   }
@@ -176,7 +179,9 @@ impl ArticleStage {
         let divider = match level {
           0 => 1.0,
           1 => 2.0,
-          _ => (level as f64 + 1.0) * 3.0,
+          _ => {
+            (f64::from(u32::try_from(level).unwrap_or(u32::MAX)) + 1.0) * 3.0
+          }
         };
         (parent.id(), score / divider)
       })
