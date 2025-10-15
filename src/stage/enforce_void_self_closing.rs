@@ -3,7 +3,7 @@ use super::*;
 pub struct EnforceVoidSelfClosingStage;
 
 impl Stage for EnforceVoidSelfClosingStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let Some(markup) = context.take_article_markup() else {
       return Ok(());
     };
