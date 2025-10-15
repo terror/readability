@@ -473,11 +473,9 @@ impl MetadataStage {
     "twitter:description",
   ];
 
-  const PUBLISHED_TIME_KEYS: [&'static str; 4] = [
+  const PUBLISHED_TIME_KEYS: [&'static str; 2] = [
     "article:published_time",
     "parsely:pub-date",
-    "parsely:publish_date",
-    "publish_date",
   ];
 
   const REPLACEMENT_CHAR: char = '\u{FFFD}';
