@@ -12,6 +12,7 @@ mod metadata;
 mod normalize_article_headings;
 mod normalize_article_root;
 mod normalize_containers;
+mod remove_comment_sections;
 mod remove_disallowed_nodes;
 mod remove_non_content_elements;
 mod remove_unlikely_candidates;
@@ -30,6 +31,7 @@ pub use {
   normalize_article_headings::NormalizeArticleHeadingsStage,
   normalize_article_root::NormalizeArticleRootStage,
   normalize_containers::NormalizeContainersStage,
+  remove_comment_sections::RemoveCommentSectionsStage,
   remove_disallowed_nodes::RemoveDisallowedNodesStage,
   remove_non_content_elements::RemoveNonContentElementsStage,
   remove_unlikely_candidates::RemoveUnlikelyCandidatesStage,

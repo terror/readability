@@ -46,6 +46,7 @@ impl<'a> Pipeline<'a> {
       Box::new(NormalizeArticleHeadingsStage),
       Box::new(FlattenSimpleTablesStage),
       Box::new(RemoveNonContentElementsStage),
+      Box::new(RemoveCommentSectionsStage),
       Box::new(StripPresentationalAttributesStage),
       Box::new(FixLazyImagesStage),
       Box::new(FixRelativeUrisStage::new(base_url)),
