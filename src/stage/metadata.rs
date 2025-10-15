@@ -468,8 +468,8 @@ impl MetadataStage {
     "dc:description",
     "dcterm:description",
     "dcterms:description",
-    "description",
     "og:description",
+    "description",
     "twitter:description",
   ];
 
