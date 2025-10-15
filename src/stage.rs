@@ -5,6 +5,7 @@ mod clean_class_attributes;
 mod element_limit;
 mod enforce_void_self_closing;
 mod fix_relative_uris;
+mod fix_lazy_images;
 mod flatten_simple_tables;
 mod language;
 mod metadata;
@@ -24,6 +25,7 @@ pub use {
   element_limit::ElementLimitStage,
   enforce_void_self_closing::EnforceVoidSelfClosingStage,
   fix_relative_uris::FixRelativeUrisStage,
+  fix_lazy_images::FixLazyImagesStage,
   flatten_simple_tables::FlattenSimpleTablesStage, language::LanguageStage,
   metadata::MetadataStage,
   normalize_article_headings::NormalizeArticleHeadingsStage,

@@ -28,7 +28,7 @@ use {
   serializable_node::SerializableNode,
   stage::{
     ArticleStage, CleanClassAttributesStage, ElementLimitStage,
-    EnforceVoidSelfClosingStage, FixRelativeUrisStage,
+    EnforceVoidSelfClosingStage, FixLazyImagesStage, FixRelativeUrisStage,
     FlattenSimpleTablesStage, LanguageStage, MetadataStage,
     NormalizeArticleHeadingsStage, NormalizeArticleRootStage,
     NormalizeContainersStage, RemoveDisallowedNodesStage,
