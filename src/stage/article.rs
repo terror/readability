@@ -226,7 +226,22 @@ impl ArticleStage {
     document: Document<'_>,
     body: NodeRef<'_, Node>,
   ) -> Option<ArticleContent> {
-    let markup = Self::serialize_children(body)?;
+    let mut buffer = Vec::new();
+
+    let serializer = SerializableNode { node: body };
+
+    serialize(
+      &mut buffer,
+      &serializer,
+      SerializeOpts {
+        scripting_enabled: false,
+        traversal_scope: TraversalScope::ChildrenOnly(None),
+        create_missing_parent: false,
+      },
+    )
+    .ok()?;
+
+    let markup = String::from_utf8(buffer).ok()?;
 
     if markup.trim().is_empty() {
       return None;
@@ -450,22 +465,6 @@ impl ArticleStage {
     }
 
     candidates
-  }
-
-  fn serialize_children(node: NodeRef<'_, Node>) -> Option<String> {
-    let opts = SerializeOpts {
-      scripting_enabled: false,
-      traversal_scope: TraversalScope::ChildrenOnly(None),
-      create_missing_parent: false,
-    };
-
-    let mut buffer = Vec::new();
-
-    let serializer = SerializableNode { node };
-
-    serialize(&mut buffer, &serializer, opts).ok()?;
-
-    String::from_utf8(buffer).ok()
   }
 
   /// Determines whether a sibling element should be merged into the article
