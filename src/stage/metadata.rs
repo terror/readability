@@ -13,16 +13,66 @@ static REGEX_BASIC_HTML_ENTITIES: LazyLock<Regex> =
 static REGEX_NUMERIC_HTML_ENTITIES: LazyLock<Regex> =
   LazyLock::new(|| Regex::new(r"&#(?:x([0-9a-fA-F]+)|([0-9]+));").unwrap());
 
+#[derive(Default)]
+struct JsonLdMetadata {
+  site_name: Option<String>,
+  published_time: Option<String>,
+}
+
+impl JsonLdMetadata {
+  fn merge_site_name(&mut self, value: Option<String>) {
+    if self.site_name.is_none() {
+      self.site_name = value;
+    }
+  }
+
+  fn merge_published_time(&mut self, value: Option<String>) {
+    if self.published_time.is_none() {
+      self.published_time = value;
+    }
+  }
+
+  fn is_complete(&self) -> bool {
+    self.site_name.is_some() && self.published_time.is_some()
+  }
+}
+
 pub struct MetadataStage;
 
 impl Stage for MetadataStage {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    context.set_metadata(Self::collect_metadata(context.document()));
+    context.set_metadata(Self::collect_metadata(
+      context.document(),
+      context.options(),
+    ));
+
     Ok(())
   }
 }
 
 impl MetadataStage {
+  const JSON_LD_ARTICLE_TYPES: [&'static str; 19] = [
+    "Article",
+    "AdvertiserContentArticle",
+    "NewsArticle",
+    "AnalysisNewsArticle",
+    "AskPublicNewsArticle",
+    "BackgroundNewsArticle",
+    "OpinionNewsArticle",
+    "ReportageNewsArticle",
+    "ReviewNewsArticle",
+    "Report",
+    "SatiricalArticle",
+    "ScholarlyArticle",
+    "MedicalScholarlyArticle",
+    "SocialMediaPosting",
+    "BlogPosting",
+    "LiveBlogPosting",
+    "DiscussionForumPosting",
+    "TechArticle",
+    "APIReference",
+  ];
+
   const BYLINE_KEYS: [&'static str; 6] = [
     "dc:creator",
     "dcterm:creator",
@@ -63,7 +113,16 @@ impl MetadataStage {
     "twitter:title",
   ];
 
-  fn collect_metadata(document: Document<'_>) -> Metadata {
+  fn collect_metadata(
+    document: Document<'_>,
+    options: &ReadabilityOptions,
+  ) -> Metadata {
+    let json_ld = if options.disable_json_ld {
+      JsonLdMetadata::default()
+    } else {
+      Self::collect_json_ld_metadata(document)
+    };
+
     let values = Self::collect_values(document);
 
     Metadata {
@@ -74,11 +133,12 @@ impl MetadataStage {
         .filter(|value| !value.trim().is_empty())
         .or_else(|| Self::find_byline(document)),
       excerpt: Self::pick_meta_value(&values, &Self::EXCERPT_KEYS),
-      site_name: Self::pick_meta_value(&values, &Self::SITE_NAME_KEYS),
-      published_time: Self::pick_meta_value(
-        &values,
-        &Self::PUBLISHED_TIME_KEYS,
-      ),
+      site_name: json_ld
+        .site_name
+        .or_else(|| Self::pick_meta_value(&values, &Self::SITE_NAME_KEYS)),
+      published_time: json_ld
+        .published_time
+        .or_else(|| Self::pick_meta_value(&values, &Self::PUBLISHED_TIME_KEYS)),
     }
   }
 
@@ -120,6 +180,42 @@ impl MetadataStage {
     }
 
     values
+  }
+
+  fn collect_json_ld_metadata(document: Document<'_>) -> JsonLdMetadata {
+    let mut metadata = JsonLdMetadata::default();
+
+    for node in document.root().descendants() {
+      let Some(element) = ElementRef::wrap(node) else {
+        continue;
+      };
+
+      if element.value().name() != "script" {
+        continue;
+      }
+
+      let Some(script_type) = element.value().attr("type") else {
+        continue;
+      };
+
+      if !Self::is_json_ld_script_type(script_type) {
+        continue;
+      }
+
+      let raw = element.text().collect::<String>();
+
+      let Some(json_source) = Self::clean_json_ld_source(&raw) else {
+        continue;
+      };
+
+      Self::parse_json_ld_payload(&json_source, &mut metadata);
+
+      if metadata.is_complete() {
+        break;
+      }
+    }
+
+    metadata
   }
 
   fn decode_html_entities(input: &str) -> String {
@@ -234,6 +330,158 @@ impl MetadataStage {
     }
 
     None
+  }
+
+  fn is_article_type(value: &Value) -> bool {
+    match value {
+      Value::String(typ) => Self::JSON_LD_ARTICLE_TYPES
+        .iter()
+        .any(|candidate| candidate == typ),
+      Value::Array(items) => items.iter().any(Self::is_article_type),
+      _ => false,
+    }
+  }
+
+  fn is_json_ld_script_type(value: &str) -> bool {
+    value
+      .split(';')
+      .next()
+      .map(|prefix| prefix.trim().eq_ignore_ascii_case("application/ld+json"))
+      .unwrap_or(false)
+  }
+
+  fn clean_json_ld_source(raw: &str) -> Option<String> {
+    let mut trimmed = raw.trim();
+
+    if trimmed.is_empty() {
+      return None;
+    }
+
+    if let Some(stripped) = trimmed.strip_prefix("<![CDATA[") {
+      trimmed = stripped;
+    }
+
+    if let Some(stripped) = trimmed.strip_suffix("]]>") {
+      trimmed = stripped;
+    }
+
+    let final_trimmed = trimmed.trim();
+
+    if final_trimmed.is_empty() {
+      None
+    } else {
+      Some(final_trimmed.to_string())
+    }
+  }
+
+  fn parse_json_ld_payload(source: &str, metadata: &mut JsonLdMetadata) {
+    let stream = Deserializer::from_str(source).into_iter::<Value>();
+
+    for value in stream {
+      let Ok(value) = value else {
+        break;
+      };
+
+      Self::update_json_ld_metadata(&value, metadata);
+
+      if metadata.is_complete() {
+        break;
+      }
+    }
+  }
+
+  fn update_json_ld_metadata(value: &Value, metadata: &mut JsonLdMetadata) {
+    match value {
+      Value::Object(map) => {
+        if let Some(graph) = map.get("@graph") {
+          Self::update_json_ld_metadata(graph, metadata);
+        }
+
+        let is_article = map.get("@type").is_some_and(Self::is_article_type);
+
+        if is_article {
+          if let Some(site_name) = map
+            .get("siteName")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+          {
+            metadata
+              .merge_site_name(Some(Self::decode_html_entities(site_name)));
+          } else if let Some(publisher) = map.get("publisher") {
+            if let Some(site_name) = Self::extract_publisher_name(publisher) {
+              metadata
+                .merge_site_name(Some(Self::decode_html_entities(&site_name)));
+            }
+          }
+
+          if let Some(published) = map
+            .get("datePublished")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+          {
+            metadata.merge_published_time(Some(Self::decode_html_entities(
+              published,
+            )));
+          }
+        }
+
+        if metadata.is_complete() {
+          return;
+        }
+
+        if let Some(main_entity) = map.get("mainEntity") {
+          Self::update_json_ld_metadata(main_entity, metadata);
+        }
+
+        if metadata.is_complete() {
+          return;
+        }
+
+        if let Some(main_entity_page) = map.get("mainEntityOfPage") {
+          Self::update_json_ld_metadata(main_entity_page, metadata);
+        }
+
+        if metadata.is_complete() {
+          return;
+        }
+
+        for nested_value in map.values() {
+          Self::update_json_ld_metadata(nested_value, metadata);
+
+          if metadata.is_complete() {
+            break;
+          }
+        }
+      }
+      Value::Array(items) => {
+        for item in items {
+          Self::update_json_ld_metadata(item, metadata);
+
+          if metadata.is_complete() {
+            break;
+          }
+        }
+      }
+      _ => {}
+    }
+  }
+
+  fn extract_publisher_name(value: &Value) -> Option<String> {
+    match value {
+      Value::Object(map) => map
+        .get("name")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|name| !name.is_empty())
+        .map(|name| name.to_owned())
+        .or_else(|| map.values().find_map(Self::extract_publisher_name)),
+      Value::Array(items) => {
+        items.iter().find_map(Self::extract_publisher_name)
+      }
+      _ => None,
+    }
   }
 
   fn insert_meta_keys(

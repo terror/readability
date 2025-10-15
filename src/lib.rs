@@ -24,6 +24,7 @@ use {
   regex::Regex,
   scraper::{ElementRef, Html, Node, Selector, node::Element},
   serde::{Deserialize, Serialize},
+  serde_json::{Deserializer, Value},
   serializable_node::SerializableNode,
   stage::{
     ArticleStage, CleanClassAttributesStage, ElementLimitStage,

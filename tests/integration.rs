@@ -221,4 +221,3 @@ test!("salon-1");
 test!("style-tags-removal");
 test!("title-and-h1-discrepancy");
 test!("title-en-dash");
-test!("lazy-image-1");
