@@ -4,7 +4,7 @@ use super::*;
 pub struct FlattenSimpleTablesStage;
 
 impl Stage for FlattenSimpleTablesStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let Some(fragment) = context.article_fragment_mut() else {
       return Ok(());
     };

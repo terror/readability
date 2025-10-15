@@ -3,7 +3,7 @@ use super::*;
 pub struct ReplaceBreakSequencesStage;
 
 impl Stage for ReplaceBreakSequencesStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let html = context.html_mut();
     Self::replace_break_sequences(html);
     Ok(())

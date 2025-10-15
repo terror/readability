@@ -44,7 +44,7 @@ pub struct ArticleStage;
 impl Stage for ArticleStage {
   /// Runs the extraction pipeline and stores the resulting fragment and language
   /// hints into the shared context.
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let ArticleContent {
       body_lang,
       dir,

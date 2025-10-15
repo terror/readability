@@ -5,7 +5,7 @@ pub struct FixRelativeUrisStage<'a> {
 }
 
 impl Stage for FixRelativeUrisStage<'_> {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let Some(base_url) = self.base_url else {
       return Ok(());
     };

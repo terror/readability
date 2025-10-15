@@ -4,30 +4,22 @@ use super::*;
 pub struct EnsureParagraphTrailingNewlineStage;
 
 impl Stage for EnsureParagraphTrailingNewlineStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let Some(fragment) = context.article_fragment_mut() else {
       return Ok(());
     };
 
-    Self::append_newlines(fragment);
-
-    Ok(())
-  }
-}
-
-impl EnsureParagraphTrailingNewlineStage {
-  fn append_newlines(fragment: &mut ArticleFragment) {
     let Some(root) = fragment.html.tree.get(fragment.root_id) else {
-      return;
+      return Ok(());
     };
 
-    let paragraph_ids: Vec<NodeId> = root
+    let paragraph_ids = root
       .descendants()
       .filter(
         |node| matches!(node.value(), Node::Element(el) if el.name() == "p"),
       )
       .map(|node| node.id())
-      .collect();
+      .collect::<Vec<NodeId>>();
 
     for paragraph_id in paragraph_ids {
       let Some(paragraph) = fragment.html.tree.get(paragraph_id) else {
@@ -54,9 +46,10 @@ impl EnsureParagraphTrailingNewlineStage {
 
       if let Some(mut paragraph_mut) = fragment.html.tree.get_mut(paragraph_id)
       {
-        paragraph_mut
-          .append(Node::Text(scraper::node::Text { text: "\n".into() }));
+        paragraph_mut.append(Node::Text(Text { text: "\n".into() }));
       }
     }
+
+    Ok(())
   }
 }

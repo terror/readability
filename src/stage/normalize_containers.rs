@@ -3,7 +3,7 @@ use super::*;
 pub struct NormalizeContainersStage;
 
 impl Stage for NormalizeContainersStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let html = context.html_mut();
     Self::normalize_containers(html);
     Ok(())

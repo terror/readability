@@ -18,7 +18,7 @@ static REGEX_OK_MAYBE_CANDIDATE: LazyLock<Regex> = LazyLock::new(|| {
 pub struct RemoveUnlikelyCandidatesStage;
 
 impl Stage for RemoveUnlikelyCandidatesStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let html = context.html_mut();
     Self::remove_unlikely_candidates(html);
     Ok(())

@@ -5,28 +5,20 @@ const CLASSES_TO_PRESERVE: &[&str] = &["page"];
 pub struct CleanClassAttributesStage;
 
 impl Stage for CleanClassAttributesStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let Some(fragment) = context.article_fragment_mut() else {
       return Ok(());
     };
 
-    Self::clean_classes(fragment);
-
-    Ok(())
-  }
-}
-
-impl CleanClassAttributesStage {
-  fn clean_classes(fragment: &mut ArticleFragment) {
     let Some(root) = fragment.html.tree.get(fragment.root_id) else {
-      return;
+      return Ok(());
     };
 
-    let node_ids: Vec<NodeId> = root
+    let node_ids = root
       .descendants()
       .filter(|node| matches!(node.value(), Node::Element(_)))
       .map(|node| node.id())
-      .collect();
+      .collect::<Vec<NodeId>>();
 
     for node_id in node_ids {
       let Some(mut node) = fragment.html.tree.get_mut(node_id) else {
@@ -48,10 +40,10 @@ impl CleanClassAttributesStage {
 
       let class_value = element.attrs[index].1.to_string();
 
-      let preserved: Vec<&str> = class_value
+      let preserved = class_value
         .split_whitespace()
         .filter(|class_name| CLASSES_TO_PRESERVE.contains(class_name))
-        .collect();
+        .collect::<Vec<&str>>();
 
       if preserved.is_empty() {
         element.attrs.remove(index);
@@ -61,5 +53,7 @@ impl CleanClassAttributesStage {
         element.attrs[index].1.push_slice(&new_value);
       }
     }
+
+    Ok(())
   }
 }
