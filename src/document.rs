@@ -245,14 +245,14 @@ mod tests {
 
     let document = Document::new(&html);
 
-    let html_element = document.html_element().expect("missing <html> element");
+    let html_element = document.html_element().unwrap();
 
     assert!(matches!(
       html_element.value(),
       Node::Element(element) if element.name() == "html"
     ));
 
-    let body_element = document.body_element().expect("missing <body> element");
+    let body_element = document.body_element().unwrap();
 
     assert!(matches!(
       body_element.value(),
@@ -277,7 +277,7 @@ mod tests {
 
     let document = Document::new(&html);
 
-    let body = document.body_element().expect("missing <body>");
+    let body = document.body_element().unwrap();
 
     let (raw, normalized) = (
       document.collect_text(body.id(), false),
