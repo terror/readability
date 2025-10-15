@@ -8,4 +8,4 @@ total=$(find submodules/readability/test/test-pages -mindepth 1 -maxdepth 1 -typ
 
 percentage=$((implemented * 100 / total))
 
-echo "![Coverage](https://img.shields.io/badge/Coverage-${implemented}%2F${total}_(${percentage}%25)-orange)"
+echo "[![Parity](https://img.shields.io/badge/Parity-${implemented}%2F${total}_(${percentage}%25)-orange)](https://github.com/terror/readability/blob/master/tests/integration.rs)"
