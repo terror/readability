@@ -21,7 +21,7 @@ impl Serialize for SerializableNode<'_> {
 
           match node.value() {
             Node::Doctype(doctype) => {
-              serializer.write_doctype(doctype.name())?
+              serializer.write_doctype(doctype.name())?;
             }
             Node::Comment(comment) => serializer.write_comment(comment)?,
             Node::Text(text) => serializer.write_text(text)?,
