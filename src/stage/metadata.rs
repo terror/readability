@@ -373,11 +373,12 @@ impl<'a> JsonLd<'a> {
     if tokens_b_str.is_empty() {
       0.0
     } else {
-      // Convert to f64 in separate steps to make conversion explicit
       let uniq_len_f64 =
         f64::from(u32::try_from(uniq_str.len()).unwrap_or(u32::MAX));
+
       let tokens_len_f64 =
         f64::from(u32::try_from(tokens_b_str.len()).unwrap_or(u32::MAX));
+
       1.0 - (uniq_len_f64 / tokens_len_f64)
     }
   }
