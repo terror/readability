@@ -235,12 +235,12 @@ mod tests {
   #[test]
   fn finds_html_and_body_elements() {
     let html = Html::parse_document(
-      r#"
+      "
       <html>
         <head></head>
         <body><p>content</p></body>
       </html>
-      "#,
+      ",
     );
 
     let document = Document::new(&html);
@@ -265,14 +265,14 @@ mod tests {
   #[test]
   fn collect_text_respects_normalization_flag() {
     let html = Html::parse_document(
-      r#"
+      "
       <html>
         <body>
           Hi   there <span>General
           Kenobi</span>
         </body>
       </html>
-      "#,
+      ",
     );
     let document = Document::new(&html);
 
@@ -345,12 +345,12 @@ mod tests {
   #[test]
   fn link_density_returns_zero_when_no_text() {
     let html = Html::parse_document(
-      r#"
+      "
       <html>
         <head></head>
         <body></body>
       </html>
-      "#,
+      ",
     );
 
     let document = Document::new(&html);
@@ -370,12 +370,12 @@ mod tests {
   #[test]
   fn title_prefers_single_h1_when_title_length_is_extreme() {
     let html = Html::parse_document(
-      r#"
+      "
       <html>
         <head><title>Hi</title></head>
         <body><h1>Descriptive Heading For Article Content</h1></body>
       </html>
-      "#,
+      ",
     );
     let document = Document::new(&html);
 
@@ -388,12 +388,12 @@ mod tests {
   #[test]
   fn title_prefers_portion_after_colon_without_matching_heading() {
     let html = Html::parse_document(
-      r#"
+      "
       <html>
         <head><title>Category: One Two Three Four Five</title></head>
         <body><h1>Completely Different Heading</h1></body>
       </html>
-      "#,
+      ",
     );
 
     let document = Document::new(&html);
@@ -407,12 +407,12 @@ mod tests {
   #[test]
   fn title_trims_after_common_separators() {
     let html = Html::parse_document(
-      r#"
+      "
       <html>
         <head><title>An Extra Wordy Article Title - Site Name</title></head>
         <body></body>
       </html>
-      "#,
+      ",
     );
 
     let document = Document::new(&html);
@@ -426,12 +426,12 @@ mod tests {
   #[test]
   fn title_retains_original_when_separator_leaves_too_few_words() {
     let html = Html::parse_document(
-      r#"
+      "
       <html>
         <head><title>Hi - Site Name</title></head>
         <body></body>
       </html>
-      "#,
+      ",
     );
 
     let document = Document::new(&html);
@@ -442,12 +442,12 @@ mod tests {
   #[test]
   fn title_with_matching_heading_keeps_colon_separator() {
     let html = Html::parse_document(
-      r#"
+      "
       <html>
         <head><title>News: Breaking Story</title></head>
         <body><h1>News: Breaking Story</h1></body>
       </html>
-      "#,
+      ",
     );
 
     let document = Document::new(&html);
@@ -458,7 +458,7 @@ mod tests {
   #[test]
   fn title_reverts_to_original_when_colon_suffix_is_too_short() {
     let html = Html::parse_document(
-      r#"
+      "
       <html>
         <head>
           <title>
@@ -467,7 +467,7 @@ mod tests {
         </head>
         <body><h1>Other heading</h1></body>
       </html>
-      "#,
+      ",
     );
 
     let document = Document::new(&html);
@@ -481,12 +481,12 @@ mod tests {
   #[test]
   fn title_returns_none_when_missing() {
     let html = Html::parse_document(
-      r#"
+      "
       <html>
         <head></head>
         <body></body>
       </html>
-      "#,
+      ",
     );
 
     let document = Document::new(&html);
