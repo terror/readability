@@ -118,7 +118,10 @@ impl TestFixture {
 }
 
 fn assert_html_eq(actual: &Html, expected: &Html) {
-  use scraper::{ElementRef, Node};
+  use {
+    ego_tree::NodeRef,
+    scraper::{ElementRef, Node},
+  };
 
   fn compare_elements(elem1: &ElementRef, elem2: &ElementRef) {
     assert_eq!(
@@ -185,7 +188,7 @@ fn assert_html_eq(actual: &Html, expected: &Html) {
     }
   }
 
-  fn is_whitespace_text(node: &ego_tree::NodeRef<Node>) -> bool {
+  fn is_whitespace_text(node: &NodeRef<Node>) -> bool {
     matches!(node.value(), Node::Text(t) if t.trim().is_empty())
   }
 
