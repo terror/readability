@@ -49,8 +49,6 @@ impl<'a> Pipeline<'a> {
       Box::new(StripPresentationalAttributesStage),
       Box::new(FixRelativeUrisStage::new(base_url)),
       Box::new(CleanClassAttributesStage),
-      Box::new(NormalizeArticleWhitespaceStage),
-      Box::new(EnsureParagraphTrailingNewlineStage),
       Box::new(EnforceVoidSelfClosingStage),
     ];
 
