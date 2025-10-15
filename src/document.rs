@@ -331,7 +331,9 @@ mod tests {
 
     let normalized_body = document.collect_text(body.id(), true);
 
-    let text_length = normalized_body.len() as f64;
+    let text_length =
+      u32::try_from(normalized_body.len()).map_or(0.0, f64::from);
+
     let expected_link_length = 9.0 + (9.0 * 0.3);
 
     let (expected_density, actual_density) = (
@@ -364,7 +366,7 @@ mod tests {
       })
       .unwrap();
 
-    assert_eq!(document.link_density(head.id()), 0.0);
+    assert!(document.link_density(head.id()).abs() < f64::EPSILON);
   }
 
   #[test]
