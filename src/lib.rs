@@ -22,7 +22,10 @@ use {
   metadata::Metadata,
   pipeline::Pipeline,
   regex::Regex,
-  scraper::{ElementRef, Html, Node, Selector, node::Element},
+  scraper::{
+    ElementRef, Html, Node, Selector,
+    node::{Element, Text},
+  },
   serde::{Deserialize, Serialize},
   serializable_node::SerializableNode,
   stage::{

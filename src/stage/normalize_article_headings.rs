@@ -9,7 +9,7 @@ use super::*;
 pub struct NormalizeArticleHeadingsStage;
 
 impl Stage for NormalizeArticleHeadingsStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let Some(fragment) = context.article_fragment_mut() else {
       return Ok(());
     };
@@ -18,7 +18,7 @@ impl Stage for NormalizeArticleHeadingsStage {
       return Ok(());
     };
 
-    let heading_ids: Vec<NodeId> = root
+    let heading_ids = root
       .descendants()
       .filter(|node| {
         matches!(
@@ -27,7 +27,7 @@ impl Stage for NormalizeArticleHeadingsStage {
         )
       })
       .map(|node| node.id())
-      .collect();
+      .collect::<Vec<NodeId>>();
 
     for heading_id in heading_ids {
       let Some(mut node) = fragment.html.tree.get_mut(heading_id) else {

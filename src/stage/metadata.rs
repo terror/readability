@@ -16,7 +16,7 @@ static REGEX_NUMERIC_HTML_ENTITIES: LazyLock<Regex> =
 pub struct MetadataStage;
 
 impl Stage for MetadataStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     context.set_metadata(Self::collect_metadata(context.document()));
     Ok(())
   }

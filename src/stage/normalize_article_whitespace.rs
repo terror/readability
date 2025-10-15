@@ -3,7 +3,7 @@ use super::*;
 pub struct NormalizeArticleWhitespaceStage;
 
 impl Stage for NormalizeArticleWhitespaceStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result<()> {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
     let Some(fragment) = context.article_fragment_mut() else {
       return Ok(());
     };
@@ -64,8 +64,8 @@ impl NormalizeArticleWhitespaceStage {
         continue;
       }
 
-      let mut normalized = String::with_capacity(original.len());
-      let mut last_was_space = false;
+      let (mut normalized, mut last_was_space) =
+        (String::with_capacity(original.len()), false);
 
       for ch in original.chars() {
         match ch {
