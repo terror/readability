@@ -223,11 +223,15 @@ impl FixLazyImagesStage {
       return;
     }
 
-    let src_could_be_removed = element.attrs.iter().enumerate().any(
-      |(attr_index, (_, value))| {
-        attr_index != index && REGEX_IMAGE_EXTENSION.is_match(&value.to_string())
-      },
-    );
+    let src_could_be_removed =
+      element
+        .attrs
+        .iter()
+        .enumerate()
+        .any(|(attr_index, (_, value))| {
+          attr_index != index
+            && REGEX_IMAGE_EXTENSION.is_match(&value.to_string())
+        });
 
     if !src_could_be_removed {
       return;
@@ -248,9 +252,10 @@ impl FixLazyImagesStage {
     } else {
       let mut attr_value = StrTendril::new();
       attr_value.push_slice(value);
-      element
-        .attrs
-        .push((QualName::new(None, ns!(), LocalName::from(name)), attr_value));
+      element.attrs.push((
+        QualName::new(None, ns!(), LocalName::from(name)),
+        attr_value,
+      ));
     }
   }
 }

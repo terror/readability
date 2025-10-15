@@ -4,8 +4,8 @@ mod article;
 mod clean_class_attributes;
 mod element_limit;
 mod enforce_void_self_closing;
-mod fix_relative_uris;
 mod fix_lazy_images;
+mod fix_relative_uris;
 mod flatten_simple_tables;
 mod language;
 mod metadata;
@@ -24,8 +24,7 @@ pub use {
   article::ArticleStage, clean_class_attributes::CleanClassAttributesStage,
   element_limit::ElementLimitStage,
   enforce_void_self_closing::EnforceVoidSelfClosingStage,
-  fix_relative_uris::FixRelativeUrisStage,
-  fix_lazy_images::FixLazyImagesStage,
+  fix_lazy_images::FixLazyImagesStage, fix_relative_uris::FixRelativeUrisStage,
   flatten_simple_tables::FlattenSimpleTablesStage, language::LanguageStage,
   metadata::MetadataStage,
   normalize_article_headings::NormalizeArticleHeadingsStage,
