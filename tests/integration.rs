@@ -3,7 +3,7 @@ use {
   readability::{Readability, ReadabilityOptions},
   scraper::Html,
   serde::{Deserialize, Serialize},
-  std::{fs, path::PathBuf},
+  std::{fs, panic, path::PathBuf},
 };
 
 macro_rules! test {
@@ -103,10 +103,17 @@ impl TestFixture {
       "Published time mismatch"
     );
 
-    assert_html_eq(
-      &Html::parse_document(&self.expected_html),
-      &Html::parse_document(&article.content),
-    );
+    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
+      assert_html_eq(
+        &Html::parse_document(&self.expected_html),
+        &Html::parse_document(&article.content),
+      );
+    }));
+
+    if result.is_err() {
+      eprintln!("Raw HTML Diff:");
+      assert_eq!(article.content, self.expected_html, "HTML content mismatch");
+    }
   }
 }
 
@@ -133,15 +140,15 @@ fn assert_html_eq(actual: &Html, expected: &Html) {
       elem1.value().name()
     );
 
-    let children1: Vec<_> = elem1
+    let children1 = elem1
       .children()
       .filter(|n| !is_whitespace_text(n))
-      .collect();
+      .collect::<Vec<_>>();
 
-    let children2: Vec<_> = elem2
+    let children2 = elem2
       .children()
       .filter(|n| !is_whitespace_text(n))
-      .collect();
+      .collect::<Vec<_>>();
 
     assert_eq!(
       children1.len(),
@@ -198,8 +205,10 @@ test!("base-url");
 test!("basic-tags-cleaning");
 test!("clean-links");
 test!("comment-inside-script-parsing");
+test!("js-link-replacement");
 test!("metadata-content-missing");
 test!("normalize-spaces");
+test!("ol");
 test!("remove-script-tags");
 test!("rtl-1");
 test!("rtl-2");
