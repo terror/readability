@@ -19,8 +19,5 @@ fmt:
 fmt-check:
   cargo fmt -- --check
 
-readme:
-  present --in-place README.md
-
 test:
   cargo test
