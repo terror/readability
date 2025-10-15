@@ -1,6 +1,5 @@
 use super::*;
 
-/// The extracted article content produced by the readability parser.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Article {
   /// Author name or attribution string when available.
