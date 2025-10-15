@@ -36,7 +36,11 @@ use {
     ReplaceBreakSequencesStage, RewriteCenterTagsStage, RewriteFontTagsStage,
     Stage, StripPresentationalAttributesStage,
   },
-  std::{collections::HashMap, io, sync::LazyLock},
+  std::{
+    collections::{HashMap, HashSet},
+    io,
+    sync::LazyLock,
+  },
   url::Url,
 };
 

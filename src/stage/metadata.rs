@@ -65,21 +65,12 @@ impl JsonLdMetadata {
   }
 }
 
-pub struct MetadataStage;
-
-impl Stage for MetadataStage {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    context.set_metadata(Self::collect_metadata(
-      context.document(),
-      context.options(),
-    ));
-
-    Ok(())
-  }
+struct JsonLd<'a> {
+  document: Document<'a>,
 }
 
-impl MetadataStage {
-  const JSON_LD_ARTICLE_TYPES: [&'static str; 19] = [
+impl<'a> JsonLd<'a> {
+  const ARTICLE_TYPES: [&'static str; 19] = [
     "Article",
     "AdvertiserContentArticle",
     "NewsArticle",
@@ -101,6 +92,369 @@ impl MetadataStage {
     "APIReference",
   ];
 
+  fn new(document: Document<'a>) -> Self {
+    Self { document }
+  }
+
+  fn collect_metadata(&self) -> JsonLdMetadata {
+    let document_title = self.document.title();
+    let mut metadata = JsonLdMetadata::default();
+
+    for node in self.document.root().descendants() {
+      let Some(element) = ElementRef::wrap(node) else {
+        continue;
+      };
+
+      if element.value().name() != "script" {
+        continue;
+      }
+
+      let Some(script_type) = element.value().attr("type") else {
+        continue;
+      };
+
+      if !Self::is_json_ld_script_type(script_type) {
+        continue;
+      }
+
+      let raw = element.text().collect::<String>();
+
+      let Some(json_source) = Self::clean_source(&raw) else {
+        continue;
+      };
+
+      self.parse_payload(
+        &json_source,
+        document_title.as_deref(),
+        &mut metadata,
+      );
+
+      if metadata.is_complete() {
+        break;
+      }
+    }
+
+    metadata
+  }
+
+  fn is_json_ld_script_type(value: &str) -> bool {
+    value
+      .split(';')
+      .next()
+      .map(|prefix| prefix.trim().eq_ignore_ascii_case("application/ld+json"))
+      .unwrap_or(false)
+  }
+
+  fn clean_source(raw: &str) -> Option<String> {
+    let mut trimmed = raw.trim();
+
+    if trimmed.is_empty() {
+      return None;
+    }
+
+    if let Some(stripped) = trimmed.strip_prefix("<![CDATA[") {
+      trimmed = stripped;
+    }
+
+    if let Some(stripped) = trimmed.strip_suffix("]]>") {
+      trimmed = stripped;
+    }
+
+    let final_trimmed = trimmed.trim();
+
+    if final_trimmed.is_empty() {
+      None
+    } else {
+      Some(final_trimmed.to_string())
+    }
+  }
+
+  fn parse_payload(
+    &self,
+    source: &str,
+    document_title: Option<&str>,
+    metadata: &mut JsonLdMetadata,
+  ) {
+    let stream = Deserializer::from_str(source).into_iter::<Value>();
+
+    for value in stream {
+      let Ok(value) = value else {
+        break;
+      };
+
+      self.update_metadata(&value, document_title, metadata);
+
+      if metadata.is_complete() {
+        break;
+      }
+    }
+  }
+
+  fn update_metadata(
+    &self,
+    value: &Value,
+    document_title: Option<&str>,
+    metadata: &mut JsonLdMetadata,
+  ) {
+    match value {
+      Value::Object(map) => {
+        if let Some(graph) = map.get("@graph") {
+          self.update_metadata(graph, document_title, metadata);
+        }
+
+        let is_article = map.get("@type").is_some_and(Self::is_article_type);
+
+        if is_article {
+          self.extract_article_metadata(map, document_title, metadata);
+        }
+
+        if metadata.is_complete() {
+          return;
+        }
+
+        if let Some(main_entity) = map.get("mainEntity") {
+          self.update_metadata(main_entity, document_title, metadata);
+        }
+
+        if metadata.is_complete() {
+          return;
+        }
+
+        if let Some(main_entity_page) = map.get("mainEntityOfPage") {
+          self.update_metadata(main_entity_page, document_title, metadata);
+        }
+
+        if metadata.is_complete() {
+          return;
+        }
+
+        for nested_value in map.values() {
+          self.update_metadata(nested_value, document_title, metadata);
+
+          if metadata.is_complete() {
+            break;
+          }
+        }
+      }
+      Value::Array(items) => {
+        for item in items {
+          self.update_metadata(item, document_title, metadata);
+
+          if metadata.is_complete() {
+            break;
+          }
+        }
+      }
+      _ => {}
+    }
+  }
+
+  fn extract_article_metadata(
+    &self,
+    map: &serde_json::Map<String, Value>,
+    document_title: Option<&str>,
+    metadata: &mut JsonLdMetadata,
+  ) {
+    let name = Self::extract_string_field(map, "name");
+
+    let headline = Self::extract_string_field(map, "headline");
+
+    metadata.merge_title(Self::sanitize_value(Self::select_title(
+      name,
+      headline,
+      document_title,
+    )));
+
+    metadata.merge_byline(Self::extract_author(map.get("author")));
+
+    metadata.merge_excerpt(Self::sanitize_value(Self::extract_string_field(
+      map,
+      "description",
+    )));
+
+    if let Some(site_name) = Self::extract_string_field(map, "siteName") {
+      metadata.merge_site_name(Self::sanitize_value(Some(site_name)));
+    } else if let Some(publisher) = map.get("publisher") {
+      metadata.merge_site_name(Self::extract_publisher_name(publisher));
+    }
+
+    metadata.merge_published_time(Self::sanitize_value(
+      Self::extract_string_field(map, "datePublished"),
+    ));
+  }
+
+  fn extract_string_field<'b>(
+    map: &'b serde_json::Map<String, Value>,
+    key: &str,
+  ) -> Option<&'b str> {
+    map
+      .get(key)
+      .and_then(Value::as_str)
+      .map(str::trim)
+      .filter(|value| !value.is_empty())
+  }
+
+  fn is_article_type(value: &Value) -> bool {
+    match value {
+      Value::String(typ) => {
+        Self::ARTICLE_TYPES.iter().any(|candidate| candidate == typ)
+      }
+      Value::Array(items) => items.iter().any(Self::is_article_type),
+      _ => false,
+    }
+  }
+
+  fn extract_publisher_name(value: &Value) -> Option<String> {
+    match value {
+      Value::Object(map) => {
+        if let Some(name) = map.get("name").and_then(Value::as_str) {
+          if let Some(sanitized) = Self::sanitize_value(Some(name)) {
+            return Some(sanitized);
+          }
+        }
+
+        for nested in map.values() {
+          if let Some(result) = Self::extract_publisher_name(nested) {
+            return Some(result);
+          }
+        }
+
+        None
+      }
+      Value::Array(items) => {
+        items.iter().find_map(Self::extract_publisher_name)
+      }
+      _ => None,
+    }
+  }
+
+  fn sanitize_value(value: Option<&str>) -> Option<String> {
+    let value = value?;
+
+    let trimmed = value.trim();
+
+    if trimmed.is_empty() {
+      None
+    } else {
+      Some(MetadataStage::decode_html_entities(trimmed))
+    }
+  }
+
+  fn select_title<'b>(
+    name: Option<&'b str>,
+    headline: Option<&'b str>,
+    document_title: Option<&str>,
+  ) -> Option<&'b str> {
+    match (name, headline) {
+      (Some(name), Some(headline)) if name != headline => {
+        if let Some(doc_title) = document_title {
+          let name_matches = Self::text_similarity(name, doc_title) > 0.75;
+
+          let headline_matches =
+            Self::text_similarity(headline, doc_title) > 0.75;
+
+          if headline_matches && !name_matches {
+            Some(headline)
+          } else {
+            Some(name)
+          }
+        } else {
+          Some(name)
+        }
+      }
+      (Some(name), _) => Some(name),
+      (None, Some(headline)) => Some(headline),
+      _ => None,
+    }
+  }
+
+  fn text_similarity(text_a: &str, text_b: &str) -> f32 {
+    let (lower_a, lower_b) = (text_a.to_lowercase(), text_b.to_lowercase());
+
+    let tokens_a: Vec<&str> = REGEX_TOKENIZE
+      .split(&lower_a)
+      .filter(|token| !token.is_empty())
+      .collect();
+
+    let tokens_b: Vec<&str> = REGEX_TOKENIZE
+      .split(&lower_b)
+      .filter(|token| !token.is_empty())
+      .collect();
+
+    if tokens_a.is_empty() || tokens_b.is_empty() {
+      return 0.0;
+    }
+
+    let tokens_a_set = tokens_a.iter().copied().collect::<HashSet<&str>>();
+
+    let uniq_tokens_b = tokens_b
+      .iter()
+      .copied()
+      .filter(|token| !tokens_a_set.contains(token))
+      .collect::<Vec<&str>>();
+
+    if uniq_tokens_b.is_empty() {
+      return 1.0;
+    }
+
+    let (uniq_str, tokens_b_str) =
+      (uniq_tokens_b.join(" "), tokens_b.join(" "));
+
+    if tokens_b_str.is_empty() {
+      0.0
+    } else {
+      1.0 - (uniq_str.len() as f32 / tokens_b_str.len() as f32)
+    }
+  }
+
+  fn extract_author(value: Option<&Value>) -> Option<String> {
+    value.and_then(Self::extract_author_value)
+  }
+
+  fn extract_author_value(value: &Value) -> Option<String> {
+    match value {
+      Value::Object(map) => {
+        if let Some(name) = map.get("name").and_then(Value::as_str) {
+          return Self::sanitize_value(Some(name));
+        }
+
+        None
+      }
+      Value::Array(items) => {
+        let mut names = Vec::new();
+
+        for item in items {
+          if let Some(name) = Self::extract_author_value(item) {
+            names.push(name);
+          }
+        }
+
+        if names.is_empty() {
+          None
+        } else {
+          Some(names.join(", "))
+        }
+      }
+      Value::String(raw) => Self::sanitize_value(Some(raw)),
+      _ => None,
+    }
+  }
+}
+
+pub struct MetadataStage;
+
+impl Stage for MetadataStage {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    context.set_metadata(Self::collect_metadata(
+      context.document(),
+      context.options(),
+    ));
+
+    Ok(())
+  }
+}
+
+impl MetadataStage {
   const BYLINE_KEYS: [&'static str; 6] = [
     "dc:creator",
     "dcterm:creator",
@@ -148,7 +502,7 @@ impl MetadataStage {
     let json_ld = if options.disable_json_ld {
       JsonLdMetadata::default()
     } else {
-      Self::collect_json_ld_metadata(document)
+      JsonLd::new(document).collect_metadata()
     };
 
     let values = Self::collect_values(document);
@@ -223,47 +577,6 @@ impl MetadataStage {
     }
 
     values
-  }
-
-  fn collect_json_ld_metadata(document: Document<'_>) -> JsonLdMetadata {
-    let document_title = document.title();
-    let mut metadata = JsonLdMetadata::default();
-
-    for node in document.root().descendants() {
-      let Some(element) = ElementRef::wrap(node) else {
-        continue;
-      };
-
-      if element.value().name() != "script" {
-        continue;
-      }
-
-      let Some(script_type) = element.value().attr("type") else {
-        continue;
-      };
-
-      if !Self::is_json_ld_script_type(script_type) {
-        continue;
-      }
-
-      let raw = element.text().collect::<String>();
-
-      let Some(json_source) = Self::clean_json_ld_source(&raw) else {
-        continue;
-      };
-
-      Self::parse_json_ld_payload(
-        &json_source,
-        document_title.as_deref(),
-        &mut metadata,
-      );
-
-      if metadata.is_complete() {
-        break;
-      }
-    }
-
-    metadata
   }
 
   fn decode_html_entities(input: &str) -> String {
@@ -378,308 +691,6 @@ impl MetadataStage {
     }
 
     None
-  }
-
-  fn is_article_type(value: &Value) -> bool {
-    match value {
-      Value::String(typ) => Self::JSON_LD_ARTICLE_TYPES
-        .iter()
-        .any(|candidate| candidate == typ),
-      Value::Array(items) => items.iter().any(Self::is_article_type),
-      _ => false,
-    }
-  }
-
-  fn is_json_ld_script_type(value: &str) -> bool {
-    value
-      .split(';')
-      .next()
-      .map(|prefix| prefix.trim().eq_ignore_ascii_case("application/ld+json"))
-      .unwrap_or(false)
-  }
-
-  fn clean_json_ld_source(raw: &str) -> Option<String> {
-    let mut trimmed = raw.trim();
-
-    if trimmed.is_empty() {
-      return None;
-    }
-
-    if let Some(stripped) = trimmed.strip_prefix("<![CDATA[") {
-      trimmed = stripped;
-    }
-
-    if let Some(stripped) = trimmed.strip_suffix("]]>") {
-      trimmed = stripped;
-    }
-
-    let final_trimmed = trimmed.trim();
-
-    if final_trimmed.is_empty() {
-      None
-    } else {
-      Some(final_trimmed.to_string())
-    }
-  }
-
-  fn parse_json_ld_payload(
-    source: &str,
-    document_title: Option<&str>,
-    metadata: &mut JsonLdMetadata,
-  ) {
-    let stream = Deserializer::from_str(source).into_iter::<Value>();
-
-    for value in stream {
-      let Ok(value) = value else {
-        break;
-      };
-
-      Self::update_json_ld_metadata(&value, document_title, metadata);
-
-      if metadata.is_complete() {
-        break;
-      }
-    }
-  }
-
-  fn update_json_ld_metadata(
-    value: &Value,
-    document_title: Option<&str>,
-    metadata: &mut JsonLdMetadata,
-  ) {
-    match value {
-      Value::Object(map) => {
-        if let Some(graph) = map.get("@graph") {
-          Self::update_json_ld_metadata(graph, document_title, metadata);
-        }
-
-        let is_article = map.get("@type").is_some_and(Self::is_article_type);
-
-        if is_article {
-          let name = map
-            .get("name")
-            .and_then(Value::as_str)
-            .map(str::trim)
-            .filter(|value| !value.is_empty());
-
-          let headline = map
-            .get("headline")
-            .and_then(Value::as_str)
-            .map(str::trim)
-            .filter(|value| !value.is_empty());
-
-          metadata.merge_title(Self::sanitize_json_ld_value(
-            Self::select_json_ld_title(name, headline, document_title),
-          ));
-
-          metadata.merge_byline(Self::extract_author(map.get("author")));
-
-          metadata.merge_excerpt(Self::sanitize_json_ld_value(
-            map
-              .get("description")
-              .and_then(Value::as_str)
-              .map(str::trim)
-              .filter(|value| !value.is_empty()),
-          ));
-
-          if let Some(site_name_value) =
-            map.get("siteName").and_then(Value::as_str)
-          {
-            metadata.merge_site_name(Self::sanitize_json_ld_value(Some(
-              site_name_value,
-            )));
-          } else if let Some(publisher) = map.get("publisher") {
-            metadata.merge_site_name(Self::extract_publisher_name(publisher));
-          }
-
-          metadata.merge_published_time(Self::sanitize_json_ld_value(
-            map
-              .get("datePublished")
-              .and_then(Value::as_str)
-              .map(str::trim)
-              .filter(|value| !value.is_empty()),
-          ));
-        }
-
-        if metadata.is_complete() {
-          return;
-        }
-
-        if let Some(main_entity) = map.get("mainEntity") {
-          Self::update_json_ld_metadata(main_entity, document_title, metadata);
-        }
-
-        if metadata.is_complete() {
-          return;
-        }
-
-        if let Some(main_entity_page) = map.get("mainEntityOfPage") {
-          Self::update_json_ld_metadata(
-            main_entity_page,
-            document_title,
-            metadata,
-          );
-        }
-
-        if metadata.is_complete() {
-          return;
-        }
-
-        for nested_value in map.values() {
-          Self::update_json_ld_metadata(nested_value, document_title, metadata);
-
-          if metadata.is_complete() {
-            break;
-          }
-        }
-      }
-      Value::Array(items) => {
-        for item in items {
-          Self::update_json_ld_metadata(item, document_title, metadata);
-
-          if metadata.is_complete() {
-            break;
-          }
-        }
-      }
-      _ => {}
-    }
-  }
-
-  fn extract_publisher_name(value: &Value) -> Option<String> {
-    match value {
-      Value::Object(map) => {
-        if let Some(name) = map.get("name").and_then(Value::as_str) {
-          if let Some(sanitized) = Self::sanitize_json_ld_value(Some(name)) {
-            return Some(sanitized);
-          }
-        }
-
-        for nested in map.values() {
-          if let Some(result) = Self::extract_publisher_name(nested) {
-            return Some(result);
-          }
-        }
-
-        None
-      }
-      Value::Array(items) => {
-        items.iter().find_map(Self::extract_publisher_name)
-      }
-      _ => None,
-    }
-  }
-
-  fn sanitize_json_ld_value(value: Option<&str>) -> Option<String> {
-    let value = value?;
-    let trimmed = value.trim();
-
-    if trimmed.is_empty() {
-      None
-    } else {
-      Some(Self::decode_html_entities(trimmed))
-    }
-  }
-
-  fn select_json_ld_title<'a>(
-    name: Option<&'a str>,
-    headline: Option<&'a str>,
-    document_title: Option<&str>,
-  ) -> Option<&'a str> {
-    match (name, headline) {
-      (Some(name), Some(headline)) if name != headline => {
-        if let Some(doc_title) = document_title {
-          let name_matches = Self::text_similarity(name, doc_title) > 0.75;
-          let headline_matches =
-            Self::text_similarity(headline, doc_title) > 0.75;
-
-          if headline_matches && !name_matches {
-            Some(headline)
-          } else {
-            Some(name)
-          }
-        } else {
-          Some(name)
-        }
-      }
-      (Some(name), _) => Some(name),
-      (None, Some(headline)) => Some(headline),
-      _ => None,
-    }
-  }
-
-  fn text_similarity(text_a: &str, text_b: &str) -> f32 {
-    let lower_a = text_a.to_lowercase();
-    let lower_b = text_b.to_lowercase();
-
-    let tokens_a: Vec<&str> = REGEX_TOKENIZE
-      .split(&lower_a)
-      .filter(|token| !token.is_empty())
-      .collect();
-
-    let tokens_b: Vec<&str> = REGEX_TOKENIZE
-      .split(&lower_b)
-      .filter(|token| !token.is_empty())
-      .collect();
-
-    if tokens_a.is_empty() || tokens_b.is_empty() {
-      return 0.0;
-    }
-
-    let tokens_a_set: std::collections::HashSet<&str> =
-      tokens_a.iter().copied().collect();
-
-    let uniq_tokens_b: Vec<&str> = tokens_b
-      .iter()
-      .copied()
-      .filter(|token| !tokens_a_set.contains(token))
-      .collect();
-
-    if uniq_tokens_b.is_empty() {
-      return 1.0;
-    }
-
-    let uniq_str = uniq_tokens_b.join(" ");
-    let tokens_b_str = tokens_b.join(" ");
-
-    if tokens_b_str.is_empty() {
-      0.0
-    } else {
-      1.0 - (uniq_str.len() as f32 / tokens_b_str.len() as f32)
-    }
-  }
-
-  fn extract_author(value: Option<&Value>) -> Option<String> {
-    value.and_then(Self::extract_author_value)
-  }
-
-  fn extract_author_value(value: &Value) -> Option<String> {
-    match value {
-      Value::Object(map) => {
-        if let Some(name) = map.get("name").and_then(Value::as_str) {
-          return Self::sanitize_json_ld_value(Some(name));
-        }
-
-        None
-      }
-      Value::Array(items) => {
-        let mut names = Vec::new();
-
-        for item in items {
-          if let Some(name) = Self::extract_author_value(item) {
-            names.push(name);
-          }
-        }
-
-        if names.is_empty() {
-          None
-        } else {
-          Some(names.join(", "))
-        }
-      }
-      Value::String(raw) => Self::sanitize_json_ld_value(Some(raw)),
-      _ => None,
-    }
   }
 
   fn insert_meta_keys(
