@@ -17,6 +17,7 @@ mod remove_disallowed_nodes;
 mod remove_non_content_elements;
 mod remove_unlikely_candidates;
 mod replace_break_sequences;
+mod rewrite_center_tags;
 mod rewrite_font_tags;
 mod strip_presentational_attributes;
 
@@ -36,6 +37,7 @@ pub use {
   remove_non_content_elements::RemoveNonContentElementsStage,
   remove_unlikely_candidates::RemoveUnlikelyCandidatesStage,
   replace_break_sequences::ReplaceBreakSequencesStage,
+  rewrite_center_tags::RewriteCenterTagsStage,
   rewrite_font_tags::RewriteFontTagsStage,
   strip_presentational_attributes::StripPresentationalAttributesStage,
 };

@@ -37,6 +37,7 @@ impl<'a> Pipeline<'a> {
       Box::new(MetadataStage),
       Box::new(RemoveDisallowedNodesStage),
       Box::new(RewriteFontTagsStage),
+      Box::new(RewriteCenterTagsStage),
       Box::new(RemoveUnlikelyCandidatesStage),
       Box::new(ReplaceBreakSequencesStage),
       Box::new(NormalizeContainersStage),

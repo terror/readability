@@ -75,7 +75,7 @@ impl TestFixture {
   fn run(&self) {
     let mut readability = Readability::new(
       &self.source_html,
-      Some("http://fakehost/"),
+      Some("http://fakehost/test/page.html"),
       ReadabilityOptions::default(),
     )
     .expect("Failed to create Readability instance");
@@ -128,6 +128,7 @@ test!("002");
 test!("003-metadata-preferred");
 test!("004-metadata-space-separated-properties");
 test!("005-unescape-html-entities");
+test!("base-url");
 test!("basic-tags-cleaning");
 test!("comment-inside-script-parsing");
 test!("metadata-content-missing");
