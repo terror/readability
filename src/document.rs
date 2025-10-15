@@ -274,16 +274,17 @@ mod tests {
       </html>
       ",
     );
+
     let document = Document::new(&html);
 
     let body = document.body_element().expect("missing <body>");
 
-    let raw = document.collect_text(body.id(), false);
-    let normalized = document.collect_text(body.id(), true);
+    let (raw, normalized) = (
+      document.collect_text(body.id(), false),
+      document.collect_text(body.id(), true),
+    );
 
-    assert!(raw.contains('\n'));
-    assert!(raw.contains("   "));
-
+    assert_eq!(raw, "Hi   there General\n          Kenobi");
     assert_eq!(normalized, "Hi there General Kenobi");
   }
 
@@ -379,6 +380,7 @@ mod tests {
       </html>
       ",
     );
+
     let document = Document::new(&html);
 
     assert_eq!(
