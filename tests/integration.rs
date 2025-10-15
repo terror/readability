@@ -134,3 +134,4 @@ test!("rtl-2");
 test!("rtl-3");
 test!("rtl-4");
 test!("salon-1");
+test!("basic-tags-cleaning");

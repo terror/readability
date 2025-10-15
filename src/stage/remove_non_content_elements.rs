@@ -1,8 +1,8 @@
 use super::*;
 
 const NON_CONTENT_ELEMENTS: &[&str] = &[
-  "aside", "button", "fieldset", "footer", "form", "iframe", "input", "link",
-  "object", "select", "textarea",
+  "aside", "button", "embed", "fieldset", "footer", "form", "iframe", "input",
+  "link", "object", "select", "textarea",
 ];
 
 /// Removes elements that typically contain sharing controls or boilerplate.

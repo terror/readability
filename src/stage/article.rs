@@ -1,26 +1,40 @@
-//! Extracts the most relevant article fragment from a parsed document by
-//! scoring candidate nodes and assembling the best matching content.
-
 use super::*;
 
-/// HTML tags considered strong indicators of readable article content.
 const DEFAULT_TAGS_TO_SCORE: &[&str] =
   &["section", "h2", "h3", "h4", "h5", "h6", "p", "td", "pre"];
 
-/// Regular expression that captures comma-like punctuation in multiple locales.
 static REGEX_COMMAS: LazyLock<Regex> =
   LazyLock::new(|| Regex::new(r"[,،﹐︐﹑⹀⸲，]").unwrap());
 
+static REGEX_POSITIVE: LazyLock<Regex> = LazyLock::new(|| {
+  Regex::new(concat!(
+    r"(?i)article|body|content|entry|hentry|h-entry|main|page|pagination|",
+    r"post|text|blog|story"
+  ))
+  .unwrap()
+});
+
+static REGEX_NEGATIVE: LazyLock<Regex> = LazyLock::new(|| {
+  Regex::new(concat!(
+    r"(?i)-ad-|hidden|^hid$| hid$| hid |^hid |banner|combx|comment|com-|",
+    r"contact|footer|gdpr|masthead|media|meta|outbrain|promo|related|scroll|",
+    r"share|shoutbox|sidebar|skyscraper|sponsor|shopping|tags|widget"
+  ))
+  .unwrap()
+});
+
 /// Minimum amount of trimmed text a node must contain to be scored.
 const MIN_TEXT_LENGTH: usize = 25;
+
 /// Ratio of the top candidate score used to decide if a sibling is included.
 const SIBLING_SCORE_RATIO: f64 = 0.2;
+
 /// Absolute sibling score floor to prevent including very weak candidates.
 const MIN_SIBLING_SCORE: f64 = 10.0;
+
 /// Maximum depth when propagating scores to ancestor nodes.
 const MAX_PARENT_DEPTH: usize = 5;
 
-/// Article fragment paired with the language discovered in the `<body>` tag.
 struct ArticleContent {
   /// Language code taken from the document's `<body lang>` attribute.
   body_lang: Option<String>,
@@ -42,8 +56,6 @@ struct Candidate {
 pub struct ArticleStage;
 
 impl Stage for ArticleStage {
-  /// Runs the extraction pipeline and stores the resulting fragment and language
-  /// hints into the shared context.
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let ArticleContent {
       body_lang,
@@ -54,6 +66,32 @@ impl Stage for ArticleStage {
 
     context.set_body_lang(body_lang);
     context.set_article_dir(dir);
+
+    if context.metadata().excerpt.is_none() {
+      let selector = Selector::parse("p")
+        .map_err(|error| Error::InvalidSelector(error.to_string()))?;
+
+      let first_paragraph = fragment.html.select(&selector);
+
+      let excerpt = first_paragraph
+        .map(|element| {
+          element
+            .text()
+            .collect::<Vec<_>>()
+            .join(" ")
+            .trim()
+            .to_string()
+        })
+        .find(|text| !text.is_empty());
+
+      if let Some(excerpt) = excerpt {
+        context.set_metadata(Metadata {
+          excerpt: Some(excerpt),
+          ..context.metadata().clone()
+        });
+      }
+    }
+
     context.set_article_fragment(fragment);
 
     Ok(())
@@ -80,6 +118,32 @@ impl ArticleStage {
       f64::from(u32::try_from((text.len() / 100).min(3)).unwrap_or(3));
 
     Some(1.0 + comma_count + length_bonus)
+  }
+
+  fn class_weight(element: ElementRef<'_>) -> f64 {
+    let mut weight = 0.0;
+
+    if let Some(class_attr) = element.value().attr("class") {
+      if REGEX_NEGATIVE.is_match(class_attr) {
+        weight -= 25.0;
+      }
+
+      if REGEX_POSITIVE.is_match(class_attr) {
+        weight += 25.0;
+      }
+    }
+
+    if let Some(id_attr) = element.value().attr("id") {
+      if REGEX_NEGATIVE.is_match(id_attr) {
+        weight -= 25.0;
+      }
+
+      if REGEX_POSITIVE.is_match(id_attr) {
+        weight += 25.0;
+      }
+    }
+
+    weight
   }
 
   /// Assembles the HTML representing the main article by merging the top
@@ -121,9 +185,8 @@ impl ArticleStage {
   /// provided document.
   fn extract(document: Document<'_>) -> Option<ArticleContent> {
     let body = document.body_element()?;
-    let body_id = body.id();
 
-    let candidates = Self::score_candidates(document, body_id);
+    let candidates = Self::score_candidates(document, body.id());
 
     let Some(top_candidate_raw) = Self::find_top_candidate(&candidates) else {
       return Self::fallback_article(document, body);
@@ -139,7 +202,7 @@ impl ArticleStage {
       };
 
     Some(ArticleContent {
-      body_lang: Self::extract_body_lang(document, body_id),
+      body_lang: Self::extract_body_lang(document, body.id()),
       dir: Self::find_article_dir(document, top_candidate),
       fragment: ArticleFragment::from(article_html.as_str()),
     })
@@ -220,6 +283,15 @@ impl ArticleStage {
       .map(|c| c.node)
   }
 
+  fn initial_score(document: Document<'_>, node_id: NodeId) -> f64 {
+    document
+      .node(node_id)
+      .and_then(ElementRef::wrap)
+      .map_or(0.0, |element| {
+        Self::node_base_score(element) + Self::class_weight(element)
+      })
+  }
+
   /// Checks whether a paragraph contains enough natural language text and low
   /// link density to be incorporated into the article.
   fn is_valid_paragraph(document: Document<'_>, node_id: NodeId) -> bool {
@@ -232,6 +304,16 @@ impl ArticleStage {
 
     (len > 80 && link_density < 0.25)
       || (len > 0 && len <= 80 && link_density == 0.0 && text.contains('.'))
+  }
+
+  fn node_base_score(element: ElementRef<'_>) -> f64 {
+    match element.value().name() {
+      "div" => 5.0,
+      "pre" | "td" | "blockquote" => 3.0,
+      "address" | "ol" | "ul" | "dl" | "dd" | "dt" | "li" | "form" => -3.0,
+      "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "th" => -5.0,
+      _ => 0.0,
+    }
   }
 
   fn node_dir(node: NodeRef<'_, Node>) -> Option<String> {
@@ -341,7 +423,7 @@ impl ArticleStage {
       return HashMap::new();
     };
 
-    body
+    let mut candidates = body
       .descendants()
       .filter_map(ElementRef::wrap)
       .filter(|el| DEFAULT_TAGS_TO_SCORE.contains(&el.value().name()))
@@ -354,13 +436,20 @@ impl ArticleStage {
       .fold(HashMap::new(), |mut acc, (node_id, score)| {
         acc
           .entry(node_id)
-          .and_modify(|c| c.score += score)
-          .or_insert(Candidate {
+          .and_modify(|c: &mut Candidate| c.score += score)
+          .or_insert_with(|| Candidate {
             node: node_id,
-            score,
+            score: score + Self::initial_score(document, node_id),
           });
         acc
-      })
+      });
+
+    for candidate in candidates.values_mut() {
+      let link_density = document.link_density(candidate.node);
+      candidate.score *= 1.0 - link_density;
+    }
+
+    candidates
   }
 
   fn serialize_children(node: NodeRef<'_, Node>) -> Option<String> {
