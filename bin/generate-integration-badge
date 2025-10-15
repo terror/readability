@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+implemented=$(grep -c '^test!(' tests/integration.rs || echo "0")
+
+total=$(find submodules/readability/test/test-pages -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+
+percentage=$((implemented * 100 / total))
+
+echo "[![integration](https://img.shields.io/badge/integration-${implemented}%2F${total}_(${percentage}%25)-orange)](https://github.com/terror/readability/blob/master/tests/integration.rs)"
