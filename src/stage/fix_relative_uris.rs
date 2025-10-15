@@ -21,6 +21,13 @@ impl Stage for FixRelativeUrisStage<'_> {
 }
 
 impl<'a> FixRelativeUrisStage<'a> {
+  fn create_element(tag: &str) -> Node {
+    Node::Element(Element::new(
+      QualName::new(None, ns!(html), LocalName::from(tag)),
+      Vec::new(),
+    ))
+  }
+
   fn find_attribute_index(element: &Element, name: &str) -> Option<usize> {
     element
       .attrs
@@ -51,8 +58,12 @@ impl<'a> FixRelativeUrisStage<'a> {
       if let Some(index) = Self::find_attribute_index(element, "href") {
         let href_value = element.attrs[index].1.to_string();
 
-        if !href_value.starts_with('#') && !Self::is_javascript_uri(&href_value)
-        {
+        if Self::is_javascript_uri(&href_value) {
+          Self::replace_javascript_link(fragment, node_id);
+          continue;
+        }
+
+        if !href_value.starts_with('#') {
           let resolved = Self::resolve_uri(base_url, &href_value);
           element.attrs[index].1.clear();
           element.attrs[index].1.push_slice(&resolved);
@@ -91,6 +102,58 @@ impl<'a> FixRelativeUrisStage<'a> {
 
   pub fn new(base_url: Option<&'a Url>) -> Self {
     Self { base_url }
+  }
+
+  fn replace_javascript_link(fragment: &mut ArticleFragment, link_id: NodeId) {
+    let (child_ids, single_text_child) = {
+      let Some(link_node) = fragment.html.tree.get(link_id) else {
+        return;
+      };
+
+      let child_ids = link_node
+        .children()
+        .map(|child| child.id())
+        .collect::<Vec<_>>();
+
+      let is_single_text = child_ids.len() == 1
+        && link_node
+          .first_child()
+          .is_some_and(|child| matches!(child.value(), Node::Text(_)));
+
+      (child_ids, is_single_text)
+    };
+
+    if single_text_child {
+      if let Some(text_id) = child_ids.first()
+        && let Some(mut link) = fragment.html.tree.get_mut(link_id)
+      {
+        link.insert_id_before(*text_id);
+      }
+
+      if let Some(mut link) = fragment.html.tree.get_mut(link_id) {
+        link.detach();
+      }
+
+      return;
+    }
+
+    let span_id = {
+      let Some(mut link) = fragment.html.tree.get_mut(link_id) else {
+        return;
+      };
+
+      link.insert_before(Self::create_element("span")).id()
+    };
+
+    for child_id in child_ids {
+      if let Some(mut span) = fragment.html.tree.get_mut(span_id) {
+        span.append_id(child_id);
+      }
+    }
+
+    if let Some(mut link) = fragment.html.tree.get_mut(link_id) {
+      link.detach();
+    }
   }
 
   fn resolve_uri(base_url: &Url, value: &str) -> String {
