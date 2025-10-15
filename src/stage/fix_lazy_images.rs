@@ -35,8 +35,7 @@ impl FixLazyImagesStage {
   fn class_contains_lazy(element: &Element) -> bool {
     element
       .attr("class")
-      .map(|class| class.to_ascii_lowercase().contains("lazy"))
-      .unwrap_or(false)
+      .is_some_and(|class| class.to_ascii_lowercase().contains("lazy"))
   }
 
   fn collect_lazy_sources(element: &Element) -> Vec<(String, String)> {
@@ -111,18 +110,14 @@ impl FixLazyImagesStage {
   fn has_src(element: &Element) -> bool {
     element
       .attr("src")
-      .map(|value| !value.trim().is_empty())
-      .unwrap_or(false)
+      .is_some_and(|value| !value.trim().is_empty())
   }
 
   fn has_srcset(element: &Element) -> bool {
-    element
-      .attr("srcset")
-      .map(|value| {
-        let trimmed = value.trim();
-        !trimmed.is_empty() && !trimmed.eq_ignore_ascii_case("null")
-      })
-      .unwrap_or(false)
+    element.attr("srcset").is_some_and(|value| {
+      let trimmed = value.trim();
+      !trimmed.is_empty() && !trimmed.eq_ignore_ascii_case("null")
+    })
   }
 
   fn process_node(fragment: &mut ArticleFragment, node_id: NodeId) {
@@ -190,18 +185,18 @@ impl FixLazyImagesStage {
       }
     }
 
-    if needs_child_image {
-      if let Some(mut figure_node) = fragment.html.tree.get_mut(node_id) {
-        let mut img_node = Self::create_element("img");
+    if needs_child_image
+      && let Some(mut figure_node) = fragment.html.tree.get_mut(node_id)
+    {
+      let mut img_node = Self::create_element("img");
 
-        if let Node::Element(ref mut img_element) = img_node {
-          for (attr, value) in &instructions {
-            Self::set_attribute(img_element, attr, value);
-          }
+      if let Node::Element(ref mut img_element) = img_node {
+        for (attr, value) in &instructions {
+          Self::set_attribute(img_element, attr, value);
         }
-
-        figure_node.append(img_node);
       }
+
+      figure_node.append(img_node);
     }
   }
 
@@ -229,15 +224,14 @@ impl FixLazyImagesStage {
         .iter()
         .enumerate()
         .any(|(attr_index, (_, value))| {
-          attr_index != index
-            && REGEX_IMAGE_EXTENSION.is_match(&value.to_string())
+          attr_index != index && REGEX_IMAGE_EXTENSION.is_match(value.as_ref())
         });
 
     if !src_could_be_removed {
       return;
     }
 
-    let prefix_len = captures.get(0).map(|m| m.end()).unwrap_or(0);
+    let prefix_len = captures.get(0).map_or(0, |m| m.end());
     let b64_length = src_value.len().saturating_sub(prefix_len);
 
     if b64_length < 133 {
