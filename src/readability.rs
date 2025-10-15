@@ -66,21 +66,6 @@ impl Readability {
       .trim()
       .to_string();
 
-    let first_paragraph = fragment
-      .select(
-        &Selector::parse("p")
-          .map_err(|error| Error::InvalidSelector(error.to_string()))?,
-      )
-      .map(|element| {
-        element
-          .text()
-          .collect::<Vec<_>>()
-          .join(" ")
-          .trim()
-          .to_string()
-      })
-      .find(|text| !text.is_empty());
-
     Ok(Article {
       title: context.metadata().title.clone().unwrap_or(String::new()),
       byline: context.metadata().byline.clone(),
@@ -92,7 +77,7 @@ impl Readability {
       content: markup,
       text_content: text_content.clone(),
       length: text_content.chars().count(),
-      excerpt: context.metadata().excerpt.clone().or(first_paragraph),
+      excerpt: context.metadata().excerpt.clone(),
       site_name: context.metadata().site_name.clone(),
       published_time: context.metadata().published_time.clone(),
     })
