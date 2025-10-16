@@ -117,6 +117,7 @@ test!("base-url");
 test!("basic-tags-cleaning");
 test!("clean-links");
 test!("comment-inside-script-parsing");
+test!("guardian-1");
 test!("js-link-replacement");
 test!("lazy-image-3");
 test!("metadata-content-missing");
