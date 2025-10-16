@@ -333,6 +333,10 @@ impl ArticleStage {
       })
   }
 
+  fn is_body_node(node: &Node) -> bool {
+    matches!(node, Node::Element(element) if element.name() == "body")
+  }
+
   /// Checks whether a paragraph contains enough natural language text and low
   /// link density to be incorporated into the article.
   fn is_valid_paragraph(document: Document<'_>, node_id: NodeId) -> bool {
@@ -345,6 +349,18 @@ impl ArticleStage {
 
     (len > 80 && link_density < 0.25)
       || (len > 0 && len <= 80 && link_density == 0.0 && text.contains('.'))
+  }
+
+  fn node_ancestors(document: Document<'_>, node_id: NodeId) -> Vec<NodeId> {
+    let mut ancestors = Vec::new();
+    let mut current = document.node(node_id).and_then(|node| node.parent());
+
+    while let Some(node) = current {
+      ancestors.push(node.id());
+      current = node.parent();
+    }
+
+    ancestors
   }
 
   fn node_base_score(element: ElementRef<'_>) -> f64 {
@@ -362,144 +378,6 @@ impl ArticleStage {
       Node::Element(element) => element.attr("dir").map(str::to_string),
       _ => None,
     }
-  }
-
-  fn is_body_node(node: &Node) -> bool {
-    matches!(node, Node::Element(element) if element.name() == "body")
-  }
-
-  fn node_ancestors(document: Document<'_>, node_id: NodeId) -> Vec<NodeId> {
-    let mut ancestors = Vec::new();
-    let mut current = document.node(node_id).and_then(|node| node.parent());
-
-    while let Some(node) = current {
-      ancestors.push(node.id());
-      current = node.parent();
-    }
-
-    ancestors
-  }
-
-  fn select_top_candidate(
-    document: Document<'_>,
-    candidates: &HashMap<NodeId, Candidate>,
-    top_candidates: &[NodeId],
-    body_id: NodeId,
-  ) -> Option<NodeId> {
-    let mut top_candidate = *top_candidates.first()?;
-
-    if top_candidate == body_id {
-      return Some(top_candidate);
-    }
-
-    let top_score = candidates.get(&top_candidate)?.score;
-
-    let alternative_ancestors = top_candidates
-      .iter()
-      .skip(1)
-      .filter_map(|candidate_id| {
-        candidates.get(candidate_id).and_then(|candidate| {
-          if candidate.score / top_score >= TOP_CANDIDATE_SCORE_RATIO {
-            Some(Self::node_ancestors(document, *candidate_id))
-          } else {
-            None
-          }
-        })
-      })
-      .collect::<Vec<_>>();
-
-    if alternative_ancestors.len() >= MINIMUM_TOP_CANDIDATE_SUPPORT {
-      let mut parent =
-        document.node(top_candidate).and_then(|node| node.parent());
-
-      while let Some(current) = parent {
-        if Self::is_body_node(current.value()) {
-          break;
-        }
-
-        let current_id = current.id();
-
-        let support = alternative_ancestors
-          .iter()
-          .filter(|ancestors| ancestors.contains(&current_id))
-          .count();
-
-        if support >= MINIMUM_TOP_CANDIDATE_SUPPORT {
-          top_candidate = current_id;
-          break;
-        }
-
-        parent = current.parent();
-      }
-    }
-
-    let mut parent =
-      document.node(top_candidate).and_then(|node| node.parent());
-    let mut last_score = top_score;
-    let score_threshold = top_score / 3.0;
-
-    while let Some(current) = parent {
-      if Self::is_body_node(current.value()) {
-        break;
-      }
-
-      let parent_id = current.id();
-
-      let Some(parent_candidate) = candidates.get(&parent_id) else {
-        parent = current.parent();
-        continue;
-      };
-
-      let parent_score = parent_candidate.score;
-
-      if parent_score < score_threshold {
-        break;
-      }
-
-      if parent_score > last_score {
-        top_candidate = parent_id;
-        break;
-      }
-
-      last_score = parent_score;
-      parent = current.parent();
-    }
-
-    if let Some(node) = document.node(top_candidate)
-      && let Some(element) = ElementRef::wrap(node)
-      && element.value().name() == "article"
-      && let Some(parent) = node.parent()
-      && let Some(parent_element) = ElementRef::wrap(parent)
-    {
-      let parent_score = candidates
-        .get(&parent.id())
-        .map_or(0.0, |candidate| candidate.score);
-
-      if parent_score >= MIN_SIBLING_SCORE
-        && matches!(parent_element.value().name(), "div" | "section" | "main")
-      {
-        top_candidate = parent.id();
-      }
-    }
-
-    Some(top_candidate)
-  }
-
-  fn top_candidates(candidates: &HashMap<NodeId, Candidate>) -> Vec<NodeId> {
-    let mut ranked = candidates
-      .values()
-      .map(|candidate| (candidate.node, candidate.score))
-      .collect::<Vec<_>>();
-
-    ranked.sort_by(|a, b| {
-      b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal)
-    });
-
-    ranked
-      .into_iter()
-      .take(DEFAULT_TOP_CANDIDATES)
-      .map(|(node, _)| node)
-      .collect()
   }
 
   /// Produces HTML for a sibling node when it meets the inclusion heuristics.
@@ -635,6 +513,113 @@ impl ArticleStage {
     candidates
   }
 
+  fn select_top_candidate(
+    document: Document<'_>,
+    candidates: &HashMap<NodeId, Candidate>,
+    top_candidates: &[NodeId],
+    body_id: NodeId,
+  ) -> Option<NodeId> {
+    let mut top_candidate = *top_candidates.first()?;
+
+    if top_candidate == body_id {
+      return Some(top_candidate);
+    }
+
+    let top_score = candidates.get(&top_candidate)?.score;
+
+    let alternative_ancestors = top_candidates
+      .iter()
+      .skip(1)
+      .filter_map(|candidate_id| {
+        candidates.get(candidate_id).and_then(|candidate| {
+          if candidate.score / top_score >= TOP_CANDIDATE_SCORE_RATIO {
+            Some(Self::node_ancestors(document, *candidate_id))
+          } else {
+            None
+          }
+        })
+      })
+      .collect::<Vec<_>>();
+
+    if alternative_ancestors.len() >= MINIMUM_TOP_CANDIDATE_SUPPORT {
+      let mut parent =
+        document.node(top_candidate).and_then(|node| node.parent());
+
+      while let Some(current) = parent {
+        if Self::is_body_node(current.value()) {
+          break;
+        }
+
+        let current_id = current.id();
+
+        let support = alternative_ancestors
+          .iter()
+          .filter(|ancestors| ancestors.contains(&current_id))
+          .count();
+
+        if support >= MINIMUM_TOP_CANDIDATE_SUPPORT {
+          top_candidate = current_id;
+          break;
+        }
+
+        parent = current.parent();
+      }
+    }
+
+    let mut parent =
+      document.node(top_candidate).and_then(|node| node.parent());
+
+    let mut last_score = top_score;
+
+    let score_threshold = top_score / 3.0;
+
+    while let Some(current) = parent {
+      if Self::is_body_node(current.value()) {
+        break;
+      }
+
+      let parent_id = current.id();
+
+      let Some(parent_candidate) = candidates.get(&parent_id) else {
+        parent = current.parent();
+        continue;
+      };
+
+      let parent_score = parent_candidate.score;
+
+      if parent_score < score_threshold {
+        break;
+      }
+
+      if parent_score > last_score {
+        top_candidate = parent_id;
+        break;
+      }
+
+      last_score = parent_score;
+      parent = current.parent();
+    }
+
+    if let Some(node) = document.node(top_candidate)
+      && let Some(element) = ElementRef::wrap(node)
+      && element.value().name() == "article"
+      && let Some(parent) = node.parent()
+      && let Some(parent_element) = ElementRef::wrap(parent)
+    {
+      let parent_score = candidates
+        .get(&parent.id())
+        .map_or(0.0, |candidate| candidate.score);
+
+      if parent_score >= MIN_SIBLING_SCORE
+        && matches!(parent_element.value().name(), "div" | "section" | "main")
+      {
+        top_candidate = parent.id();
+      }
+    }
+
+    Some(top_candidate)
+  }
+
   /// Determines whether a sibling element should be merged into the article
   /// output based on scoring and structural heuristics.
   fn should_include_sibling(
@@ -654,13 +639,12 @@ impl ArticleStage {
     let mut candidate_score =
       candidates.get(&child_id).map_or(0.0, |c| c.score);
 
-    if candidate_score > 0.0 {
-      if let Some(top_class) = top_class.filter(|cls| !cls.is_empty())
-        && let Some(sibling_class) = element.value().attr("class")
-        && sibling_class == top_class
-      {
-        candidate_score += top_score * CLASS_BONUS_RATIO;
-      }
+    if candidate_score > 0.0
+      && let Some(top_class) = top_class.filter(|cls| !cls.is_empty())
+      && let Some(sibling_class) = element.value().attr("class")
+      && sibling_class == top_class
+    {
+      candidate_score += top_score * CLASS_BONUS_RATIO;
     }
 
     if candidate_score >= threshold {
@@ -672,5 +656,22 @@ impl ArticleStage {
     } else {
       false
     }
+  }
+
+  fn top_candidates(candidates: &HashMap<NodeId, Candidate>) -> Vec<NodeId> {
+    let mut ranked = candidates
+      .values()
+      .map(|candidate| (candidate.node, candidate.score))
+      .collect::<Vec<_>>();
+
+    ranked.sort_by(|a, b| {
+      b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal)
+    });
+
+    ranked
+      .into_iter()
+      .take(DEFAULT_TOP_CANDIDATES)
+      .map(|(node, _)| node)
+      .collect()
   }
 }

@@ -33,9 +33,9 @@ use {
     NormalizeArticleHeadingsStage, NormalizeArticleRootStage,
     NormalizeContainersStage, RemoveCommentSectionsStage,
     RemoveDisallowedNodesStage, RemoveNonContentElementsStage,
-    RemoveUnlikelyCandidatesStage,
-    ReplaceBreakSequencesStage, RewriteCenterTagsStage, RewriteFontTagsStage,
-    Stage, StripPresentationalAttributesStage,
+    RemoveUnlikelyCandidatesStage, ReplaceBreakSequencesStage,
+    RewriteCenterTagsStage, RewriteFontTagsStage, Stage,
+    StripPresentationalAttributesStage,
   },
   std::{
     collections::{HashMap, HashSet},

@@ -44,14 +44,12 @@ impl Stage for RemoveCommentSectionsStage {
 
       if let Some(role) = element.attr("role")
         && matches!(role, "complementary" | "feed" | "navigation")
-      {
-        if element
+        && element
           .attr("aria-label")
           .into_iter()
           .any(|value| REGEX_COMMENTS.is_match(value))
-        {
-          to_remove.push(node.id());
-        }
+      {
+        to_remove.push(node.id());
       }
     }
 

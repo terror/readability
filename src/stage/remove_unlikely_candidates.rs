@@ -29,6 +29,33 @@ impl Stage for RemoveUnlikelyCandidatesStage {
 }
 
 impl RemoveUnlikelyCandidatesStage {
+  fn contains_significant_content(node: NodeRef<'_, Node>) -> bool {
+    let text_length = Self::node_text_length(node);
+
+    if text_length >= MIN_CONTENT_TEXT_LENGTH {
+      return true;
+    }
+
+    let paragraph_count = Self::count_descendants_with_tag(node, &["p"]);
+
+    paragraph_count >= MIN_PARAGRAPH_THRESHOLD
+  }
+
+  fn count_descendants_with_tag(
+    node: NodeRef<'_, Node>,
+    tags: &[&str],
+  ) -> usize {
+    node
+      .descendants()
+      .filter(|descendant| {
+        matches!(
+          descendant.value(),
+          Node::Element(element) if tags.contains(&element.name())
+        )
+      })
+      .count()
+  }
+
   fn has_ancestor_tag(node: NodeRef<'_, Node>, tags: &[&str]) -> bool {
     let mut parent = node.parent();
 
@@ -83,6 +110,19 @@ impl RemoveUnlikelyCandidatesStage {
       element.name(),
       "div" | "section" | "header" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6"
     )
+  }
+
+  fn node_text_length(node: NodeRef<'_, Node>) -> usize {
+    node
+      .descendants()
+      .filter_map(|descendant| {
+        if let Node::Text(text) = descendant.value() {
+          Some(text.trim().len())
+        } else {
+          None
+        }
+      })
+      .sum()
   }
 
   fn remove_unlikely_candidates(html: &mut Html) {
@@ -152,45 +192,5 @@ impl RemoveUnlikelyCandidatesStage {
         node.detach();
       }
     }
-  }
-
-  fn contains_significant_content(node: NodeRef<'_, Node>) -> bool {
-    let text_length = Self::node_text_length(node);
-
-    if text_length >= MIN_CONTENT_TEXT_LENGTH {
-      return true;
-    }
-
-    let paragraph_count = Self::count_descendants_with_tag(node, &["p"]);
-
-    paragraph_count >= MIN_PARAGRAPH_THRESHOLD
-  }
-
-  fn count_descendants_with_tag(
-    node: NodeRef<'_, Node>,
-    tags: &[&str],
-  ) -> usize {
-    node
-      .descendants()
-      .filter(|descendant| {
-        matches!(
-          descendant.value(),
-          Node::Element(element) if tags.contains(&element.name())
-        )
-      })
-      .count()
-  }
-
-  fn node_text_length(node: NodeRef<'_, Node>) -> usize {
-    node
-      .descendants()
-      .filter_map(|descendant| {
-        if let Node::Text(text) = descendant.value() {
-          Some(text.trim().len())
-        } else {
-          None
-        }
-      })
-      .sum()
   }
 }
