@@ -2,9 +2,16 @@
 
 set -euo pipefail
 
-implemented=$(grep -c '^test!(' tests/integration.rs || echo "0")
+# Count individual tests: test!() counts as 2 (metadata + output), others count as 1
+full_tests=$(grep -c '^test!(' tests/integration.rs || echo "0")
+metadata_tests=$(grep -c '^test_metadata!(' tests/integration.rs || echo "0")
+output_tests=$(grep -c '^test_output!(' tests/integration.rs || echo "0")
 
+implemented=$((full_tests * 2 + metadata_tests + output_tests))
+
+# Total is number of fixtures * 2 (metadata + output for each)
 total=$(find submodules/readability/test/test-pages -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
+total=$((total * 2))
 
 percentage=$((implemented * 100 / total))
 
