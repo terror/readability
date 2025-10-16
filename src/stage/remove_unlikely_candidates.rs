@@ -15,6 +15,9 @@ static REGEX_OK_MAYBE_CANDIDATE: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
+const MIN_CONTENT_TEXT_LENGTH: usize = 200;
+const MIN_PARAGRAPH_THRESHOLD: usize = 2;
+
 pub struct RemoveUnlikelyCandidatesStage;
 
 impl Stage for RemoveUnlikelyCandidatesStage {
@@ -26,6 +29,33 @@ impl Stage for RemoveUnlikelyCandidatesStage {
 }
 
 impl RemoveUnlikelyCandidatesStage {
+  fn contains_significant_content(node: NodeRef<'_, Node>) -> bool {
+    let text_length = Self::node_text_length(node);
+
+    if text_length >= MIN_CONTENT_TEXT_LENGTH {
+      return true;
+    }
+
+    let paragraph_count = Self::count_descendants_with_tag(node, &["p"]);
+
+    paragraph_count >= MIN_PARAGRAPH_THRESHOLD
+  }
+
+  fn count_descendants_with_tag(
+    node: NodeRef<'_, Node>,
+    tags: &[&str],
+  ) -> usize {
+    node
+      .descendants()
+      .filter(|descendant| {
+        matches!(
+          descendant.value(),
+          Node::Element(element) if tags.contains(&element.name())
+        )
+      })
+      .count()
+  }
+
   fn has_ancestor_tag(node: NodeRef<'_, Node>, tags: &[&str]) -> bool {
     let mut parent = node.parent();
 
@@ -82,6 +112,19 @@ impl RemoveUnlikelyCandidatesStage {
     )
   }
 
+  fn node_text_length(node: NodeRef<'_, Node>) -> usize {
+    node
+      .descendants()
+      .filter_map(|descendant| {
+        if let Node::Text(text) = descendant.value() {
+          Some(text.trim().len())
+        } else {
+          None
+        }
+      })
+      .sum()
+  }
+
   fn remove_unlikely_candidates(html: &mut Html) {
     let mut to_remove = Vec::new();
 
@@ -124,11 +167,17 @@ impl RemoveUnlikelyCandidatesStage {
 
       let match_string = match_parts.join(" ").trim().to_string();
 
-      if !match_string.is_empty()
-        && REGEX_UNLIKELY_CANDIDATES.is_match(&match_string)
+      let matches_unlikely = !match_string.is_empty()
+        && REGEX_UNLIKELY_CANDIDATES.is_match(&match_string);
+
+      if matches_unlikely
         && !REGEX_OK_MAYBE_CANDIDATE.is_match(&match_string)
         && !Self::has_ancestor_tag(node, &["table", "code"])
       {
+        if Self::contains_significant_content(node) {
+          continue;
+        }
+
         to_remove.push(node.id());
         continue;
       }
