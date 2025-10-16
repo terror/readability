@@ -6,14 +6,32 @@ use {
   std::{fs, path::PathBuf},
 };
 
-macro_rules! test {
+macro_rules! test_metadata {
   ($name:expr) => {
     paste::paste! {
       #[test]
-      fn [<test_ $name>]() {
-        TestFixture::load($name).run();
+      fn [<test_metadata_ $name>]() {
+        TestFixture::load($name).test_metadata();
       }
     }
+  };
+}
+
+macro_rules! test_output {
+  ($name:expr) => {
+    paste::paste! {
+      #[test]
+      fn [<test_output_ $name>]() {
+        TestFixture::load($name).test_output();
+      }
+    }
+  };
+}
+
+macro_rules! test {
+  ($name:expr) => {
+    test_metadata!($name);
+    test_output!($name);
   };
 }
 
@@ -64,7 +82,7 @@ impl TestFixture {
     }
   }
 
-  fn run(&self) {
+  fn parse_article(&self) -> readability::Article {
     let mut readability = Readability::new(
       &self.source_html,
       Some("http://fakehost/test/page.html"),
@@ -72,7 +90,11 @@ impl TestFixture {
     )
     .unwrap();
 
-    let article = readability.parse().expect("Failed to parse article");
+    readability.parse().expect("Failed to parse article")
+  }
+
+  fn test_metadata(&self) {
+    let article = self.parse_article();
 
     assert_eq!(
       article.title, self.expected_metadata.title,
@@ -102,8 +124,13 @@ impl TestFixture {
       article.published_time, self.expected_metadata.published_time,
       "Published time mismatch"
     );
+  }
 
-    assert_html_eq!(article.content, self.expected_html.to_string());
+  fn test_output(&self) {
+    assert_html_eq!(
+      self.parse_article().content,
+      self.expected_html.to_string()
+    );
   }
 }
 
