@@ -1,9 +1,9 @@
 use {
+  assert_html_eq::assert_html_eq,
   pretty_assertions::assert_eq,
   readability::{Readability, ReadabilityOptions},
-  scraper::Html,
   serde::{Deserialize, Serialize},
-  std::{fs, panic, path::PathBuf},
+  std::{fs, path::PathBuf},
 };
 
 macro_rules! test {
@@ -103,100 +103,8 @@ impl TestFixture {
       "Published time mismatch"
     );
 
-    let result = panic::catch_unwind(panic::AssertUnwindSafe(|| {
-      assert_html_eq(
-        &Html::parse_document(&self.expected_html),
-        &Html::parse_document(&article.content),
-      );
-    }));
-
-    if result.is_err() {
-      eprintln!("Raw HTML Diff:");
-      assert_eq!(article.content, self.expected_html, "HTML content mismatch");
-    }
+    assert_html_eq!(article.content, self.expected_html.to_string());
   }
-}
-
-fn assert_html_eq(actual: &Html, expected: &Html) {
-  use {
-    ego_tree::NodeRef,
-    scraper::{ElementRef, Node},
-  };
-
-  fn compare_elements(elem1: &ElementRef, elem2: &ElementRef) {
-    assert_eq!(
-      elem1.value().name(),
-      elem2.value().name(),
-      "Tag name mismatch"
-    );
-
-    let mut attrs1 = elem1.value().attrs().collect::<Vec<_>>();
-    let mut attrs2 = elem2.value().attrs().collect::<Vec<_>>();
-
-    attrs1.sort_by_key(|a| a.0);
-    attrs2.sort_by_key(|a| a.0);
-
-    assert_eq!(
-      attrs1,
-      attrs2,
-      "Attributes mismatch on <{}>",
-      elem1.value().name()
-    );
-
-    let children1 = elem1
-      .children()
-      .filter(|n| !is_whitespace_text(n))
-      .collect::<Vec<_>>();
-
-    let children2 = elem2
-      .children()
-      .filter(|n| !is_whitespace_text(n))
-      .collect::<Vec<_>>();
-
-    assert_eq!(
-      children1.len(),
-      children2.len(),
-      "Different number of children in <{}>",
-      elem1.value().name()
-    );
-
-    for (child1, child2) in children1.iter().zip(children2.iter()) {
-      match (child1.value(), child2.value()) {
-        (Node::Element(_), Node::Element(_)) => {
-          compare_elements(
-            &ElementRef::wrap(*child1).unwrap(),
-            &ElementRef::wrap(*child2).unwrap(),
-          );
-        }
-        (Node::Text(t1), Node::Text(t2)) => {
-          assert_eq!(
-            normalize_whitespace(t1),
-            normalize_whitespace(t2),
-            "Text content mismatch in <{}>",
-            elem1.value().name()
-          );
-        }
-        _ => {
-          panic!(
-            "Node type mismatch in <{}>: {:?} vs {:?}",
-            elem1.value().name(),
-            child1.value(),
-            child2.value()
-          );
-        }
-      }
-    }
-  }
-
-  fn is_whitespace_text(node: &NodeRef<Node>) -> bool {
-    matches!(node.value(), Node::Text(t) if t.trim().is_empty())
-  }
-
-  fn normalize_whitespace(text: &str) -> String {
-    text.split_whitespace().collect::<Vec<_>>().join(" ")
-  }
-
-  compare_elements(&actual.root_element(), &expected.root_element());
 }
 
 test!("001");
