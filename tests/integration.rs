@@ -6,14 +6,32 @@ use {
   std::{fs, path::PathBuf},
 };
 
-macro_rules! test {
+macro_rules! test_metadata {
   ($name:expr) => {
     paste::paste! {
       #[test]
-      fn [<test_ $name>]() {
-        TestFixture::load($name).run();
+      fn [<test_metadata_ $name>]() {
+        TestFixture::load($name).test_metadata();
       }
     }
+  };
+}
+
+macro_rules! test_output {
+  ($name:expr) => {
+    paste::paste! {
+      #[test]
+      fn [<test_output_ $name>]() {
+        TestFixture::load($name).test_output();
+      }
+    }
+  };
+}
+
+macro_rules! test {
+  ($name:expr) => {
+    test_metadata!($name);
+    test_output!($name);
   };
 }
 
@@ -64,7 +82,7 @@ impl TestFixture {
     }
   }
 
-  fn run(&self) {
+  fn parse_article(&self) -> readability::Article {
     let mut readability = Readability::new(
       &self.source_html,
       Some("http://fakehost/test/page.html"),
@@ -72,7 +90,11 @@ impl TestFixture {
     )
     .unwrap();
 
-    let article = readability.parse().expect("Failed to parse article");
+    readability.parse().expect("Failed to parse article")
+  }
+
+  fn test_metadata(&self) {
+    let article = self.parse_article();
 
     assert_eq!(
       article.title, self.expected_metadata.title,
@@ -102,8 +124,13 @@ impl TestFixture {
       article.published_time, self.expected_metadata.published_time,
       "Published time mismatch"
     );
+  }
 
-    assert_html_eq!(article.content, self.expected_html.to_string());
+  fn test_output(&self) {
+    assert_html_eq!(
+      self.parse_article().content,
+      self.expected_html.to_string()
+    );
   }
 }
 
@@ -132,3 +159,78 @@ test!("salon-1");
 test!("style-tags-removal");
 test!("title-and-h1-discrepancy");
 test!("title-en-dash");
+
+test_metadata!("aktualne");
+test_metadata!("archive-of-our-own");
+test_metadata!("ars-1");
+test_metadata!("article-author-tag");
+test_metadata!("base-url-base-element");
+test_metadata!("base-url-base-element-relative");
+test_metadata!("bug-1255978");
+test_metadata!("citylab-1");
+test_metadata!("cnet");
+test_metadata!("cnet-svg-classes");
+test_metadata!("cnn");
+test_metadata!("daringfireball-1");
+test_metadata!("data-url-image");
+test_metadata!("dev418");
+test_metadata!("dropbox-blog");
+test_metadata!("ebb-org");
+test_metadata!("ehow-1");
+test_metadata!("ehow-2");
+test_metadata!("embedded-videos");
+test_metadata!("engadget");
+test_metadata!("firefox-nightly-blog");
+test_metadata!("folha");
+test_metadata!("gitlab-blog");
+test_metadata!("gmw");
+test_metadata!("heise");
+test_metadata!("hidden-nodes");
+test_metadata!("ietf-1");
+test_metadata!("invalid-attributes");
+test_metadata!("keep-images");
+test_metadata!("lazy-image-1");
+test_metadata!("lazy-image-2");
+test_metadata!("lemonde-1");
+test_metadata!("lifehacker-post-comment-load");
+test_metadata!("lifehacker-working");
+test_metadata!("mathjax");
+test_metadata!("medicalnewstoday");
+test_metadata!("medium-1");
+test_metadata!("medium-2");
+test_metadata!("medium-3");
+test_metadata!("mercurial");
+test_metadata!("missing-paragraphs");
+test_metadata!("mozilla-2");
+test_metadata!("msn");
+test_metadata!("nytimes-1");
+test_metadata!("nytimes-2");
+test_metadata!("nytimes-3");
+test_metadata!("nytimes-4");
+test_metadata!("nytimes-5");
+test_metadata!("pixnet");
+test_metadata!("qq");
+test_metadata!("remove-extra-brs");
+test_metadata!("remove-extra-paragraphs");
+test_metadata!("reordering-paragraphs");
+test_metadata!("royal-road");
+test_metadata!("schema-org-context-object");
+test_metadata!("seattletimes-1");
+test_metadata!("social-buttons");
+test_metadata!("spiceworks");
+test_metadata!("svg-parsing");
+test_metadata!("theverge");
+test_metadata!("tmz-1");
+test_metadata!("toc-missing");
+test_metadata!("topicseed-1");
+test_metadata!("v8-blog");
+test_metadata!("videos-1");
+test_metadata!("videos-2");
+test_metadata!("wapo-1");
+test_metadata!("wapo-2");
+test_metadata!("yahoo-4");
+test_metadata!("youth");
+
+test_output!("parsely-metadata");
+test_output!("replace-font-tags");
+test_output!("wikia");
