@@ -15,6 +15,7 @@ thiserror = "2.0.17"
 url = "2.5.7"
 
 [dev-dependencies]
+assert-html-eq = { git = "https://github.com/terror/assert-html-eq" }
 paste = "1.0"
 pretty_assertions = "1.4"
 
