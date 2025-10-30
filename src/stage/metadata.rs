@@ -487,9 +487,9 @@ impl MetadataStage {
     "dc:title",
     "dcterm:title",
     "dcterms:title",
-    "title",
     "og:title",
     "twitter:title",
+    "title",
   ];
 
   fn collect_metadata(
