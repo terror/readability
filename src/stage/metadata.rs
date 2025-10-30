@@ -663,6 +663,10 @@ impl MetadataStage {
         continue;
       };
 
+      if Self::is_blacklisted_byline_node(element) {
+        continue;
+      }
+
       let text = document.collect_text(node.id(), true);
 
       let trimmed = text.trim();
@@ -845,5 +849,32 @@ impl MetadataStage {
     }
 
     None
+  }
+
+  fn is_blacklisted_byline_node(mut element: ElementRef<'_>) -> bool {
+    const BLACKLIST_SUBSTRINGS: &[&str] = &["post-footer", "widget profile"];
+
+    loop {
+      let value = element.value();
+
+      for attr in ["class", "id"] {
+        if value.attr(attr).is_some_and(|raw| {
+          let lower = raw.to_ascii_lowercase();
+          BLACKLIST_SUBSTRINGS
+            .iter()
+            .any(|needle| lower.contains(needle))
+        }) {
+          return true;
+        }
+      }
+
+      let Some(parent) = element.parent().and_then(ElementRef::wrap) else {
+        break;
+      };
+
+      element = parent;
+    }
+
+    false
   }
 }
