@@ -671,17 +671,6 @@ impl MetadataStage {
         continue;
       }
 
-      let rel_author = element.value().attr("rel").is_some_and(|value| {
-        value
-          .split_whitespace()
-          .any(|token| token.eq_ignore_ascii_case("author"))
-      });
-
-      let itemprop_author = element
-        .value()
-        .attr("itemprop")
-        .is_some_and(|value| value.to_ascii_lowercase().contains("author"));
-
       let mut match_parts = Vec::new();
 
       if let Some(class_name) = element.value().attr("class") {
@@ -693,6 +682,17 @@ impl MetadataStage {
       }
 
       let match_string = match_parts.join(" ");
+
+      let rel_author = element.value().attr("rel").is_some_and(|value| {
+        value
+          .split_whitespace()
+          .any(|token| token.eq_ignore_ascii_case("author"))
+      });
+
+      let itemprop_author = element
+        .value()
+        .attr("itemprop")
+        .is_some_and(|value| value.to_ascii_lowercase().contains("author"));
 
       let class_match =
         !match_string.is_empty() && REGEX_BYLINE.is_match(&match_string);
@@ -711,10 +711,92 @@ impl MetadataStage {
         }
       }
 
+      let parent_has_byline_keyword =
+        match_string.to_ascii_lowercase().contains("byline");
+
+      if let Some(child_byline) = Self::find_descendant_byline(
+        document,
+        element,
+        parent_has_byline_keyword,
+      ) {
+        return Some(child_byline);
+      }
+
       return Some(Self::decode_html_entities(trimmed));
     }
 
     None
+  }
+
+  fn find_descendant_byline(
+    document: Document<'_>,
+    element: ElementRef<'_>,
+    parent_has_byline_keyword: bool,
+  ) -> Option<String> {
+    if parent_has_byline_keyword {
+      return None;
+    }
+
+    let mut best: Option<(usize, String)> = None;
+
+    for descendant in element.descendants() {
+      let Some(child) = ElementRef::wrap(descendant) else {
+        continue;
+      };
+
+      if child.id() == element.id() {
+        continue;
+      }
+
+      let text = document.collect_text(child.id(), true);
+
+      let trimmed = text.trim();
+
+      if trimmed.is_empty() || trimmed.chars().count() >= 100 {
+        continue;
+      }
+
+      let mut match_parts = Vec::new();
+
+      if let Some(class_name) = child.value().attr("class") {
+        match_parts.push(class_name);
+      }
+
+      if let Some(id) = child.value().attr("id") {
+        match_parts.push(id);
+      }
+
+      let match_string = match_parts.join(" ");
+
+      let rel_author = child.value().attr("rel").is_some_and(|value| {
+        value
+          .split_whitespace()
+          .any(|token| token.eq_ignore_ascii_case("author"))
+      });
+
+      let itemprop_author = child
+        .value()
+        .attr("itemprop")
+        .is_some_and(|value| value.to_ascii_lowercase().contains("author"));
+
+      let class_match =
+        !match_string.is_empty() && REGEX_BYLINE.is_match(&match_string);
+
+      if !(rel_author || itemprop_author || class_match) {
+        continue;
+      }
+
+      let decoded = Self::decode_html_entities(trimmed);
+
+      let length = decoded.chars().count();
+
+      match best {
+        Some((best_length, _)) if length <= best_length => continue,
+        _ => best = Some((length, decoded)),
+      };
+    }
+
+    best.map(|(_, value)| value)
   }
 
   fn insert_meta_keys(

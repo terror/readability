@@ -161,6 +161,7 @@ test!("title-and-h1-discrepancy");
 test!("title-en-dash");
 
 test_metadata!("aktualne");
+test_metadata!("quanta-1");
 test_metadata!("archive-of-our-own");
 test_metadata!("ars-1");
 test_metadata!("article-author-tag");
