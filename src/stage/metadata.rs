@@ -456,15 +456,15 @@ impl Stage for MetadataStage {
 }
 
 impl MetadataStage {
-  const BYLINE_KEYS: [&'static str; 6] = [
+  const BYLINE_KEYS: [&'static str; 7] = [
     "dc:creator",
     "dcterm:creator",
     "dcterms:creator",
     "dc:author",
     "author",
     "parsely:author",
+    "og:article:author",
   ];
-
   const EXCERPT_KEYS: [&'static str; 6] = [
     "dc:description",
     "dcterm:description",
@@ -547,8 +547,35 @@ impl MetadataStage {
       });
 
     if let Some(head) = head {
-      for meta in head.children() {
+      for meta in head.descendants() {
         let Some(element) = ElementRef::wrap(meta) else {
+          continue;
+        };
+
+        if element.value().name() != "meta" {
+          continue;
+        }
+
+        let content =
+          element.value().attr("content").unwrap_or_default().trim();
+
+        if content.is_empty() {
+          continue;
+        }
+
+        if let Some(name) = element.value().attr("name") {
+          Self::insert_meta_keys(&mut values, name, content);
+        }
+
+        if let Some(property) = element.value().attr("property") {
+          Self::insert_meta_keys(&mut values, property, content);
+        }
+      }
+    }
+
+    if values.is_empty() {
+      for node in document.root().descendants() {
+        let Some(element) = ElementRef::wrap(node) else {
           continue;
         };
 

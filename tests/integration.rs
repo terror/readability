@@ -166,6 +166,7 @@ test_metadata!("ars-1");
 test_metadata!("article-author-tag");
 test_metadata!("base-url-base-element");
 test_metadata!("base-url-base-element-relative");
+test_metadata!("bbc-1");
 test_metadata!("bug-1255978");
 test_metadata!("citylab-1");
 test_metadata!("cnet");
