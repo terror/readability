@@ -24,7 +24,6 @@ use {
     },
     tendril::StrTendril,
   },
-  lazy_static::lazy_static,
   metadata::Metadata,
   pipeline::Pipeline,
   regex::Regex,
