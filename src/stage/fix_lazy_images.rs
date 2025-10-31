@@ -1,21 +1,5 @@
 use super::*;
 
-use html5ever::tendril::StrTendril;
-
-static REGEX_B64_DATA_URL: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(r"^data:\s*([^\s;,]+)\s*;\s*base64\s*,").unwrap()
-});
-
-static REGEX_IMAGE_EXTENSION: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"(?i)\.(?:jpg|jpeg|png|webp)").unwrap());
-
-static REGEX_SRCSET_CANDIDATE: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"(?i)\.(?:jpg|jpeg|png|webp)\s+\d").unwrap());
-
-static REGEX_SRC_VALUE: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(r"(?i)^\s*\S+\.(?:jpg|jpeg|png|webp)\S*\s*$").unwrap()
-});
-
 /// Copies lazy-loading image sources into standard attributes so images load without JS.
 pub struct FixLazyImagesStage;
 
@@ -50,9 +34,9 @@ impl FixLazyImagesStage {
 
         let attr_value = value.to_string();
 
-        if REGEX_SRCSET_CANDIDATE.is_match(&attr_value) {
+        if re::SRCSET_CANDIDATE_VALUE.is_match(&attr_value) {
           Some(("srcset".to_owned(), attr_value))
-        } else if REGEX_SRC_VALUE.is_match(&attr_value) {
+        } else if re::LAZY_IMAGE_SRC_VALUE.is_match(&attr_value) {
           Some(("src".to_owned(), attr_value))
         } else {
           None
@@ -207,7 +191,7 @@ impl FixLazyImagesStage {
 
     let src_value = element.attrs[index].1.to_string();
 
-    let Some(captures) = REGEX_B64_DATA_URL.captures(&src_value) else {
+    let Some(captures) = re::BASE64_DATA_URL.captures(&src_value) else {
       return;
     };
 
@@ -224,7 +208,8 @@ impl FixLazyImagesStage {
         .iter()
         .enumerate()
         .any(|(attr_index, (_, value))| {
-          attr_index != index && REGEX_IMAGE_EXTENSION.is_match(value.as_ref())
+          attr_index != index
+            && re::IMAGE_EXTENSION_SUFFIX.is_match(value.as_ref())
         });
 
     if !src_could_be_removed {

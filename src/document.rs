@@ -1,20 +1,5 @@
 use super::*;
 
-static REGEX_NORMALIZE: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"\s{2,}").unwrap());
-
-static REGEX_HASH_URL: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"^#.+").unwrap());
-
-static REGEX_TITLE_SEPARATORS: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"\s[\|\-–—\\\/>»]\s").unwrap());
-
-static REGEX_TITLE_FIRST_SEPARATOR: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"^[^\|\-–—\\\/>»]*[\|\-–—\\\/>»]").unwrap());
-
-static REGEX_TITLE_HIERARCHICAL_SEPARATORS: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"\s[\\\/>»]\s").unwrap());
-
 #[derive(Clone, Copy)]
 pub(crate) struct Document<'a> {
   html: &'a Html,
@@ -43,7 +28,7 @@ impl<'a> Document<'a> {
     let text = text.trim();
 
     if normalize {
-      REGEX_NORMALIZE.replace_all(text, " ").into_owned()
+      re::WHITESPACE_RUNS.replace_all(text, " ").into_owned()
     } else {
       text.to_string()
     }
@@ -84,7 +69,7 @@ impl<'a> Document<'a> {
 
           let href = element.value().attr("href").unwrap_or_default();
 
-          let weight = if REGEX_HASH_URL.is_match(href) {
+          let weight = if re::FRAGMENT_URL.is_match(href) {
             0.3
           } else {
             1.0
@@ -131,18 +116,18 @@ impl<'a> Document<'a> {
 
     let mut title_had_hierarchical_separators = false;
 
-    if REGEX_TITLE_SEPARATORS.is_match(&cur_title) {
+    if re::TITLE_SEPARATOR_RUN.is_match(&cur_title) {
       title_had_hierarchical_separators =
-        REGEX_TITLE_HIERARCHICAL_SEPARATORS.is_match(&cur_title);
+        re::TITLE_HIERARCHICAL_SEPARATOR.is_match(&cur_title);
 
       if let Some(last_match) =
-        REGEX_TITLE_SEPARATORS.find_iter(&orig_title).last()
+        re::TITLE_SEPARATOR_RUN.find_iter(&orig_title).last()
       {
         cur_title = orig_title[..last_match.start()].to_string();
       }
 
       if Self::word_count(&cur_title) < 3 {
-        cur_title = REGEX_TITLE_FIRST_SEPARATOR
+        cur_title = re::TITLE_LEADING_SEPARATOR
           .replace(&orig_title, "")
           .to_string();
       }
@@ -193,13 +178,13 @@ impl<'a> Document<'a> {
       }
     }
 
-    cur_title = REGEX_NORMALIZE
+    cur_title = re::WHITESPACE_RUNS
       .replace_all(cur_title.trim(), " ")
       .into_owned();
 
     let cur_title_word_count = Self::word_count(&cur_title);
 
-    let normalized_orig = REGEX_TITLE_SEPARATORS
+    let normalized_orig = re::TITLE_SEPARATOR_RUN
       .replace_all(&orig_title, "")
       .into_owned();
 
