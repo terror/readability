@@ -1,20 +1,5 @@
 use super::*;
 
-static REGEX_UNLIKELY_CANDIDATES: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(concat!(
-    r"(?i)-ad-|ai2html|banner|breadcrumbs|combx|comment|community|cover-wrap|",
-    r"disqus|extra|footer|gdpr|header|legends|menu|related|remark|replies|rss|",
-    r"shoutbox|sidebar|skyscraper|social|sponsor|supplemental|ad-break|agegate|",
-    r"pagination|pager|popup|yom-remote"
-  ))
-  .unwrap()
-});
-
-static REGEX_OK_MAYBE_CANDIDATE: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(r"(?i)and|article|body|column|content|main|mathjax|shadow")
-    .unwrap()
-});
-
 const MIN_CONTENT_TEXT_LENGTH: usize = 200;
 const MIN_PARAGRAPH_THRESHOLD: usize = 2;
 
@@ -168,10 +153,10 @@ impl RemoveUnlikelyCandidatesStage {
       let match_string = match_parts.join(" ").trim().to_string();
 
       let matches_unlikely = !match_string.is_empty()
-        && REGEX_UNLIKELY_CANDIDATES.is_match(&match_string);
+        && re::UNLIKELY_CONTENT_CANDIDATES.is_match(&match_string);
 
       if matches_unlikely
-        && !REGEX_OK_MAYBE_CANDIDATE.is_match(&match_string)
+        && !re::POSSIBLE_CONTENT_CANDIDATE.is_match(&match_string)
         && !Self::has_ancestor_tag(node, &["table", "code"])
       {
         if Self::contains_significant_content(node) {

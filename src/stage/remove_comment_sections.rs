@@ -1,10 +1,5 @@
 use super::*;
 
-static REGEX_COMMENTS: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(r"(?i)comment|comments|discussion|discuss|respond|reply|talkback")
-    .unwrap()
-});
-
 const TARGET_TAGS: &[&str] = &["div", "section", "aside", "ul", "ol"];
 
 /// Removes obvious comment or discussion sections from the article fragment.
@@ -35,7 +30,7 @@ impl Stage for RemoveCommentSectionsStage {
         .attr("id")
         .into_iter()
         .chain(element.attr("class"))
-        .any(|value| REGEX_COMMENTS.is_match(value));
+        .any(|value| re::COMMENT_SECTION_HINT.is_match(value));
 
       if matches_comment {
         to_remove.push(node.id());
@@ -47,7 +42,7 @@ impl Stage for RemoveCommentSectionsStage {
         && element
           .attr("aria-label")
           .into_iter()
-          .any(|value| REGEX_COMMENTS.is_match(value))
+          .any(|value| re::COMMENT_SECTION_HINT.is_match(value))
       {
         to_remove.push(node.id());
       }

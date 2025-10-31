@@ -8,12 +8,11 @@ impl Stage for EnforceVoidSelfClosingStage {
       return Ok(());
     };
 
-    context.set_article_markup(
-      Regex::new(r"<img([^>]*[^/])>")
-        .unwrap()
-        .replace_all(&markup.replace("<br>", "<br />"), "<img$1 />")
-        .to_string(),
-    );
+    let updated_markup = re::IMG_MISSING_SELF_CLOSING
+      .replace_all(&markup.replace("<br>", "<br />"), "<img$1 />")
+      .to_string();
+
+    context.set_article_markup(updated_markup);
 
     Ok(())
   }

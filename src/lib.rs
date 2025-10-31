@@ -6,6 +6,7 @@ mod error;
 mod metadata;
 mod options;
 mod pipeline;
+mod re;
 mod readability;
 mod serializable_node;
 mod stage;
@@ -17,7 +18,11 @@ use {
   ego_tree::{NodeId, NodeRef, iter::Edge},
   html5ever::{
     LocalName, QualName, ns,
-    serialize::{SerializeOpts, Serializer, TraversalScope, serialize},
+    serialize::{
+      Serialize as HtmlSerialize, SerializeOpts, Serializer, TraversalScope,
+      serialize,
+    },
+    tendril::StrTendril,
   },
   metadata::Metadata,
   pipeline::Pipeline,

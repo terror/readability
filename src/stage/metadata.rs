@@ -1,20 +1,7 @@
 use super::*;
 
-static REGEX_BYLINE: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(r"(?i)byline|author|dateline|writtenby|p-author").unwrap()
-});
-
 static SELECTOR_ITEMPROP_NAME: LazyLock<Selector> =
   LazyLock::new(|| Selector::parse("[itemprop*=\"name\"]").unwrap());
-
-static REGEX_BASIC_HTML_ENTITIES: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"&(?P<name>quot|amp|apos|lt|gt);").unwrap());
-
-static REGEX_NUMERIC_HTML_ENTITIES: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"&#(?:x([0-9a-fA-F]+)|([0-9]+));").unwrap());
-
-static REGEX_TOKENIZE: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"\W+").unwrap());
 
 #[derive(Default)]
 struct JsonLdMetadata {
@@ -341,12 +328,12 @@ impl<'a> JsonLd<'a> {
   fn text_similarity(text_a: &str, text_b: &str) -> f64 {
     let (lower_a, lower_b) = (text_a.to_lowercase(), text_b.to_lowercase());
 
-    let tokens_a: Vec<&str> = REGEX_TOKENIZE
+    let tokens_a: Vec<&str> = re::TOKEN_BOUNDARY
       .split(&lower_a)
       .filter(|token| !token.is_empty())
       .collect();
 
-    let tokens_b: Vec<&str> = REGEX_TOKENIZE
+    let tokens_b: Vec<&str> = re::TOKEN_BOUNDARY
       .split(&lower_b)
       .filter(|token| !token.is_empty())
       .collect();
@@ -608,7 +595,7 @@ impl MetadataStage {
       return input.to_string();
     }
 
-    let named_decoded = REGEX_BASIC_HTML_ENTITIES.replace_all(
+    let named_decoded = re::NAMED_HTML_ENTITIES.replace_all(
       input,
       |captures: &regex::Captures<'_>| -> String {
         match &captures["name"] {
@@ -624,7 +611,7 @@ impl MetadataStage {
       },
     );
 
-    REGEX_NUMERIC_HTML_ENTITIES
+    re::NUMERIC_HTML_ENTITY
       .replace_all(&named_decoded, |captures: &regex::Captures<'_>| {
         let (value, radix) = if let Some(hex) = captures.get(1) {
           (hex.as_str(), 16)
@@ -695,7 +682,7 @@ impl MetadataStage {
       let match_string = match_parts.join(" ");
 
       let class_match =
-        !match_string.is_empty() && REGEX_BYLINE.is_match(&match_string);
+        !match_string.is_empty() && re::BYLINE_HINTS.is_match(&match_string);
 
       if !(rel_author || itemprop_author || class_match) {
         continue;

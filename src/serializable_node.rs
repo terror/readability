@@ -1,10 +1,10 @@
-use {super::*, html5ever::serialize::Serialize};
+use super::*;
 
 pub(crate) struct SerializableNode<'a> {
   pub(crate) node: NodeRef<'a, Node>,
 }
 
-impl Serialize for SerializableNode<'_> {
+impl HtmlSerialize for SerializableNode<'_> {
   fn serialize<S: Serializer>(
     &self,
     serializer: &mut S,

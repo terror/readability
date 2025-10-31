@@ -1,8 +1,5 @@
 use super::*;
 
-static REGEX_NORMALIZE: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"\s{2,}").unwrap());
-
 pub struct Readability {
   base_url: Option<Url>,
   html: Html,
@@ -49,7 +46,7 @@ impl Readability {
 
     let fragment = Html::parse_fragment(&markup);
 
-    let text_content = REGEX_NORMALIZE
+    let text_content = re::WHITESPACE_RUNS
       .replace_all(
         &fragment
           .tree

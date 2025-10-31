@@ -3,26 +3,6 @@ use super::*;
 const DEFAULT_TAGS_TO_SCORE: &[&str] =
   &["section", "h2", "h3", "h4", "h5", "h6", "p", "td", "pre"];
 
-static REGEX_COMMAS: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"[,،﹐︐﹑⹀⸲，]").unwrap());
-
-static REGEX_POSITIVE: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(concat!(
-    r"(?i)article|body|content|entry|hentry|h-entry|main|page|pagination|",
-    r"post|text|blog|story"
-  ))
-  .unwrap()
-});
-
-static REGEX_NEGATIVE: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(concat!(
-    r"(?i)-ad-|hidden|^hid$| hid$| hid |^hid |banner|combx|comment|com-|",
-    r"contact|footer|gdpr|masthead|media|meta|outbrain|promo|related|scroll|",
-    r"share|shoutbox|sidebar|skyscraper|sponsor|shopping|tags|widget"
-  ))
-  .unwrap()
-});
-
 /// Minimum amount of trimmed text a node must contain to be scored.
 const MIN_TEXT_LENGTH: usize = 25;
 
@@ -123,7 +103,8 @@ impl ArticleStage {
     }
 
     let comma_count = f64::from(
-      u32::try_from(REGEX_COMMAS.find_iter(text).count()).unwrap_or(u32::MAX),
+      u32::try_from(re::COMMA_VARIANTS.find_iter(text).count())
+        .unwrap_or(u32::MAX),
     );
 
     let length_bonus =
@@ -136,21 +117,21 @@ impl ArticleStage {
     let mut weight = 0.0;
 
     if let Some(class_attr) = element.value().attr("class") {
-      if REGEX_NEGATIVE.is_match(class_attr) {
+      if re::NEGATIVE_CONTENT_HINTS.is_match(class_attr) {
         weight -= 25.0;
       }
 
-      if REGEX_POSITIVE.is_match(class_attr) {
+      if re::POSITIVE_CONTENT_HINTS.is_match(class_attr) {
         weight += 25.0;
       }
     }
 
     if let Some(id_attr) = element.value().attr("id") {
-      if REGEX_NEGATIVE.is_match(id_attr) {
+      if re::NEGATIVE_CONTENT_HINTS.is_match(id_attr) {
         weight -= 25.0;
       }
 
-      if REGEX_POSITIVE.is_match(id_attr) {
+      if re::POSITIVE_CONTENT_HINTS.is_match(id_attr) {
         weight += 25.0;
       }
     }
