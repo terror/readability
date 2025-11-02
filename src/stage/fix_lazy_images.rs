@@ -216,7 +216,11 @@ impl FixLazyImagesStage {
       return;
     }
 
-    let prefix_len = captures.get(0).map_or(0, |m| m.end());
+    let prefix_len = captures
+      .name("data")
+      .map(|m| m.start())
+      .unwrap_or(src_value.len());
+
     let b64_length = src_value.len().saturating_sub(prefix_len);
 
     if b64_length < 133 {
