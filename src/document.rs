@@ -22,6 +22,10 @@ impl<'a> Document<'a> {
   pub(crate) fn remove_elements(&mut self, selector: &str) {
     self.document.select(selector).remove();
   }
+
+  pub(crate) fn rename_elements(&mut self, selector: &str, new_name: &str) {
+    self.document.select(selector).rename(new_name);
+  }
 }
 
 #[cfg(test)]
