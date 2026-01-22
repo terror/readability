@@ -16,9 +16,8 @@ mod tests {
 
   #[test]
   fn converts_font_to_span() {
-    let mut document = dom_query::Document::from(
-      r#"<html><body><font>Hello</font></body></html>"#,
-    );
+    let mut document =
+      dom_query::Document::from("<html><body><font>Hello</font></body></html>");
 
     let options = ReadabilityOptions::default();
 
@@ -33,7 +32,7 @@ mod tests {
   #[test]
   fn preserves_font_tag_content() {
     let mut document = dom_query::Document::from(
-      r#"<html><body><font>Hello <b>world</b></font></body></html>"#,
+      "<html><body><font>Hello <b>world</b></font></body></html>",
     );
 
     let options = ReadabilityOptions::default();
@@ -51,7 +50,7 @@ mod tests {
   #[test]
   fn converts_multiple_font_tags() {
     let mut document = dom_query::Document::from(
-      r#"<html><body><font>One</font><p>Middle</p><font>Two</font></body></html>"#,
+      "<html><body><font>One</font><p>Middle</p><font>Two</font></body></html>",
     );
 
     let options = ReadabilityOptions::default();
@@ -68,7 +67,7 @@ mod tests {
   #[test]
   fn handles_nested_font_tags() {
     let mut document = dom_query::Document::from(
-      r#"<html><body><font>Outer <font>Inner</font></font></body></html>"#,
+      "<html><body><font>Outer <font>Inner</font></font></body></html>",
     );
 
     let options = ReadabilityOptions::default();
