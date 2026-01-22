@@ -34,7 +34,7 @@ impl Readability {
   ///
   /// Returns an error when the pipeline cannot resolve article content.
   pub fn parse(&mut self) -> Result<Article> {
-    let mut context = Pipeline::with_default_stages(
+    let context = Pipeline::with_default_stages(
       Context::new(&mut self.html, &self.options),
       self.base_url.as_ref(),
     )
@@ -46,7 +46,7 @@ impl Readability {
       excerpt,
       site_name,
       published_time,
-    } = context.metadata();
+    } = context.metadata;
 
     Ok(Article {
       title: title.unwrap_or_default(),
