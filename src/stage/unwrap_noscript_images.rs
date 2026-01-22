@@ -170,63 +170,63 @@ mod tests {
   test! {
     name: basic_unwrap,
     stage: UnwrapNoscriptImages,
-    content: r#"<html><body><img alt="x"/><noscript><img src="real.jpg"/></noscript></body></html>"#,
-    expected: r#"<html><head></head><body><img src="real.jpg" alt="x"></body></html>"#,
+    content: "<html><body><img alt=\"x\"/><noscript><img src=\"real.jpg\"/></noscript></body></html>",
+    expected: "<html><head></head><body><img src=\"real.jpg\" alt=\"x\"></body></html>",
   }
 
   test! {
     name: remove_placeholder_without_src,
     stage: UnwrapNoscriptImages,
-    content: r#"<html><body><img class="lazy"/></body></html>"#,
-    expected: r#"<html><head></head><body></body></html>"#,
+    content: "<html><body><img class=\"lazy\"/></body></html>",
+    expected: "<html><head></head><body></body></html>",
   }
 
   test! {
     name: keep_valid_image,
     stage: UnwrapNoscriptImages,
-    content: r#"<html><body><img src="valid.jpg"/></body></html>"#,
-    expected: r#"<html><head></head><body><img src="valid.jpg"></body></html>"#,
+    content: "<html><body><img src=\"valid.jpg\"/></body></html>",
+    expected: "<html><head></head><body><img src=\"valid.jpg\"></body></html>",
   }
 
   test! {
     name: non_image_noscript_unchanged,
     stage: UnwrapNoscriptImages,
-    content: r#"<html><body><noscript><p>Enable JS</p></noscript></body></html>"#,
-    expected: r#"<html><head></head><body><noscript><p>Enable JS</p></noscript></body></html>"#,
+    content: "<html><body><noscript><p>Enable JS</p></noscript></body></html>",
+    expected: "<html><head></head><body><noscript><p>Enable JS</p></noscript></body></html>",
   }
 
   test! {
     name: no_previous_sibling_unchanged,
     stage: UnwrapNoscriptImages,
-    content: r#"<html><body><noscript><img src="x.jpg"/></noscript></body></html>"#,
-    expected: r#"<html><head></head><body><noscript><img src="x.jpg"></noscript></body></html>"#,
+    content: "<html><body><noscript><img src=\"x.jpg\"/></noscript></body></html>",
+    expected: "<html><head></head><body><noscript><img src=\"x.jpg\"></noscript></body></html>",
   }
 
   test! {
     name: nested_wrapper,
     stage: UnwrapNoscriptImages,
-    content: r#"<html><body><div><img/></div><noscript><img src="real.jpg"/></noscript></body></html>"#,
-    expected: r#"<html><head></head><body><img src="real.jpg"></body></html>"#,
+    content: "<html><body><div><img/></div><noscript><img src=\"real.jpg\"/></noscript></body></html>",
+    expected: "<html><head></head><body><img src=\"real.jpg\"></body></html>",
   }
 
   test! {
     name: preserves_data_src,
     stage: UnwrapNoscriptImages,
-    content: r#"<html><body><img data-src="lazy.jpg"/></body></html>"#,
-    expected: r#"<html><head></head><body><img data-src="lazy.jpg"></body></html>"#,
+    content: "<html><body><img data-src=\"lazy.jpg\"/></body></html>",
+    expected: "<html><head></head><body><img data-src=\"lazy.jpg\"></body></html>",
   }
 
   test! {
     name: preserves_srcset,
     stage: UnwrapNoscriptImages,
-    content: r#"<html><body><img srcset="img-320w.jpg 320w, img-480w.jpg 480w"/></body></html>"#,
-    expected: r#"<html><head></head><body><img srcset="img-320w.jpg 320w, img-480w.jpg 480w"></body></html>"#,
+    content: "<html><body><img srcset=\"img-320w.jpg 320w, img-480w.jpg 480w\"/></body></html>",
+    expected: "<html><head></head><body><img srcset=\"img-320w.jpg 320w, img-480w.jpg 480w\"></body></html>",
   }
 
   test! {
     name: preserves_image_extension_in_attr,
     stage: UnwrapNoscriptImages,
-    content: r#"<html><body><img data-lazy="image.png"/></body></html>"#,
-    expected: r#"<html><head></head><body><img data-lazy="image.png"></body></html>"#,
+    content: "<html><body><img data-lazy=\"image.png\"/></body></html>",
+    expected: "<html><head></head><body><img data-lazy=\"image.png\"></body></html>",
   }
 }
