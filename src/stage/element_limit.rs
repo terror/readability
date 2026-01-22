@@ -1,8 +1,8 @@
 use super::*;
 
-pub struct ElementLimitStage;
+pub struct ElementLimit;
 
-impl Stage for ElementLimitStage {
+impl Stage for ElementLimit {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let Some(limit) = context.options().max_elements else {
       return Ok(());

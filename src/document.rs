@@ -18,6 +18,10 @@ impl<'a> Document<'a> {
   pub(crate) fn new(document: &'a mut dom_query::Document) -> Self {
     Document { document }
   }
+
+  pub(crate) fn remove_elements(&mut self, selector: &str) {
+    self.document.select(selector).remove();
+  }
 }
 
 #[cfg(test)]
@@ -26,7 +30,7 @@ mod tests {
 
   #[test]
   fn counts_element_nodes_only_once() {
-    let mut doc = dom_query::Document::from(
+    let mut document = dom_query::Document::from(
       r#"
       <html>
         <head><meta charset="utf-8" /></head>
@@ -41,7 +45,7 @@ mod tests {
       "#,
     );
 
-    let document = Document::new(&mut doc);
+    let document = Document::new(&mut document);
 
     assert_eq!(document.element_count(), 8);
   }
