@@ -6,7 +6,6 @@ use {
   pipeline::Pipeline,
   serde::{Deserialize, Serialize},
   stage::{ElementLimit, RemoveDisallowedNodes, RewriteFontTags, Stage},
-  std::mem,
   url::Url,
 };
 

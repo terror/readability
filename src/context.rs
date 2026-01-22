@@ -1,18 +1,14 @@
 use super::*;
 
 pub(crate) struct Context<'a> {
-  html: &'a mut dom_query::Document,
-  metadata: Metadata,
-  options: &'a ReadabilityOptions,
+  pub(crate) document: &'a mut dom_query::Document,
+  pub(crate) metadata: Metadata,
+  pub(crate) options: &'a ReadabilityOptions,
 }
 
 impl<'a> Context<'a> {
   pub(crate) fn document(&mut self) -> Document<'_> {
-    Document::new(&mut *self.html)
-  }
-
-  pub(crate) fn metadata(&mut self) -> Metadata {
-    mem::take(&mut self.metadata)
+    Document::new(&mut *self.document)
   }
 
   pub(crate) fn new(
@@ -20,7 +16,7 @@ impl<'a> Context<'a> {
     options: &'a ReadabilityOptions,
   ) -> Self {
     Self {
-      html,
+      document: html,
       metadata: Metadata::default(),
       options,
     }
