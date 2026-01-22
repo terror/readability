@@ -33,6 +33,7 @@ impl<'a> Pipeline<'a> {
 
     let stages: Vec<Box<dyn Stage>> = vec![
       Box::new(ElementLimit),
+      Box::new(UnwrapNoscriptImages),
       Box::new(RemoveDisallowedNodes),
       Box::new(RewriteFontTags),
     ];

@@ -5,7 +5,10 @@ use {
   metadata::Metadata,
   pipeline::Pipeline,
   serde::{Deserialize, Serialize},
-  stage::{ElementLimit, RemoveDisallowedNodes, RewriteFontTags, Stage},
+  stage::{
+    ElementLimit, RemoveDisallowedNodes, RewriteFontTags, Stage,
+    UnwrapNoscriptImages,
+  },
   url::Url,
 };
 
