@@ -16,70 +16,79 @@ impl Stage for UnwrapNoscriptImages {
 }
 
 impl UnwrapNoscriptImages {
-  fn has_image_source(node: &NodeRef) -> bool {
-    for attribute in SOURCE_ATTRIBUTES {
-      let Some(value) = node.attr(attribute) else {
-        continue;
-      };
+  fn build_image_html(
+    attributes: impl Iterator<Item = (String, String)>,
+  ) -> String {
+    let mut html = String::from("<img");
 
-      if !value.trim().is_empty() {
-        return true;
-      }
+    for (name, value) in attributes {
+      write!(html, " {name}=\"").unwrap();
+      encode_double_quoted_attribute_to_string(&value, &mut html);
+      html.push('"');
     }
 
-    for attribute in node.attrs() {
+    html.push_str("/>");
+
+    html
+  }
+
+  fn find_image<'a>(selection: &Selection<'a>) -> Option<NodeRef<'a>> {
+    selection
+      .nodes()
+      .iter()
+      .find(|node| node.node_name().as_deref() == Some("img"))
+      .cloned()
+  }
+
+  fn has_image_source(node: &NodeRef) -> bool {
+    let has_source_attribute = SOURCE_ATTRIBUTES
+      .iter()
+      .filter_map(|attribute| node.attr(attribute))
+      .any(|value| !value.trim().is_empty());
+
+    let has_image_extension = node.attrs().into_iter().any(|attribute| {
       let value = attribute.value.to_lowercase();
 
-      for extension in IMAGE_EXTENSIONS {
-        if value.contains(extension) {
-          return true;
-        }
-      }
-    }
+      IMAGE_EXTENSIONS
+        .iter()
+        .any(|extension| value.contains(extension))
+    });
 
-    false
+    has_source_attribute || has_image_extension
   }
 
-  fn html_escape(s: &str) -> String {
-    s.replace('&', "&amp;")
-      .replace('"', "&quot;")
-      .replace('<', "&lt;")
-      .replace('>', "&gt;")
-  }
-
-  fn is_single_image(selection: &dom_query::Selection) -> bool {
-    let mut img_count = 0;
-
-    for node in selection.nodes() {
-      if node.node_name().as_deref() == Some("img") {
-        img_count += 1;
-      }
-    }
-
-    img_count += selection.select("img").length();
-
-    if img_count != 1 {
+  fn is_single_image(selection: &Selection) -> bool {
+    if !selection.text().trim().is_empty() {
       return false;
     }
 
-    selection.text().trim().is_empty()
+    let direct_image_count = selection
+      .nodes()
+      .iter()
+      .filter(|node| node.node_name().as_deref() == Some("img"))
+      .count();
+
+    direct_image_count + selection.select("img").length() == 1
   }
 
   fn remove_placeholder_images(context: &mut Context<'_>) {
-    let nodes = context.document.select("img").nodes().to_vec();
-
-    for node in nodes {
-      if !Self::has_image_source(&node) {
-        node.remove_from_parent();
-      }
-    }
+    context
+      .document
+      .select("img")
+      .nodes()
+      .iter()
+      .filter(|node| !Self::has_image_source(node))
+      .cloned()
+      .collect::<Vec<_>>()
+      .into_iter()
+      .for_each(|node| node.remove_from_parent());
   }
 
   fn unwrap_noscript_images(context: &mut Context<'_>) {
     let nodes = context.document.select("noscript").nodes().to_vec();
 
-    for noscript_node in nodes {
-      let inner_html = noscript_node.inner_html();
+    for node in nodes {
+      let inner_html = node.inner_html();
 
       if inner_html.trim().is_empty() {
         continue;
@@ -89,49 +98,31 @@ impl UnwrapNoscriptImages {
 
       let fragment_selection = fragment.select("body > *");
 
-      if !Self::is_single_image(&fragment_selection) {
-        continue;
-      }
-
-      let new_img = {
-        let mut found = None;
-
-        for node in fragment_selection.nodes() {
-          if node.node_name().as_deref() == Some("img") {
-            found = Some(node.clone());
-            break;
-          }
-        }
-
-        if found.is_none() {
-          found = fragment_selection.select("img").nodes().first().cloned();
-        }
-
-        found
-      };
-
-      let Some(new_img) = new_img else {
+      let Some(new_image) = Self::is_single_image(&fragment_selection)
+        .then(|| Self::find_image(&fragment_selection))
+        .flatten()
+      else {
         continue;
       };
 
-      let Some(prev_sibling) = noscript_node.prev_element_sibling() else {
+      let Some(prev_sibling) = node.prev_element_sibling() else {
         continue;
       };
 
-      let prev_selection = dom_query::Selection::from(prev_sibling.clone());
+      let prev_selection = Selection::from(prev_sibling.clone());
 
       if !Self::is_single_image(&prev_selection) {
         continue;
       }
 
-      let placeholder_img =
+      let placeholder_image =
         if prev_sibling.node_name().as_deref() == Some("img") {
           Some(prev_sibling.clone())
         } else {
-          prev_selection.select("img").nodes().first().cloned()
+          Self::find_image(&prev_selection)
         };
 
-      let mut attributes = new_img
+      let new_attributes = new_image
         .attrs()
         .into_iter()
         .map(|attribute| {
@@ -140,44 +131,40 @@ impl UnwrapNoscriptImages {
             attribute.value.to_string(),
           )
         })
-        .collect::<Vec<(String, String)>>();
+        .collect::<Vec<_>>();
 
-      if let Some(placeholder) = placeholder_img {
-        for attribute in placeholder.attrs() {
-          let attribute_name = attribute.name.local.to_string();
+      let placeholder_attributes = placeholder_image
+        .into_iter()
+        .flat_map(|image| {
+          image.attrs().into_iter().filter_map(|attribute| {
+            let name = attribute.name.local.to_string();
 
-          if SOURCE_ATTRIBUTES.contains(&attribute_name.as_str()) {
-            continue;
-          }
+            let is_source = SOURCE_ATTRIBUTES.contains(&name.as_str());
 
-          if !attributes.iter().any(|(name, _)| name == &attribute_name) {
-            attributes.push((attribute_name, attribute.value.to_string()));
-          }
-        }
-      }
+            let already_exists = new_attributes
+              .iter()
+              .any(|(attribute_name, _)| attribute_name == &name);
 
-      let mut img_html = String::from("<img");
+            if is_source || already_exists {
+              return None;
+            }
 
-      for (name, value) in attributes {
-        img_html.push(' ');
-        img_html.push_str(&name);
-        img_html.push_str("=\"");
-        img_html.push_str(&Self::html_escape(&value));
-        img_html.push('"');
-      }
+            Some((name, attribute.value.to_string()))
+          })
+        })
+        .collect::<Vec<_>>();
 
-      img_html.push_str("/>");
+      prev_sibling.replace_with_html(Self::build_image_html(
+        new_attributes.into_iter().chain(placeholder_attributes),
+      ));
 
-      prev_sibling.replace_with_html(img_html);
-
-      noscript_node.remove_from_parent();
+      node.remove_from_parent();
     }
   }
 }
 
 #[cfg(test)]
 mod tests {
-  use super::super::test;
   use super::*;
 
   test! {
