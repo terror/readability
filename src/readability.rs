@@ -2,7 +2,7 @@ use super::*;
 
 pub struct Readability {
   base_url: Option<Url>,
-  html: Html,
+  html: dom_query::Document,
   options: ReadabilityOptions,
 }
 
@@ -23,7 +23,7 @@ impl Readability {
 
     Ok(Self {
       base_url,
-      html: Html::parse_document(html),
+      html: dom_query::Document::from(html),
       options,
     })
   }
@@ -40,43 +40,25 @@ impl Readability {
     )
     .run()?;
 
-    let markup = context
-      .take_article_markup()
-      .ok_or(Error::MissingArticleContent)?;
-
-    let fragment = Html::parse_fragment(&markup);
-
-    let text_content = re::WHITESPACE_RUNS
-      .replace_all(
-        &fragment
-          .tree
-          .root()
-          .descendants()
-          .filter_map(|node| match node.value() {
-            Node::Text(value) => Some(value.trim()),
-            _ => None,
-          })
-          .collect::<Vec<_>>()
-          .join(" "),
-        " ",
-      )
-      .trim()
-      .to_string();
+    let Metadata {
+      title,
+      byline,
+      excerpt,
+      site_name,
+      published_time,
+    } = context.metadata();
 
     Ok(Article {
-      title: context.metadata().title.clone().unwrap_or(String::new()),
-      byline: context.metadata().byline.clone(),
-      dir: context.article_dir().cloned(),
-      lang: context
-        .body_lang()
-        .cloned()
-        .or(context.document_lang().cloned()),
-      content: markup,
-      text_content: text_content.clone(),
-      length: text_content.chars().count(),
-      excerpt: context.metadata().excerpt.clone(),
-      site_name: context.metadata().site_name.clone(),
-      published_time: context.metadata().published_time.clone(),
+      title: title.unwrap_or_default(),
+      byline,
+      dir: None,
+      lang: None,
+      content: String::new(),
+      text_content: String::new(),
+      length: 0,
+      excerpt,
+      site_name,
+      published_time,
     })
   }
 }

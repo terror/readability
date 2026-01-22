@@ -1,52 +1,12 @@
-mod article;
-mod article_fragment;
-mod context;
-mod document;
-mod error;
-mod metadata;
-mod options;
-mod pipeline;
-mod re;
-mod readability;
-mod serializable_node;
-mod stage;
-
 use {
-  article_fragment::ArticleFragment,
   context::Context,
   document::Document,
-  ego_tree::{NodeId, NodeRef, iter::Edge},
-  html5ever::{
-    LocalName, QualName, ns,
-    serialize::{
-      Serialize as HtmlSerialize, SerializeOpts, Serializer, TraversalScope,
-      serialize,
-    },
-    tendril::StrTendril,
-  },
+  dom_query::NodeRef,
   metadata::Metadata,
   pipeline::Pipeline,
-  regex::Regex,
-  scraper::{ElementRef, Html, Node, Selector, node::Element},
   serde::{Deserialize, Serialize},
-  serde_json::{Deserializer, Value},
-  serializable_node::SerializableNode,
-  stage::{
-    ArticleStage, CleanClassAttributesStage, ElementLimitStage,
-    EnforceVoidSelfClosingStage, FixLazyImagesStage, FixRelativeUrisStage,
-    FlattenSimpleTablesStage, LanguageStage, MetadataStage,
-    NormalizeArticleHeadingsStage, NormalizeArticleRootStage,
-    NormalizeContainersStage, RemoveCommentSectionsStage,
-    RemoveDisallowedNodesStage, RemoveNonContentElementsStage,
-    RemoveUnlikelyCandidatesStage, ReplaceBreakSequencesStage,
-    RewriteCenterTagsStage, RewriteFontTagsStage, Stage,
-    StripPresentationalAttributesStage,
-  },
-  std::{
-    collections::{HashMap, HashSet},
-    io,
-    sync::LazyLock,
-  },
+  stage::{ElementLimitStage, Stage},
+  std::mem,
   url::Url,
 };
 
@@ -56,5 +16,15 @@ pub use crate::{
   options::{ReadabilityOptions, ReadabilityOptionsBuilder},
   readability::Readability,
 };
+
+mod article;
+mod context;
+mod document;
+mod error;
+mod metadata;
+mod options;
+mod pipeline;
+mod readability;
+mod stage;
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
