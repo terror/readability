@@ -129,9 +129,6 @@ impl TestFixture {
   }
 
   fn test_output(&self) {
-    assert_html_eq!(
-      self.parse_article().content,
-      self.expected_html.to_string()
-    );
+    assert_html_eq!(self.parse_article().content, self.expected_html.clone());
   }
 }
