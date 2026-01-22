@@ -27,32 +27,11 @@ impl<'a> Pipeline<'a> {
 
   pub(crate) fn with_default_stages(
     context: Context<'a>,
-    base_url: Option<&'a Url>,
+    _base_url: Option<&'a Url>,
   ) -> Self {
     let mut pipeline = Self::new(context);
 
-    let stages: Vec<Box<dyn Stage>> = vec![
-      Box::new(ElementLimitStage),
-      Box::new(LanguageStage),
-      Box::new(MetadataStage),
-      Box::new(RemoveDisallowedNodesStage),
-      Box::new(RewriteFontTagsStage),
-      Box::new(RewriteCenterTagsStage),
-      Box::new(RemoveUnlikelyCandidatesStage),
-      Box::new(ReplaceBreakSequencesStage),
-      Box::new(NormalizeContainersStage),
-      Box::new(ArticleStage),
-      Box::new(NormalizeArticleRootStage),
-      Box::new(NormalizeArticleHeadingsStage),
-      Box::new(FlattenSimpleTablesStage),
-      Box::new(RemoveNonContentElementsStage),
-      Box::new(RemoveCommentSectionsStage),
-      Box::new(StripPresentationalAttributesStage),
-      Box::new(FixLazyImagesStage),
-      Box::new(FixRelativeUrisStage::new(base_url)),
-      Box::new(CleanClassAttributesStage),
-      Box::new(EnforceVoidSelfClosingStage),
-    ];
+    let stages: Vec<Box<dyn Stage>> = vec![Box::new(ElementLimitStage)];
 
     for stage in stages {
       pipeline.add_stage(stage);

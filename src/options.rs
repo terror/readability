@@ -1,26 +1,50 @@
 #[derive(Debug, Clone)]
 pub struct ReadabilityOptions {
-  pub char_threshold: usize,
-  pub classes_to_preserve: Vec<String>,
+  /// Whether to enable logging of debug messages.
+  ///
+  /// Default: false
   pub debug: bool,
-  pub disable_json_ld: bool,
+  /// Whether to preserve all classes on HTML elements.
+  ///
+  /// Default: false
   pub keep_classes: bool,
-  pub link_density_modifier: f32,
-  pub max_elems_to_parse: Option<usize>,
-  pub nb_top_candidates: usize,
+  /// A weighting applied to the link density calculation.
+  ///
+  /// Default: 0.0
+  pub link_density_bias: f32,
+  /// The maximum number of DOM elements to parse before aborting.
+  ///
+  /// Default: None
+  pub max_elements: Option<usize>,
+  /// The minimum number of characters required for an article to be considered valid.
+  ///
+  /// Default: 500
+  pub min_text_length: usize,
+  /// The number of top candidate nodes to analyze during the scoring pass.
+  ///
+  /// Default: 5
+  pub n_top_candidates: usize,
+  /// A list of specific class names to preserve when `keep_classes` is false.
+  ///
+  /// Default: \["page"\]
+  pub preserved_classes: Vec<String>,
+  /// Whether to extract metadata from JSON-LD.
+  ///
+  /// Default: true
+  pub use_json_ld: bool,
 }
 
 impl Default for ReadabilityOptions {
   fn default() -> Self {
     Self {
-      char_threshold: 500,
-      classes_to_preserve: vec!["page".to_string()],
       debug: false,
-      disable_json_ld: false,
       keep_classes: false,
-      link_density_modifier: 0.0,
-      max_elems_to_parse: None,
-      nb_top_candidates: 5,
+      link_density_bias: 0.0,
+      max_elements: None,
+      min_text_length: 500,
+      n_top_candidates: 5,
+      preserved_classes: vec!["page".to_string()],
+      use_json_ld: true,
     }
   }
 }
@@ -44,16 +68,6 @@ impl ReadabilityOptionsBuilder {
   }
 
   #[must_use]
-  pub fn char_threshold(self, char_threshold: usize) -> Self {
-    Self {
-      inner: ReadabilityOptions {
-        char_threshold,
-        ..self.inner
-      },
-    }
-  }
-
-  #[must_use]
   pub fn classes_to_preserve<I, S>(self, classes: I) -> Self
   where
     I: IntoIterator<Item = S>,
@@ -61,7 +75,7 @@ impl ReadabilityOptionsBuilder {
   {
     Self {
       inner: ReadabilityOptions {
-        classes_to_preserve: classes.into_iter().map(Into::into).collect(),
+        preserved_classes: classes.into_iter().map(Into::into).collect(),
         ..self.inner
       },
     }
@@ -78,16 +92,6 @@ impl ReadabilityOptionsBuilder {
   }
 
   #[must_use]
-  pub fn disable_json_ld(self, disable_json_ld: bool) -> Self {
-    Self {
-      inner: ReadabilityOptions {
-        disable_json_ld,
-        ..self.inner
-      },
-    }
-  }
-
-  #[must_use]
   pub fn keep_classes(self, keep_classes: bool) -> Self {
     Self {
       inner: ReadabilityOptions {
@@ -98,30 +102,50 @@ impl ReadabilityOptionsBuilder {
   }
 
   #[must_use]
-  pub fn link_density_modifier(self, link_density_modifier: f32) -> Self {
+  pub fn link_density_bias(self, link_density_bias: f32) -> Self {
     Self {
       inner: ReadabilityOptions {
-        link_density_modifier,
+        link_density_bias,
         ..self.inner
       },
     }
   }
 
   #[must_use]
-  pub fn max_elems_to_parse(self, max_elems_to_parse: Option<usize>) -> Self {
+  pub fn max_elements(self, max_elements: Option<usize>) -> Self {
     Self {
       inner: ReadabilityOptions {
-        max_elems_to_parse,
+        max_elements,
         ..self.inner
       },
     }
   }
 
   #[must_use]
-  pub fn nb_top_candidates(self, nb_top_candidates: usize) -> Self {
+  pub fn min_text_length(self, min_text_length: usize) -> Self {
     Self {
       inner: ReadabilityOptions {
-        nb_top_candidates,
+        min_text_length,
+        ..self.inner
+      },
+    }
+  }
+
+  #[must_use]
+  pub fn n_top_candidates(self, n_top_candidates: usize) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        n_top_candidates,
+        ..self.inner
+      },
+    }
+  }
+
+  #[must_use]
+  pub fn use_json_ld(self, use_json_ld: bool) -> Self {
+    Self {
+      inner: ReadabilityOptions {
+        use_json_ld,
         ..self.inner
       },
     }

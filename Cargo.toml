@@ -3,23 +3,6 @@ name = "readability"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
-anyhow = "1.0.100"
-clap = { version = "4.5.49", features = ["derive"] }
-ego-tree = "0.10.0"
-html5ever = "0.35.0"
-regex = "1.12.2"
-scraper = "0.24.0"
-serde = { version = "1.0.228", features = ["derive"] }
-serde_json = "1.0.145"
-thiserror = "2.0.17"
-url = "2.5.7"
-
-[dev-dependencies]
-assert-html-eq = { git = "https://github.com/terror/assert-html-eq" }
-paste = "1.0"
-pretty_assertions = "1.4"
-
 [lints.rust]
 mismatched_lifetime_syntaxes = "allow"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fuzzing)'] }
@@ -40,3 +23,17 @@ type_complexity = "allow"
 undocumented_unsafe_blocks = "deny"
 unnecessary_wraps = "allow"
 wildcard_imports = "allow"
+
+[dependencies]
+anyhow = "1.0.100"
+clap = { version = "4.5.54", features = ["derive"] }
+dom_query = "0.12"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.149"
+thiserror = "2.0.18"
+url = "2.5.8"
+
+[dev-dependencies]
+assert-html-eq = { git = "https://github.com/terror/assert-html-eq" }
+paste = "1.0"
+pretty_assertions = "1.4"
