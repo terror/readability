@@ -41,24 +41,24 @@ impl Readability {
     .run()?;
 
     let Metadata {
-      title,
       byline,
       excerpt,
-      site_name,
       published_time,
+      site_name,
+      title,
     } = context.metadata;
 
     Ok(Article {
-      title: title.unwrap_or_default(),
       byline,
+      content: context.document.html().to_string(),
       dir: None,
-      lang: None,
-      content: String::new(),
-      text_content: String::new(),
-      length: 0,
       excerpt,
-      site_name,
+      lang: None,
+      length: context.document.text().to_string().len(),
       published_time,
+      site_name,
+      text_content: context.document.text().to_string(),
+      title: title.unwrap_or_default(),
     })
   }
 }
