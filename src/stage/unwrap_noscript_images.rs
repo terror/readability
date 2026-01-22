@@ -1,6 +1,7 @@
 use super::*;
 
 const IMAGE_EXTENSIONS: &[&str] = &[".jpg", ".jpeg", ".png", ".webp"];
+
 const SOURCE_ATTRIBUTES: &[&str] =
   &["src", "srcset", "data-src", "data-srcset"];
 
