@@ -31,8 +31,11 @@ impl<'a> Pipeline<'a> {
   ) -> Self {
     let mut pipeline = Self::new(context);
 
-    let stages: Vec<Box<dyn Stage>> =
-      vec![Box::new(ElementLimit), Box::new(RemoveDisallowedNodes)];
+    let stages: Vec<Box<dyn Stage>> = vec![
+      Box::new(ElementLimit),
+      Box::new(RemoveDisallowedNodes),
+      Box::new(RewriteFontTags),
+    ];
 
     for stage in stages {
       pipeline.add_stage(stage);
