@@ -4,8 +4,7 @@ mod element_limit;
 mod remove_disallowed_nodes;
 
 pub use {
-  element_limit::ElementLimitStage,
-  remove_disallowed_nodes::RemoveDisallowedNodesStage,
+  element_limit::ElementLimit, remove_disallowed_nodes::RemoveDisallowedNodes,
 };
 
 pub(crate) trait Stage {

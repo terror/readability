@@ -1,8 +1,8 @@
 use super::*;
 
-pub struct RemoveDisallowedNodesStage;
+pub struct RemoveDisallowedNodes;
 
-impl Stage for RemoveDisallowedNodesStage {
+impl Stage for RemoveDisallowedNodes {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     context
       .document()
@@ -26,7 +26,7 @@ mod tests {
 
     let mut context = Context::new(&mut document, &options);
 
-    RemoveDisallowedNodesStage.run(&mut context).unwrap();
+    RemoveDisallowedNodes.run(&mut context).unwrap();
 
     assert_eq!(document.select("p").length(), 1);
     assert_eq!(document.select("script").length(), 0);
@@ -42,7 +42,7 @@ mod tests {
 
     let mut context = Context::new(&mut document, &options);
 
-    RemoveDisallowedNodesStage.run(&mut context).unwrap();
+    RemoveDisallowedNodes.run(&mut context).unwrap();
 
     assert_eq!(document.select("p").length(), 1);
     assert_eq!(document.select("style").length(), 0);
@@ -58,7 +58,7 @@ mod tests {
 
     let mut context = Context::new(&mut document, &options);
 
-    RemoveDisallowedNodesStage.run(&mut context).unwrap();
+    RemoveDisallowedNodes.run(&mut context).unwrap();
 
     assert_eq!(document.select("noscript").length(), 0);
     assert_eq!(document.select("p").length(), 1);
@@ -87,7 +87,7 @@ mod tests {
 
     let mut context = Context::new(&mut document, &options);
 
-    RemoveDisallowedNodesStage.run(&mut context).unwrap();
+    RemoveDisallowedNodes.run(&mut context).unwrap();
 
     assert_eq!(document.select("noscript").length(), 0);
     assert_eq!(document.select("p").length(), 1);
