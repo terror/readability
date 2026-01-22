@@ -5,7 +5,7 @@ use {
   metadata::Metadata,
   pipeline::Pipeline,
   serde::{Deserialize, Serialize},
-  stage::{ElementLimitStage, Stage},
+  stage::{ElementLimitStage, RemoveDisallowedNodesStage, Stage},
   std::mem,
   url::Url,
 };

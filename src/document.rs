@@ -18,6 +18,10 @@ impl<'a> Document<'a> {
   pub(crate) fn new(document: &'a mut dom_query::Document) -> Self {
     Document { document }
   }
+
+  pub(crate) fn remove_elements(&mut self, selector: &str) {
+    self.document.select(selector).remove();
+  }
 }
 
 #[cfg(test)]
