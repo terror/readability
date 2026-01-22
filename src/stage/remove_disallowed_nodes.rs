@@ -19,7 +19,7 @@ mod tests {
   #[test]
   fn removes_script_tags() {
     let mut document = dom_query::Document::from(
-      r#"<html><body><script>alert('hi');</script><p>Content</p></body></html>"#,
+      "<html><body><script>alert('hi');</script><p>Content</p></body></html>",
     );
 
     let options = ReadabilityOptions::default();
@@ -35,7 +35,7 @@ mod tests {
   #[test]
   fn removes_style_tags() {
     let mut document = dom_query::Document::from(
-      r#"<html><head><style>body { color: red; }</style></head><body><p>Content</p></body></html>"#,
+      "<html><head><style>body { color: red; }</style></head><body><p>Content</p></body></html>",
     );
 
     let options = ReadabilityOptions::default();
@@ -51,7 +51,7 @@ mod tests {
   #[test]
   fn removes_noscript_tags() {
     let mut document = dom_query::Document::from(
-      r#"<html><body><noscript>Enable JS</noscript><p>Content</p></body></html>"#,
+      "<html><body><noscript>Enable JS</noscript><p>Content</p></body></html>",
     );
 
     let options = ReadabilityOptions::default();
@@ -67,7 +67,7 @@ mod tests {
   #[test]
   fn removes_all_disallowed_tags() {
     let mut document = dom_query::Document::from(
-      r#"
+      "
       <html>
         <head>
           <style>.foo { color: red; }</style>
@@ -80,7 +80,7 @@ mod tests {
           <style>.bar { display: none; }</style>
         </body>
       </html>
-      "#,
+      ",
     );
 
     let options = ReadabilityOptions::default();
