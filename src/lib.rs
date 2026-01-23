@@ -1,11 +1,14 @@
 use {
   context::Context,
   document::Document,
-  dom_query::NodeRef,
+  dom_query::{NodeRef, Selection},
   metadata::Metadata,
   pipeline::Pipeline,
   serde::{Deserialize, Serialize},
-  stage::{ElementLimit, RemoveDisallowedNodes, RewriteFontTags, Stage},
+  stage::{
+    ElementLimit, RemoveDisallowedNodes, RewriteFontTags, Stage,
+    UnwrapNoscriptImages,
+  },
   url::Url,
 };
 

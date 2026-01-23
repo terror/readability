@@ -3,10 +3,12 @@ use super::*;
 mod element_limit;
 mod remove_disallowed_nodes;
 mod rewrite_font_tags;
+mod unwrap_noscript_images;
 
 pub use {
   element_limit::ElementLimit, remove_disallowed_nodes::RemoveDisallowedNodes,
   rewrite_font_tags::RewriteFontTags,
+  unwrap_noscript_images::UnwrapNoscriptImages,
 };
 
 pub(crate) trait Stage {
