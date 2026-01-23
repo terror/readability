@@ -35,6 +35,7 @@ impl<'a> Pipeline<'a> {
       Box::new(ElementLimit),
       Box::new(UnwrapNoscriptImages),
       Box::new(RemoveDisallowedNodes),
+      Box::new(RewriteLineBreaks),
       Box::new(RewriteFontTags),
     ];
 

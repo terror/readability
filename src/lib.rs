@@ -6,9 +6,10 @@ use {
   pipeline::Pipeline,
   serde::{Deserialize, Serialize},
   stage::{
-    ElementLimit, RemoveDisallowedNodes, RewriteFontTags, Stage,
-    UnwrapNoscriptImages,
+    ElementLimit, RemoveDisallowedNodes, RewriteFontTags, RewriteLineBreaks,
+    Stage, UnwrapNoscriptImages,
   },
+  std::iter,
   url::Url,
 };
 
