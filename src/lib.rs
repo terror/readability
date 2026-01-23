@@ -2,7 +2,6 @@ use {
   context::Context,
   document::Document,
   dom_query::{NodeRef, Selection},
-  html_escape::encode_double_quoted_attribute_to_string,
   metadata::Metadata,
   pipeline::Pipeline,
   serde::{Deserialize, Serialize},
@@ -10,7 +9,6 @@ use {
     ElementLimit, RemoveDisallowedNodes, RewriteFontTags, Stage,
     UnwrapNoscriptImages,
   },
-  std::fmt::Write,
   url::Url,
 };
 

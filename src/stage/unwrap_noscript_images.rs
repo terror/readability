@@ -16,78 +16,40 @@ impl Stage for UnwrapNoscriptImages {
 }
 
 impl UnwrapNoscriptImages {
-  fn build_image_html(
-    attributes: impl Iterator<Item = (String, String)>,
-  ) -> String {
-    let mut html = String::from("<img");
-
-    for (name, value) in attributes {
-      write!(html, " {name}=\"").unwrap();
-      encode_double_quoted_attribute_to_string(&value, &mut html);
-      html.push('"');
-    }
-
-    html.push_str("/>");
-
-    html
-  }
-
-  fn find_image<'a>(selection: &Selection<'a>) -> Option<NodeRef<'a>> {
-    selection
-      .nodes()
-      .iter()
-      .find(|node| node.node_name().as_deref() == Some("img"))
-      .cloned()
-  }
-
   fn has_image_source(node: &NodeRef) -> bool {
-    let has_source_attribute = SOURCE_ATTRIBUTES
-      .iter()
-      .filter_map(|attribute| node.attr(attribute))
-      .any(|value| !value.trim().is_empty());
-
-    let has_image_extension = node.attrs().into_iter().any(|attribute| {
-      let value = attribute.value.to_lowercase();
-
-      IMAGE_EXTENSIONS
-        .iter()
-        .any(|extension| value.contains(extension))
-    });
-
-    has_source_attribute || has_image_extension
-  }
-
-  fn is_single_image(selection: &Selection) -> bool {
-    if !selection.text().trim().is_empty() {
-      return false;
-    }
-
-    let direct_image_count = selection
-      .nodes()
-      .iter()
-      .filter(|node| node.node_name().as_deref() == Some("img"))
-      .count();
-
-    direct_image_count + selection.select("img").length() == 1
+    node.attrs().iter().any(|attribute| {
+      SOURCE_ATTRIBUTES.contains(&attribute.name.local.as_ref())
+        || IMAGE_EXTENSIONS
+          .iter()
+          .any(|extension| attribute.value.to_lowercase().contains(extension))
+    })
   }
 
   fn remove_placeholder_images(context: &mut Context<'_>) {
-    context
-      .document
-      .select("img")
-      .nodes()
-      .iter()
-      .filter(|node| !Self::has_image_source(node))
-      .cloned()
-      .collect::<Vec<_>>()
-      .into_iter()
-      .for_each(|node| node.remove_from_parent());
+    for node in context.document.select("img").nodes().to_vec() {
+      if !Self::has_image_source(&node) {
+        node.remove_from_parent();
+      }
+    }
+  }
+
+  fn single_image<'a>(selection: &Selection<'a>) -> Option<NodeRef<'a>> {
+    if !selection.text().trim().is_empty() {
+      return None;
+    }
+
+    let direct = selection.filter("img");
+    let nested = selection.select("img");
+
+    match (direct.nodes(), nested.length()) {
+      ([img], 0) => Some(img.clone()),
+      ([], 1) => nested.nodes().first().cloned(),
+      _ => None,
+    }
   }
 
   fn unwrap_noscript_images(context: &mut Context<'_>) {
-    let nodes = context.document.select("noscript").nodes().to_vec();
-
-    for node in nodes {
+    for node in context.document.select("noscript").nodes().to_vec() {
       let inner_html = node.inner_html();
 
       if inner_html.trim().is_empty() {
@@ -96,67 +58,31 @@ impl UnwrapNoscriptImages {
 
       let fragment = dom_query::Document::from(inner_html.as_ref());
 
-      let fragment_selection = fragment.select("body > *");
-
-      let Some(new_image) = Self::is_single_image(&fragment_selection)
-        .then(|| Self::find_image(&fragment_selection))
-        .flatten()
+      let Some(new_image) = Self::single_image(&fragment.select("body > *"))
       else {
         continue;
       };
 
-      let Some(prev_sibling) = node.prev_element_sibling() else {
+      let Some(previous_element_sibling) = node.prev_element_sibling() else {
         continue;
       };
 
-      let prev_selection = Selection::from(prev_sibling.clone());
+      let previous_selection =
+        Selection::from(previous_element_sibling.clone());
 
-      if !Self::is_single_image(&prev_selection) {
+      let Some(placeholder) = Self::single_image(&previous_selection) else {
         continue;
+      };
+
+      placeholder.remove_attrs(SOURCE_ATTRIBUTES);
+
+      for attribute in &new_image.attrs() {
+        placeholder.set_attr(&attribute.name.local, &attribute.value);
       }
 
-      let placeholder_image =
-        if prev_sibling.node_name().as_deref() == Some("img") {
-          Some(prev_sibling.clone())
-        } else {
-          Self::find_image(&prev_selection)
-        };
-
-      let new_attributes = new_image
-        .attrs()
-        .into_iter()
-        .map(|attribute| {
-          (
-            attribute.name.local.to_string(),
-            attribute.value.to_string(),
-          )
-        })
-        .collect::<Vec<_>>();
-
-      let placeholder_attributes = placeholder_image
-        .into_iter()
-        .flat_map(|image| {
-          image.attrs().into_iter().filter_map(|attribute| {
-            let name = attribute.name.local.to_string();
-
-            let is_source = SOURCE_ATTRIBUTES.contains(&name.as_str());
-
-            let already_exists = new_attributes
-              .iter()
-              .any(|(attribute_name, _)| attribute_name == &name);
-
-            if is_source || already_exists {
-              return None;
-            }
-
-            Some((name, attribute.value.to_string()))
-          })
-        })
-        .collect::<Vec<_>>();
-
-      prev_sibling.replace_with_html(Self::build_image_html(
-        new_attributes.into_iter().chain(placeholder_attributes),
-      ));
+      if previous_element_sibling.node_name().as_deref() != Some("img") {
+        previous_element_sibling.replace_with(&placeholder);
+      }
 
       node.remove_from_parent();
     }
@@ -171,7 +97,7 @@ mod tests {
     name: basic_unwrap,
     stage: UnwrapNoscriptImages,
     content: "<html><body><img alt=\"x\"/><noscript><img src=\"real.jpg\"/></noscript></body></html>",
-    expected: "<html><head></head><body><img src=\"real.jpg\" alt=\"x\"></body></html>",
+    expected: "<html><head></head><body><img alt=\"x\" src=\"real.jpg\"></body></html>",
   }
 
   test! {
