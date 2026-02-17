@@ -1,6 +1,11 @@
 use super::*;
 
-pub struct ElementLimit;
+/// Enforces the configured maximum number of DOM elements.
+///
+/// If `Options::max_elements` is set, this stage counts elements in the parsed
+/// document and returns `Error::ElementLimitExceeded` when the count is above
+/// the limit, preventing expensive processing of unusually large inputs.
+pub(crate) struct ElementLimit;
 
 impl Stage for ElementLimit {
   fn run(&mut self, context: &mut Context<'_>) -> Result {

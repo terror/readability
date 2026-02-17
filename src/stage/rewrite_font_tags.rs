@@ -1,6 +1,11 @@
 use super::*;
 
-pub struct RewriteFontTags;
+/// Rewrites deprecated `<font>` elements into semantic-neutral `<span>` tags.
+///
+/// This preserves document content and hierarchy while normalizing obsolete
+/// markup into a tag form that later cleanup and scoring stages can process
+/// consistently.
+pub(crate) struct RewriteFontTags;
 
 impl Stage for RewriteFontTags {
   fn run(&mut self, context: &mut Context<'_>) -> Result {

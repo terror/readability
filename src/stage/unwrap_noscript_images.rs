@@ -5,7 +5,14 @@ const IMAGE_EXTENSIONS: &[&str] = &[".jpg", ".jpeg", ".png", ".webp"];
 const SOURCE_ATTRIBUTES: &[&str] =
   &["src", "srcset", "data-src", "data-srcset"];
 
-pub struct UnwrapNoscriptImages;
+/// Resolves lazy-loaded image placeholders paired with `<noscript>` fallbacks.
+///
+/// For each `noscript` block that contains exactly one image, this stage looks
+/// at the previous element sibling and, when it also represents a single image
+/// placeholder, copies the real image attributes onto it. It then removes the
+/// processed `noscript` node and finally drops placeholder images that still do
+/// not contain a detectable image source attribute.
+pub(crate) struct UnwrapNoscriptImages;
 
 impl Stage for UnwrapNoscriptImages {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
