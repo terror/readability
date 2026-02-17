@@ -1,6 +1,11 @@
 use super::*;
 
-pub struct RemoveDisallowedNodes;
+/// Removes nodes that are never useful for readable article extraction.
+///
+/// This stage deletes all `script`, `style`, and `noscript` elements from the
+/// parsed document so later stages do not need to account for executable code,
+/// stylesheet content, or fallback markup.
+pub(crate) struct RemoveDisallowedNodes;
 
 impl Stage for RemoveDisallowedNodes {
   fn run(&mut self, context: &mut Context<'_>) -> Result {

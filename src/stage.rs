@@ -6,7 +6,7 @@ mod rewrite_font_tags;
 mod rewrite_line_breaks;
 mod unwrap_noscript_images;
 
-pub use {
+pub(crate) use {
   element_limit::ElementLimit, remove_disallowed_nodes::RemoveDisallowedNodes,
   rewrite_font_tags::RewriteFontTags, rewrite_line_breaks::RewriteLineBreaks,
   unwrap_noscript_images::UnwrapNoscriptImages,

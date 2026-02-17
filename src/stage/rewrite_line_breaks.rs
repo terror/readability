@@ -8,7 +8,14 @@ const PHRASING_ELEMENTS: &[&str] = &[
   "textarea", "time", "var", "wbr",
 ];
 
-pub struct RewriteLineBreaks;
+/// Converts `<br><br>` paragraph separators into explicit paragraph elements.
+///
+/// The stage scans `br` chains, replaces break runs with `<p>`, and moves
+/// following phrasing content into the new paragraph until a block boundary or
+/// the next break run is reached. It also trims trailing whitespace-like nodes
+/// and rewrites parent `<p>` containers to `<div>` when nested paragraphs would
+/// otherwise be produced.
+pub(crate) struct RewriteLineBreaks;
 
 impl Stage for RewriteLineBreaks {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
