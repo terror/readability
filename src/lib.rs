@@ -4,12 +4,14 @@ use {
   dom_query::{NodeRef, Selection},
   metadata::Metadata,
   pipeline::Pipeline,
+  regex::Regex,
   serde::{Deserialize, Serialize},
   stage::{
     ElementLimit, ExtractJsonLd, ExtractMetaTags, RemoveDisallowedNodes,
     RewriteFontTags, RewriteLineBreaks, Stage, UnwrapNoscriptImages,
   },
-  std::iter,
+  std::{iter, sync::LazyLock},
+  title_extractor::TitleExtractor,
   url::Url,
 };
 
@@ -29,5 +31,6 @@ mod options;
 mod pipeline;
 mod readability;
 mod stage;
+mod title_extractor;
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;

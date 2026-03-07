@@ -1,4 +1,5 @@
-use {super::*, regex::Regex};
+use super::*;
+use regex::Regex;
 
 pub(crate) struct ExtractMetaTags;
 
@@ -40,7 +41,9 @@ impl ExtractMetaTags {
 
     for meta in document.select("meta").nodes().to_vec() {
       let content = match meta.attr("content") {
-        Some(c) if !c.trim().is_empty() => c.trim().to_string(),
+        Some(content) if !content.trim().is_empty() => {
+          content.trim().to_string()
+        }
         _ => continue,
       };
 
@@ -61,85 +64,8 @@ impl ExtractMetaTags {
   }
 
   fn extract_article_title(document: &dom_query::Document) -> Option<String> {
-    let raw = document.select("title").first().text().trim().to_string();
-
-    if raw.is_empty() {
-      return None;
-    }
-
-    let separators = r"|\-–—\/>»";
-    let sep_pattern = Regex::new(&format!(r"\s[{separators}]\s")).unwrap();
-    let hierarchical_pattern = Regex::new(r"\s[\\/>»]\s").unwrap();
-    let strip_prefix_pattern =
-      Regex::new(&format!(r"(?i)^[^{separators}]*[{separators}]")).unwrap();
-
-    let word_count = |s: &str| s.split_whitespace().count();
-
-    let title = if sep_pattern.is_match(&raw) {
-      let had_hierarchical = hierarchical_pattern.is_match(&raw);
-
-      let all_matches = sep_pattern.find_iter(&raw).collect::<Vec<_>>();
-
-      let last_match = all_matches.last().unwrap();
-      let mut candidate = raw[..last_match.start()].to_string();
-
-      if word_count(&candidate) < 3 {
-        candidate = strip_prefix_pattern.replace(&raw, "").trim().to_string();
-      }
-
-      let candidate_words = word_count(&candidate);
-      let original_words_without_sep =
-        sep_pattern.replace_all(&raw, "").split_whitespace().count();
-
-      if candidate_words <= 4
-        && (!had_hierarchical
-          || candidate_words != original_words_without_sep - 1)
-      {
-        raw.clone()
-      } else {
-        candidate
-      }
-    } else if raw.contains(": ") {
-      let headings = document.select("h1, h2");
-      let trimmed = raw.trim();
-      let heading_match =
-        headings.nodes().iter().any(|h| h.text().trim().eq(trimmed));
-
-      if heading_match {
-        raw.clone()
-      } else {
-        let after_last_colon =
-          raw[raw.rfind(':').unwrap() + 1..].trim().to_string();
-
-        if word_count(&after_last_colon) < 3 {
-          let after_first_colon =
-            raw[raw.find(':').unwrap() + 1..].trim().to_string();
-          let before_first_colon = &raw[..raw.find(':').unwrap()];
-
-          if word_count(before_first_colon) > 5 {
-            raw.clone()
-          } else {
-            after_first_colon
-          }
-        } else {
-          after_last_colon
-        }
-      }
-    } else if raw.len() > 150 || raw.len() < 15 {
-      let h1s = document.select("h1");
-      if h1s.length() == 1 {
-        h1s.first().text().trim().to_string()
-      } else {
-        raw.clone()
-      }
-    } else {
-      raw.clone()
-    };
-
-    let normalize = Regex::new(r"\s{2,}").unwrap();
-    let title = normalize.replace_all(title.trim(), " ").to_string();
-
-    if title.is_empty() { None } else { Some(title) }
+    TitleExtractor::new(document)
+      .extract(document.select("title").first().text().trim())
   }
 
   fn extract_byline(
@@ -201,7 +127,7 @@ impl ExtractMetaTags {
   }
 
   fn is_url(s: &str) -> bool {
-    url::Url::parse(s).is_ok()
+    Url::parse(s).is_ok()
   }
 
   fn match_name(name: &str) -> Option<String> {
@@ -251,14 +177,6 @@ mod tests {
   use super::*;
 
   fn run(content: &str) -> Metadata {
-    let mut document = dom_query::Document::from(content);
-    let options = ReadabilityOptions::default();
-    let mut context = Context::new(&mut document, &options);
-    ExtractMetaTags.run(&mut context).unwrap();
-    context.metadata
-  }
-
-  fn run_with_json_ld(content: &str) -> Metadata {
     let mut document = dom_query::Document::from(content);
     let options = ReadabilityOptions::default();
     let mut context = Context::new(&mut document, &options);
@@ -345,7 +263,7 @@ mod tests {
   #[test]
   fn json_ld_title_takes_priority() {
     assert_eq!(
-      run_with_json_ld(
+      run(
         r#"<html><head>
           <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","name":"foo"}</script>
           <meta property="og:title" content="bar"/>
@@ -361,7 +279,7 @@ mod tests {
   #[test]
   fn meta_fills_gap_when_no_json_ld() {
     assert_eq!(
-      run_with_json_ld(
+      run(
         r#"<html><head>
           <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","name":"foo"}</script>
           <meta property="og:description" content="bar"/>
