@@ -1,5 +1,33 @@
 use super::*;
-use regex::Regex;
+
+const BYLINE_KEYS: &[&str] =
+  &["dc:creator", "dcterm:creator", "author", "parsely-author"];
+
+const EXCERPT_KEYS: &[&str] = &[
+  "dc:description",
+  "dcterm:description",
+  "og:description",
+  "weibo:article:description",
+  "weibo:webpage:description",
+  "description",
+  "twitter:description",
+];
+
+const PUBLISHED_TIME_KEYS: &[&str] =
+  &["article:published_time", "parsely-pub-date"];
+
+const SITE_NAME_KEYS: &[&str] = &["og:site_name"];
+
+const TITLE_KEYS: &[&str] = &[
+  "dc:title",
+  "dcterm:title",
+  "og:title",
+  "weibo:article:title",
+  "weibo:webpage:title",
+  "title",
+  "twitter:title",
+  "parsely-title",
+];
 
 pub(crate) struct ExtractMetaTags;
 
@@ -7,27 +35,23 @@ impl Stage for ExtractMetaTags {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let values = Self::collect_meta_values(context.document);
 
-    let metadata = &mut context.metadata;
+    let title = Self::extract_title(&values, context.document);
 
-    if metadata.title.is_none() {
-      metadata.title = Self::extract_title(&values, context.document);
-    }
+    let metadata = std::mem::take(&mut context.metadata);
 
-    if metadata.byline.is_none() {
-      metadata.byline = Self::extract_byline(&values);
-    }
-
-    if metadata.excerpt.is_none() {
-      metadata.excerpt = Self::extract_excerpt(&values);
-    }
-
-    if metadata.site_name.is_none() {
-      metadata.site_name = values.get("og:site_name").cloned();
-    }
-
-    if metadata.published_time.is_none() {
-      metadata.published_time = Self::extract_published_time(&values);
-    }
+    context.metadata = Metadata {
+      title: metadata.title.or(title),
+      byline: metadata.byline.or_else(|| Self::extract_byline(&values)),
+      excerpt: metadata
+        .excerpt
+        .or_else(|| Self::first_value(&values, EXCERPT_KEYS)),
+      site_name: metadata
+        .site_name
+        .or_else(|| Self::first_value(&values, SITE_NAME_KEYS)),
+      published_time: metadata
+        .published_time
+        .or_else(|| Self::first_value(&values, PUBLISHED_TIME_KEYS)),
+    };
 
     Ok(())
   }
@@ -36,8 +60,8 @@ impl Stage for ExtractMetaTags {
 impl ExtractMetaTags {
   fn collect_meta_values(
     document: &dom_query::Document,
-  ) -> std::collections::HashMap<String, String> {
-    let mut values = std::collections::HashMap::new();
+  ) -> HashMap<String, String> {
+    let mut values = HashMap::new();
 
     for meta in document.select("meta").nodes().to_vec() {
       let content = match meta.attr("content") {
@@ -48,15 +72,17 @@ impl ExtractMetaTags {
       };
 
       if let Some(property) = meta.attr("property") {
-        for key in Self::match_property(property.as_ref()) {
-          values.entry(key).or_insert_with(|| content.clone());
+        for token in property.split_whitespace() {
+          values
+            .entry(Self::normalize_key(token))
+            .or_insert_with(|| content.clone());
         }
       }
 
-      if let Some(name) = meta.attr("name")
-        && let Some(key) = Self::match_name(name.as_ref())
-      {
-        values.entry(key).or_insert_with(|| content.clone());
+      if let Some(name) = meta.attr("name") {
+        values
+          .entry(Self::normalize_key(name.as_ref()).replace('.', ":"))
+          .or_insert_with(|| content.clone());
       }
     }
 
@@ -68,106 +94,38 @@ impl ExtractMetaTags {
       .extract(document.select("title").first().text().trim())
   }
 
-  fn extract_byline(
-    values: &std::collections::HashMap<String, String>,
-  ) -> Option<String> {
+  fn extract_byline(values: &HashMap<String, String>) -> Option<String> {
     let article_author = values
       .get("article:author")
-      .filter(|v| !Self::is_url(v))
+      .filter(|value| !Self::is_url(value))
       .cloned();
 
-    values
-      .get("dc:creator")
-      .or_else(|| values.get("dcterm:creator"))
-      .or_else(|| values.get("author"))
-      .or_else(|| values.get("parsely-author"))
-      .cloned()
-      .or(article_author)
-  }
-
-  fn extract_excerpt(
-    values: &std::collections::HashMap<String, String>,
-  ) -> Option<String> {
-    values
-      .get("dc:description")
-      .or_else(|| values.get("dcterm:description"))
-      .or_else(|| values.get("og:description"))
-      .or_else(|| values.get("weibo:article:description"))
-      .or_else(|| values.get("weibo:webpage:description"))
-      .or_else(|| values.get("description"))
-      .or_else(|| values.get("twitter:description"))
-      .cloned()
-  }
-
-  fn extract_published_time(
-    values: &std::collections::HashMap<String, String>,
-  ) -> Option<String> {
-    values
-      .get("article:published_time")
-      .or_else(|| values.get("parsely-pub-date"))
-      .cloned()
+    Self::first_value(values, BYLINE_KEYS).or(article_author)
   }
 
   fn extract_title(
-    values: &std::collections::HashMap<String, String>,
+    values: &HashMap<String, String>,
     document: &dom_query::Document,
   ) -> Option<String> {
-    let title = values
-      .get("dc:title")
-      .or_else(|| values.get("dcterm:title"))
-      .or_else(|| values.get("og:title"))
-      .or_else(|| values.get("weibo:article:title"))
-      .or_else(|| values.get("weibo:webpage:title"))
-      .or_else(|| values.get("title"))
-      .or_else(|| values.get("twitter:title"))
-      .or_else(|| values.get("parsely-title"))
-      .cloned();
+    Self::first_value(values, TITLE_KEYS)
+      .or_else(|| Self::extract_article_title(document))
+  }
 
-    title.or_else(|| Self::extract_article_title(document))
+  fn first_value(
+    values: &HashMap<String, String>,
+    keys: &[&str],
+  ) -> Option<String> {
+    keys.iter().find_map(|key| values.get(*key).cloned())
   }
 
   fn is_url(s: &str) -> bool {
     Url::parse(s).is_ok()
   }
 
-  fn match_name(name: &str) -> Option<String> {
-    let pattern = Regex::new(
-      r"(?ix)
-      ^\s*
-      (?:(dc|dcterm|og|twitter|parsely|weibo:(?:article|webpage))\s*[-\.:]\s*)?
-      (author|creator|pub-date|description|title|site_name)
-      \s*$",
-    )
-    .unwrap();
-
-    if pattern.is_match(name) {
-      Some(
-        name
-          .to_lowercase()
-          .chars()
-          .filter(|c| !c.is_whitespace())
-          .collect::<String>()
-          .replace('.', ":"),
-      )
-    } else {
-      None
-    }
-  }
-
-  fn match_property(property: &str) -> Vec<String> {
-    let pattern =
-      Regex::new(r"(?i)\s*(article|dc|dcterm|og|twitter)\s*:\s*(author|creator|description|published_time|title|site_name)\s*")
-        .unwrap();
-
-    pattern
-      .find_iter(property)
-      .map(|m| {
-        m.as_str()
-          .to_lowercase()
-          .chars()
-          .filter(|c: &char| !c.is_whitespace())
-          .collect::<String>()
-      })
+  fn normalize_key(s: &str) -> String {
+    s.to_lowercase()
+      .chars()
+      .filter(|c| !c.is_whitespace())
       .collect()
   }
 }

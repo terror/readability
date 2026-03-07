@@ -10,7 +10,7 @@ use {
     ElementLimit, ExtractJsonLd, ExtractMetaTags, RemoveDisallowedNodes,
     RewriteFontTags, RewriteLineBreaks, Stage, UnwrapNoscriptImages,
   },
-  std::{iter, sync::LazyLock},
+  std::{collections::HashMap, iter, sync::LazyLock},
   title_extractor::TitleExtractor,
   url::Url,
 };
