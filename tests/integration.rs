@@ -134,8 +134,10 @@ impl TestFixture {
 }
 
 test_metadata!("004-metadata-space-separated-properties");
+test_metadata!("aclu");
 test_metadata!("archive-of-our-own");
 test_metadata!("article-author-tag");
+test_metadata!("blogger");
 test_metadata!("citylab-1");
 test_metadata!("cnn");
 test_metadata!("ebb-org");
@@ -153,10 +155,12 @@ test_metadata!("lazy-image-1");
 test_metadata!("lazy-image-3");
 test_metadata!("lifehacker-post-comment-load");
 test_metadata!("lifehacker-working");
+test_metadata!("links-in-tables");
 test_metadata!("medium-1");
 test_metadata!("medium-2");
 test_metadata!("medium-3");
 test_metadata!("metadata-content-missing");
+test_metadata!("mozilla-2");
 test_metadata!("nytimes-1");
 test_metadata!("nytimes-2");
 test_metadata!("qq");
@@ -170,4 +174,5 @@ test_metadata!("tumblr");
 test_metadata!("v8-blog");
 test_metadata!("videos-1");
 test_metadata!("videos-2");
+test_metadata!("wordpress");
 test_metadata!("youth");
