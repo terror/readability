@@ -34,6 +34,7 @@ impl<'a> Pipeline<'a> {
     let stages: Vec<Box<dyn Stage>> = vec![
       Box::new(ElementLimit),
       Box::new(UnwrapNoscriptImages),
+      Box::new(ExtractLang),
       Box::new(ExtractJsonLd),
       Box::new(ExtractMetaTags),
       Box::new(RemoveDisallowedNodes),
