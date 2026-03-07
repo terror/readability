@@ -2,6 +2,7 @@ use super::*;
 
 pub(crate) struct Context<'a> {
   pub(crate) document: &'a mut dom_query::Document,
+  pub(crate) lang: Option<String>,
   pub(crate) metadata: Metadata,
   pub(crate) options: &'a ReadabilityOptions,
 }
@@ -17,6 +18,7 @@ impl<'a> Context<'a> {
   ) -> Self {
     Self {
       document: html,
+      lang: None,
       metadata: Metadata::default(),
       options,
     }

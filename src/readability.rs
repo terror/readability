@@ -53,7 +53,7 @@ impl Readability {
       content: context.document.html().to_string(),
       dir: None,
       excerpt,
-      lang: None,
+      lang: context.lang,
       length: context.document.text().to_string().len(),
       published_time,
       site_name,
