@@ -134,218 +134,253 @@ impl ExtractMetaTags {
 mod tests {
   use super::*;
 
-  fn test(content: &str) -> Test {
-    Test::new()
-      .stage(ExtractJsonLd)
-      .stage(ExtractMetaTags)
-      .document(content)
-  }
-
   #[test]
   fn og_title() {
-    test(
-      r#"<html><head><meta property="og:title" content="foo"/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      title: Some("foo".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta property="og:title" content="foo"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        title: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn og_description() {
-    test(
-      r#"<html><head><meta property="og:description" content="foo"/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      excerpt: Some("foo".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta property="og:description" content="foo"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        excerpt: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn og_site_name() {
-    test(
-      r#"<html><head><meta property="og:site_name" content="foo"/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      site_name: Some("foo".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta property="og:site_name" content="foo"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        site_name: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn article_published_time() {
-    test(
-      r#"<html><head><meta property="article:published_time" content="2024-01-01"/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      published_time: Some("2024-01-01".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta property="article:published_time" content="2024-01-01"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        published_time: Some("2024-01-01".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn article_author_url_ignored() {
-    test(
-      r#"<html><head><meta property="article:author" content="https://example.com/author"/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata::default())
-    .run();
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta property="article:author" content="https://example.com/author"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata::default())
+      .run();
   }
 
   #[test]
   fn article_author_non_url_used() {
-    test(
-      r#"<html><head><meta property="article:author" content="foo bar"/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      byline: Some("foo bar".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta property="article:author" content="foo bar"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        byline: Some("foo bar".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn json_ld_title_takes_priority() {
-    test(
-      r#"<html><head>
+    Test::new()
+      .stage(ExtractJsonLd)
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head>
           <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","name":"foo"}</script>
           <meta property="og:title" content="bar"/>
         </head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      title: Some("foo".into()),
-      ..Metadata::default()
-    })
-    .run();
+      )
+      .expected_metadata(Metadata {
+        title: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn meta_fills_gap_when_no_json_ld() {
-    test(
-      r#"<html><head>
+    Test::new()
+      .stage(ExtractJsonLd)
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head>
           <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","name":"foo"}</script>
           <meta property="og:description" content="bar"/>
         </head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      title: Some("foo".into()),
-      excerpt: Some("bar".into()),
-      ..Metadata::default()
-    })
-    .run();
+      )
+      .expected_metadata(Metadata {
+        title: Some("foo".into()),
+        excerpt: Some("bar".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn author_meta() {
-    test(
-      r#"<html><head><meta name="author" content="foo"/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      byline: Some("foo".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta name="author" content="foo"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        byline: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn dc_creator() {
-    test(
-      r#"<html><head><meta name="dc.creator" content="foo"/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      byline: Some("foo".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta name="dc.creator" content="foo"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        byline: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn title_strips_site_name_suffix() {
-    test(
-      r"<html><head><title>foo bar baz qux quux | site name</title></head><body></body></html>",
-    )
-    .expected_metadata(Metadata {
-      title: Some("foo bar baz qux quux".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r"<html><head><title>foo bar baz qux quux | site name</title></head><body></body></html>",
+      )
+      .expected_metadata(Metadata {
+        title: Some("foo bar baz qux quux".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn title_strips_colon_suffix() {
-    test(
-      r"<html><head><title>site: foo bar baz qux</title></head><body></body></html>",
-    )
-    .expected_metadata(Metadata {
-      title: Some("foo bar baz qux".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractJsonLd)
+      .stage(ExtractMetaTags)
+      .document(
+        r"<html><head><title>site: foo bar baz qux</title></head><body></body></html>",
+      )
+      .expected_metadata(Metadata {
+        title: Some("foo bar baz qux".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn title_uses_h1_when_too_short() {
-    test(
-      r"<html><head><title>hi</title></head><body><h1>foo bar</h1></body></html>",
-    )
-    .expected_metadata(Metadata {
-      title: Some("foo bar".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractJsonLd)
+      .stage(ExtractMetaTags)
+      .document(
+        r"<html><head><title>hi</title></head><body><h1>foo bar</h1></body></html>",
+      )
+      .expected_metadata(Metadata {
+        title: Some("foo bar".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn twitter_title_fallback() {
-    test(
-      r#"<html><head><meta name="twitter:title" content="foo"/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      title: Some("foo".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractJsonLd)
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta name="twitter:title" content="foo"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        title: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn parsely_pub_date() {
-    test(
-      r#"<html><head><meta name="parsely-pub-date" content="2024-06-01"/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      published_time: Some("2024-06-01".into()),
-      ..Metadata::default()
-    })
-    .run();
+    Test::new()
+      .stage(ExtractJsonLd)
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta name="parsely-pub-date" content="2024-06-01"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        published_time: Some("2024-06-01".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 
   #[test]
   fn empty_content_ignored() {
-    test(
-      r#"<html><head><meta property="og:title" content=""/></head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata::default())
-    .run();
+    Test::new()
+      .stage(ExtractJsonLd)
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta property="og:title" content=""/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata::default())
+      .run();
   }
 
   #[test]
   fn dc_title_preferred_over_og_title() {
-    test(
-      r#"<html><head>
+    Test::new()
+      .stage(ExtractJsonLd)
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head>
           <meta name="dc.title" content="foo"/>
           <meta property="og:title" content="bar"/>
         </head><body></body></html>"#,
-    )
-    .expected_metadata(Metadata {
-      title: Some("foo".into()),
-      ..Metadata::default()
-    })
-    .run();
+      )
+      .expected_metadata(Metadata {
+        title: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
   }
 }

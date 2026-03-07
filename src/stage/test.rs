@@ -1,26 +1,20 @@
 use super::*;
 
+enum Assertion<T> {
+  Unset,
+  Expect(T),
+}
+
 pub(crate) struct Test {
   document: Option<String>,
-  expected_dir: Option<Option<String>>,
+  expected_dir: Assertion<Option<String>>,
   expected_html: Option<String>,
-  expected_lang: Option<Option<String>>,
+  expected_lang: Assertion<Option<String>>,
   expected_metadata: Option<Metadata>,
   stages: Vec<Box<dyn Stage>>,
 }
 
 impl Test {
-  pub(crate) fn new() -> Self {
-    Self {
-      document: None,
-      expected_dir: None,
-      expected_html: None,
-      expected_lang: None,
-      expected_metadata: None,
-      stages: Vec::new(),
-    }
-  }
-
   pub(crate) fn document(self, html: &str) -> Self {
     Self {
       document: Some(html.to_owned()),
@@ -30,7 +24,7 @@ impl Test {
 
   pub(crate) fn expected_dir(self, dir: Option<&str>) -> Self {
     Self {
-      expected_dir: Some(dir.map(str::to_owned)),
+      expected_dir: Assertion::Expect(dir.map(str::to_owned)),
       ..self
     }
   }
@@ -44,7 +38,7 @@ impl Test {
 
   pub(crate) fn expected_lang(self, lang: Option<&str>) -> Self {
     Self {
-      expected_lang: Some(lang.map(str::to_owned)),
+      expected_lang: Assertion::Expect(lang.map(str::to_owned)),
       ..self
     }
   }
@@ -56,10 +50,15 @@ impl Test {
     }
   }
 
-  pub(crate) fn stage(self, stage: impl Stage + 'static) -> Self {
-    let mut stages = self.stages;
-    stages.push(Box::new(stage));
-    Self { stages, ..self }
+  pub(crate) fn new() -> Self {
+    Self {
+      document: None,
+      expected_dir: Assertion::Unset,
+      expected_html: None,
+      expected_lang: Assertion::Unset,
+      expected_metadata: None,
+      stages: Vec::new(),
+    }
   }
 
   #[track_caller]
@@ -91,12 +90,23 @@ impl Test {
       assert_eq!(metadata, expected);
     }
 
-    if let Some(expected) = self.expected_lang {
+    if let Assertion::Expect(expected) = self.expected_lang {
       assert_eq!(lang, expected);
     }
 
-    if let Some(expected) = self.expected_dir {
+    if let Assertion::Expect(expected) = self.expected_dir {
       assert_eq!(dir, expected);
+    }
+  }
+
+  pub(crate) fn stage(self, stage: impl Stage + 'static) -> Self {
+    Self {
+      stages: self
+        .stages
+        .into_iter()
+        .chain([Box::new(stage) as _])
+        .collect(),
+      ..self
     }
   }
 }
