@@ -6,8 +6,8 @@ use {
   pipeline::Pipeline,
   serde::{Deserialize, Serialize},
   stage::{
-    ElementLimit, RemoveDisallowedNodes, RewriteFontTags, RewriteLineBreaks,
-    Stage, UnwrapNoscriptImages,
+    ElementLimit, ExtractJsonLd, RemoveDisallowedNodes, RewriteFontTags,
+    RewriteLineBreaks, Stage, UnwrapNoscriptImages,
   },
   std::iter,
   url::Url,

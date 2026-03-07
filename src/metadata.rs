@@ -1,4 +1,4 @@
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub(crate) struct Metadata {
   pub(crate) byline: Option<String>,
   pub(crate) excerpt: Option<String>,
