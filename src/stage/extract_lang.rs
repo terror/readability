@@ -41,7 +41,7 @@ mod tests {
 
   #[test]
   fn returns_none_when_no_lang() {
-    assert_eq!(run(r#"<html><head></head><body></body></html>"#), None);
+    assert_eq!(run(r"<html><head></head><body></body></html>"), None);
   }
 
   #[test]
