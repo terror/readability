@@ -132,3 +132,18 @@ impl TestFixture {
     assert_html_eq!(self.parse_article().content, self.expected_html.clone());
   }
 }
+
+test_metadata!("004-metadata-space-separated-properties");
+test_metadata!("cnn");
+test_metadata!("gmw");
+test_metadata!("keep-images");
+test_metadata!("la-nacion");
+test_metadata!("lazy-image-3");
+test_metadata!("medium-1");
+test_metadata!("medium-2");
+test_metadata!("metadata-content-missing");
+test_metadata!("qq");
+test_metadata!("tmz-1");
+test_metadata!("topicseed-1");
+test_metadata!("videos-1");
+test_metadata!("youth");
