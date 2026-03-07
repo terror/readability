@@ -23,50 +23,50 @@ impl Stage for ExtractLang {
 mod tests {
   use super::*;
 
-  fn run(content: &str) -> Option<String> {
-    let mut document = dom_query::Document::from(content);
-    let options = ReadabilityOptions::default();
-    let mut context = Context::new(&mut document, &options);
-    ExtractLang.run(&mut context).unwrap();
-    context.lang
-  }
-
   #[test]
   fn extracts_lang_from_html_element() {
-    assert_eq!(
-      run(r#"<html lang="en"><head></head><body></body></html>"#),
-      Some("en".into())
-    );
+    Test::new()
+      .stage(ExtractLang)
+      .document(r#"<html lang="en"><head></head><body></body></html>"#)
+      .expected_lang(Some("en"))
+      .run();
   }
 
   #[test]
   fn returns_none_when_no_lang() {
-    assert_eq!(run(r"<html><head></head><body></body></html>"), None);
+    Test::new()
+      .stage(ExtractLang)
+      .document(r"<html><head></head><body></body></html>")
+      .expected_lang(None)
+      .run();
   }
 
   #[test]
   fn returns_none_when_lang_empty() {
-    assert_eq!(
-      run(r#"<html lang=""><head></head><body></body></html>"#),
-      None
-    );
+    Test::new()
+      .stage(ExtractLang)
+      .document(r#"<html lang=""><head></head><body></body></html>"#)
+      .expected_lang(None)
+      .run();
   }
 
   #[test]
   fn extracts_xml_lang() {
-    assert_eq!(
-      run(r#"<html xml:lang="fr"><head></head><body></body></html>"#),
-      None
-    );
+    Test::new()
+      .stage(ExtractLang)
+      .document(r#"<html xml:lang="fr"><head></head><body></body></html>"#)
+      .expected_lang(None)
+      .run();
   }
 
   #[test]
   fn extracts_lang_with_xmlns() {
-    assert_eq!(
-      run(
-        r#"<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"><head></head><body></body></html>"#
-      ),
-      Some("en".into())
-    );
+    Test::new()
+      .stage(ExtractLang)
+      .document(
+        r#"<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"><head></head><body></body></html>"#,
+      )
+      .expected_lang(Some("en"))
+      .run();
   }
 }

@@ -92,66 +92,96 @@ impl UnwrapNoscriptImages {
 mod tests {
   use super::*;
 
-  test! {
-    name: basic_unwrap,
-    stage: UnwrapNoscriptImages,
-    content: "<html><body><img alt=\"x\"/><noscript><img src=\"real.jpg\"/></noscript></body></html>",
-    expected: "<html><head></head><body><img alt=\"x\" src=\"real.jpg\"></body></html>",
+  #[test]
+  fn basic_unwrap() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><img alt=\"x\"/><noscript><img src=\"real.jpg\"/></noscript></body></html>")
+      .expected_html("<html><head></head><body><img alt=\"x\" src=\"real.jpg\"></body></html>")
+      .run();
   }
 
-  test! {
-    name: remove_placeholder_without_src,
-    stage: UnwrapNoscriptImages,
-    content: "<html><body><img class=\"lazy\"/></body></html>",
-    expected: "<html><head></head><body></body></html>",
+  #[test]
+  fn remove_placeholder_without_src() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><img class=\"lazy\"/></body></html>")
+      .expected_html("<html><head></head><body></body></html>")
+      .run();
   }
 
-  test! {
-    name: keep_valid_image,
-    stage: UnwrapNoscriptImages,
-    content: "<html><body><img src=\"valid.jpg\"/></body></html>",
-    expected: "<html><head></head><body><img src=\"valid.jpg\"></body></html>",
+  #[test]
+  fn keep_valid_image() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><img src=\"valid.jpg\"/></body></html>")
+      .expected_html(
+        "<html><head></head><body><img src=\"valid.jpg\"></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: non_image_noscript_unchanged,
-    stage: UnwrapNoscriptImages,
-    content: "<html><body><noscript><p>Enable JS</p></noscript></body></html>",
-    expected: "<html><head></head><body><noscript><p>Enable JS</p></noscript></body></html>",
+  #[test]
+  fn non_image_noscript_unchanged() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><noscript><p>Enable JS</p></noscript></body></html>")
+      .expected_html(
+        "<html><head></head><body><noscript><p>Enable JS</p></noscript></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: no_previous_sibling_unchanged,
-    stage: UnwrapNoscriptImages,
-    content: "<html><body><noscript><img src=\"x.jpg\"/></noscript></body></html>",
-    expected: "<html><head></head><body><noscript><img src=\"x.jpg\"></noscript></body></html>",
+  #[test]
+  fn no_previous_sibling_unchanged() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><noscript><img src=\"x.jpg\"/></noscript></body></html>")
+      .expected_html(
+        "<html><head></head><body><noscript><img src=\"x.jpg\"></noscript></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: nested_wrapper,
-    stage: UnwrapNoscriptImages,
-    content: "<html><body><div><img/></div><noscript><img src=\"real.jpg\"/></noscript></body></html>",
-    expected: "<html><head></head><body><img src=\"real.jpg\"></body></html>",
+  #[test]
+  fn nested_wrapper() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><div><img/></div><noscript><img src=\"real.jpg\"/></noscript></body></html>")
+      .expected_html("<html><head></head><body><img src=\"real.jpg\"></body></html>")
+      .run();
   }
 
-  test! {
-    name: preserves_data_src,
-    stage: UnwrapNoscriptImages,
-    content: "<html><body><img data-src=\"lazy.jpg\"/></body></html>",
-    expected: "<html><head></head><body><img data-src=\"lazy.jpg\"></body></html>",
+  #[test]
+  fn preserves_data_src() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><img data-src=\"lazy.jpg\"/></body></html>")
+      .expected_html(
+        "<html><head></head><body><img data-src=\"lazy.jpg\"></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: preserves_srcset,
-    stage: UnwrapNoscriptImages,
-    content: "<html><body><img srcset=\"img-320w.jpg 320w, img-480w.jpg 480w\"/></body></html>",
-    expected: "<html><head></head><body><img srcset=\"img-320w.jpg 320w, img-480w.jpg 480w\"></body></html>",
+  #[test]
+  fn preserves_srcset() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><img srcset=\"img-320w.jpg 320w, img-480w.jpg 480w\"/></body></html>")
+      .expected_html(
+        "<html><head></head><body><img srcset=\"img-320w.jpg 320w, img-480w.jpg 480w\"></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: preserves_image_extension_in_attr,
-    stage: UnwrapNoscriptImages,
-    content: "<html><body><img data-lazy=\"image.png\"/></body></html>",
-    expected: "<html><head></head><body><img data-lazy=\"image.png\"></body></html>",
+  #[test]
+  fn preserves_image_extension_in_attr() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><img data-lazy=\"image.png\"/></body></html>")
+      .expected_html(
+        "<html><head></head><body><img data-lazy=\"image.png\"></body></html>",
+      )
+      .run();
   }
 }
