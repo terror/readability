@@ -1,8 +1,8 @@
 use super::*;
 
 enum Assertion<T> {
-  Unset,
   Expect(T),
+  Unset,
 }
 
 pub(crate) struct Test {
