@@ -2,6 +2,7 @@ use super::*;
 
 mod element_limit;
 mod extract_json_ld;
+mod extract_meta_tags;
 mod remove_disallowed_nodes;
 mod rewrite_font_tags;
 mod rewrite_line_breaks;
@@ -9,6 +10,7 @@ mod unwrap_noscript_images;
 
 pub(crate) use {
   element_limit::ElementLimit, extract_json_ld::ExtractJsonLd,
+  extract_meta_tags::ExtractMetaTags,
   remove_disallowed_nodes::RemoveDisallowedNodes,
   rewrite_font_tags::RewriteFontTags, rewrite_line_breaks::RewriteLineBreaks,
   unwrap_noscript_images::UnwrapNoscriptImages,
