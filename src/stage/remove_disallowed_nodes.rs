@@ -19,24 +19,32 @@ impl Stage for RemoveDisallowedNodes {
 mod tests {
   use super::*;
 
-  test! {
-    name: removes_script_tags,
-    stage: RemoveDisallowedNodes,
-    content: "<html><body><script>alert('hi');</script><p>Content</p></body></html>",
-    expected: "<html><head></head><body><p>Content</p></body></html>",
+  #[test]
+  fn removes_script_tags() {
+    Test::new()
+      .stage(RemoveDisallowedNodes)
+      .document(
+        "<html><body><script>alert('hi');</script><p>Content</p></body></html>",
+      )
+      .expected_html("<html><head></head><body><p>Content</p></body></html>")
+      .run();
   }
 
-  test! {
-    name: removes_style_tags,
-    stage: RemoveDisallowedNodes,
-    content: "<html><head><style>body { color: red; }</style></head><body><p>Content</p></body></html>",
-    expected: "<html><head></head><body><p>Content</p></body></html>",
+  #[test]
+  fn removes_style_tags() {
+    Test::new()
+      .stage(RemoveDisallowedNodes)
+      .document("<html><head><style>body { color: red; }</style></head><body><p>Content</p></body></html>")
+      .expected_html("<html><head></head><body><p>Content</p></body></html>")
+      .run();
   }
 
-  test! {
-    name: removes_noscript_tags,
-    stage: RemoveDisallowedNodes,
-    content: "<html><body><noscript>Enable JS</noscript><p>Content</p></body></html>",
-    expected: "<html><head></head><body><p>Content</p></body></html>",
+  #[test]
+  fn removes_noscript_tags() {
+    Test::new()
+      .stage(RemoveDisallowedNodes)
+      .document("<html><body><noscript>Enable JS</noscript><p>Content</p></body></html>")
+      .expected_html("<html><head></head><body><p>Content</p></body></html>")
+      .run();
   }
 }

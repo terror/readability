@@ -23,40 +23,41 @@ impl Stage for ExtractDir {
 mod tests {
   use super::*;
 
-  fn run(content: &str) -> Option<String> {
-    let mut document = dom_query::Document::from(content);
-    let options = ReadabilityOptions::default();
-    let mut context = Context::new(&mut document, &options);
-    ExtractDir.run(&mut context).unwrap();
-    context.dir
-  }
-
   #[test]
   fn extracts_dir_from_html_element() {
-    assert_eq!(
-      run(r#"<html dir="rtl"><head></head><body></body></html>"#),
-      Some("rtl".into())
-    );
+    Test::new()
+      .stage(ExtractDir)
+      .document(r#"<html dir="rtl"><head></head><body></body></html>"#)
+      .expected_dir(Some("rtl"))
+      .run();
   }
 
   #[test]
   fn extracts_dir_from_body_before_html() {
-    assert_eq!(
-      run(r#"<html dir="ltr"><head></head><body dir="rtl"></body></html>"#),
-      Some("rtl".into())
-    );
+    Test::new()
+      .stage(ExtractDir)
+      .document(
+        r#"<html dir="ltr"><head></head><body dir="rtl"></body></html>"#,
+      )
+      .expected_dir(Some("rtl"))
+      .run();
   }
 
   #[test]
   fn returns_none_when_no_dir() {
-    assert_eq!(run(r"<html><head></head><body></body></html>"), None);
+    Test::new()
+      .stage(ExtractDir)
+      .document(r"<html><head></head><body></body></html>")
+      .expected_dir(None)
+      .run();
   }
 
   #[test]
   fn returns_none_when_dir_empty() {
-    assert_eq!(
-      run(r#"<html dir=""><head></head><body></body></html>"#),
-      None
-    );
+    Test::new()
+      .stage(ExtractDir)
+      .document(r#"<html dir=""><head></head><body></body></html>"#)
+      .expected_dir(None)
+      .run();
   }
 }

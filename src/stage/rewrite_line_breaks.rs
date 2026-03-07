@@ -107,80 +107,130 @@ impl RewriteLineBreaks {
 mod tests {
   use super::*;
 
-  test! {
-    name: replaces_double_br_with_p,
-    stage: RewriteLineBreaks,
-    content: "<html><body><div>foo<br><br>bar</div></body></html>",
-    expected: "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
+  #[test]
+  fn replaces_double_br_with_p() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><div>foo<br><br>bar</div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: single_br_unchanged,
-    stage: RewriteLineBreaks,
-    content: "<html><body><div>foo<br>bar</div></body></html>",
-    expected: "<html><head></head><body><div>foo<br>bar</div></body></html>",
+  #[test]
+  fn single_br_unchanged() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><div>foo<br>bar</div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>foo<br>bar</div></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: triple_br_becomes_single_p,
-    stage: RewriteLineBreaks,
-    content: "<html><body><div>foo<br><br><br>bar</div></body></html>",
-    expected: "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
+  #[test]
+  fn triple_br_becomes_single_p() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><div>foo<br><br><br>bar</div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: whitespace_between_brs_ignored_for_chain_detection,
-    stage: RewriteLineBreaks,
-    content: "<html><body><div>foo<br> <br>bar</div></body></html>",
-    expected: "<html><head></head><body><div>foo<p> bar</p></div></body></html>",
+  #[test]
+  fn whitespace_between_brs_ignored_for_chain_detection() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><div>foo<br> <br>bar</div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>foo<p> bar</p></div></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: stops_at_next_br_chain,
-    stage: RewriteLineBreaks,
-    content: "<html><body><div>a<br><br>b<br><br>c</div></body></html>",
-    expected: "<html><head></head><body><div>a<p>b</p><p>c</p></div></body></html>",
+  #[test]
+  fn stops_at_next_br_chain() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><div>a<br><br>b<br><br>c</div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>a<p>b</p><p>c</p></div></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: collects_phrasing_content,
-    stage: RewriteLineBreaks,
-    content: "<html><body><div>foo<br><br>bar <b>baz</b></div></body></html>",
-    expected: "<html><head></head><body><div>foo<p>bar <b>baz</b></p></div></body></html>",
+  #[test]
+  fn collects_phrasing_content() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document(
+        "<html><body><div>foo<br><br>bar <b>baz</b></div></body></html>",
+      )
+      .expected_html(
+        "<html><head></head><body><div>foo<p>bar <b>baz</b></p></div></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: stops_at_block_element,
-    stage: RewriteLineBreaks,
-    content: "<html><body><div>foo<br><br>bar<div>block</div></div></body></html>",
-    expected: "<html><head></head><body><div>foo<p>bar</p><div>block</div></div></body></html>",
+  #[test]
+  fn stops_at_block_element() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document(
+        "<html><body><div>foo<br><br>bar<div>block</div></div></body></html>",
+      )
+      .expected_html(
+        "<html><head></head><body><div>foo<p>bar</p><div>block</div></div></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: trims_trailing_whitespace_nodes,
-    stage: RewriteLineBreaks,
-    content: "<html><body><div>foo<br><br>bar<br></div></body></html>",
-    expected: "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
+  #[test]
+  fn trims_trailing_whitespace_nodes() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><div>foo<br><br>bar<br></div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: parent_p_becomes_div,
-    stage: RewriteLineBreaks,
-    content: "<html><body><p>foo<br><br>bar</p></body></html>",
-    expected: "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
+  #[test]
+  fn parent_p_becomes_div() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><p>foo<br><br>bar</p></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: handles_br_at_end,
-    stage: RewriteLineBreaks,
-    content: "<html><body><div>foo<br><br></div></body></html>",
-    expected: "<html><head></head><body><div>foo<p></p></div></body></html>",
+  #[test]
+  fn handles_br_at_end() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><div>foo<br><br></div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>foo<p></p></div></body></html>",
+      )
+      .run();
   }
 
-  test! {
-    name: anchor_with_phrasing_children_is_phrasing,
-    stage: RewriteLineBreaks,
-    content: "<html><body><div>foo<br><br><a href=\"#\"><b>link</b></a></div></body></html>",
-    expected: "<html><head></head><body><div>foo<p><a href=\"#\"><b>link</b></a></p></div></body></html>",
+  #[test]
+  fn anchor_with_phrasing_children_is_phrasing() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document(
+        "<html><body><div>foo<br><br><a href=\"#\"><b>link</b></a></div></body></html>",
+      )
+      .expected_html(
+        "<html><head></head><body><div>foo<p><a href=\"#\"><b>link</b></a></p></div></body></html>",
+      )
+      .run();
   }
 }

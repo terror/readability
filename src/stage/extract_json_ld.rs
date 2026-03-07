@@ -182,36 +182,30 @@ impl ExtractJsonLd {
 mod tests {
   use super::*;
 
-  fn run(content: &str) -> Metadata {
-    let mut document = dom_query::Document::from(content);
-    let options = ReadabilityOptions::default();
-    let mut context = Context::new(&mut document, &options);
-    ExtractJsonLd.run(&mut context).unwrap();
-    context.metadata
-  }
-
   #[test]
   fn array_of_objects_picks_article() {
-    assert_eq!(
-      run(
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
         r#"<html><head><script type="application/ld+json">
         [
           { "@context": "https://schema.org", "@type": "VideoObject", "name": "foo" },
           { "@context": "https://schema.org", "@type": "NewsArticle", "name": "bar" }
         ]
         </script></head><body></body></html>"#,
-      ),
-      Metadata {
+      )
+      .expected_metadata(Metadata {
         title: Some("bar".to_string()),
         ..Metadata::default()
-      }
-    );
+      })
+      .run();
   }
 
   #[test]
   fn cdata_stripped() {
-    assert_eq!(
-      run(
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
         r#"<html><head><script type="application/ld+json">
         <![CDATA[
         {
@@ -221,18 +215,19 @@ mod tests {
         }
         ]]>
         </script></head><body></body></html>"#,
-      ),
-      Metadata {
+      )
+      .expected_metadata(Metadata {
         title: Some("foo".to_string()),
         ..Metadata::default()
-      }
-    );
+      })
+      .run();
   }
 
   #[test]
   fn context_object_with_vocab() {
-    assert_eq!(
-      run(
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
         r#"<html><head><script type="application/ld+json">
         {
           "@context": { "@vocab": "https://schema.org/" },
@@ -240,18 +235,19 @@ mod tests {
           "name": "foo"
         }
         </script></head><body></body></html>"#,
-      ),
-      Metadata {
+      )
+      .expected_metadata(Metadata {
         title: Some("foo".to_string()),
         ..Metadata::default()
-      }
-    );
+      })
+      .run();
   }
 
   #[test]
   fn extracts_article_fields() {
-    assert_eq!(
-      run(
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
         r#"<html><head><script type="application/ld+json">
         {
           "@context": "https://schema.org",
@@ -263,21 +259,22 @@ mod tests {
           "author": { "name": "qux" }
         }
         </script></head><body></body></html>"#,
-      ),
-      Metadata {
+      )
+      .expected_metadata(Metadata {
         title: Some("foo".to_string()),
         excerpt: Some("bar".to_string()),
         site_name: Some("baz".to_string()),
         published_time: Some("2024-01-01".to_string()),
         byline: Some("qux".to_string()),
-      }
-    );
+      })
+      .run();
   }
 
   #[test]
   fn graph_traversal() {
-    assert_eq!(
-      run(
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
         r#"<html><head><script type="application/ld+json">
         {
           "@context": "https://schema.org",
@@ -287,18 +284,19 @@ mod tests {
           ]
         }
         </script></head><body></body></html>"#,
-      ),
-      Metadata {
+      )
+      .expected_metadata(Metadata {
         title: Some("bar".to_string()),
         ..Metadata::default()
-      }
-    );
+      })
+      .run();
   }
 
   #[test]
   fn headline_fallback() {
-    assert_eq!(
-      run(
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
         r#"<html><head><script type="application/ld+json">
         {
           "@context": "https://schema.org",
@@ -306,18 +304,19 @@ mod tests {
           "headline": "foo"
         }
         </script></head><body></body></html>"#,
-      ),
-      Metadata {
+      )
+      .expected_metadata(Metadata {
         title: Some("foo".to_string()),
         ..Metadata::default()
-      }
-    );
+      })
+      .run();
   }
 
   #[test]
   fn ignores_non_article_type() {
-    assert_eq!(
-      run(
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
         r#"<html><head><script type="application/ld+json">
         {
           "@context": "https://schema.org",
@@ -325,15 +324,16 @@ mod tests {
           "name": "foo"
         }
         </script></head><body></body></html>"#,
-      ),
-      Metadata::default()
-    );
+      )
+      .expected_metadata(Metadata::default())
+      .run();
   }
 
   #[test]
   fn ignores_non_schema_org() {
-    assert_eq!(
-      run(
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
         r#"<html><head><script type="application/ld+json">
         {
           "@context": "https://example.com",
@@ -341,31 +341,33 @@ mod tests {
           "name": "foo"
         }
         </script></head><body></body></html>"#,
-      ),
-      Metadata::default()
-    );
+      )
+      .expected_metadata(Metadata::default())
+      .run();
   }
 
   #[test]
   fn invalid_json_skipped() {
-    assert_eq!(
-      run(
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
         r#"<html><head>
         <script type="application/ld+json">not json</script>
         <script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","name":"foo"}</script>
         </head><body></body></html>"#,
-      ),
-      Metadata {
+      )
+      .expected_metadata(Metadata {
         title: Some("foo".to_string()),
         ..Metadata::default()
-      }
-    );
+      })
+      .run();
   }
 
   #[test]
   fn multiple_authors() {
-    assert_eq!(
-      run(
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
         r#"<html><head><script type="application/ld+json">
         {
           "@context": "https://schema.org",
@@ -373,11 +375,11 @@ mod tests {
           "author": [{ "name": "foo" }, { "name": "bar" }]
         }
         </script></head><body></body></html>"#,
-      ),
-      Metadata {
+      )
+      .expected_metadata(Metadata {
         byline: Some("foo, bar".to_string()),
         ..Metadata::default()
-      }
-    );
+      })
+      .run();
   }
 }
