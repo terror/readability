@@ -281,7 +281,7 @@ mod tests {
   fn title_strips_site_name_suffix() {
     assert_eq!(
       run(
-        r#"<html><head><title>foo bar baz qux quux | site name</title></head><body></body></html>"#,
+        r"<html><head><title>foo bar baz qux quux | site name</title></head><body></body></html>",
       ),
       Metadata {
         title: Some("foo bar baz qux quux".into()),
@@ -294,7 +294,7 @@ mod tests {
   fn title_strips_colon_suffix() {
     assert_eq!(
       run(
-        r#"<html><head><title>site: foo bar baz qux</title></head><body></body></html>"#,
+        r"<html><head><title>site: foo bar baz qux</title></head><body></body></html>",
       ),
       Metadata {
         title: Some("foo bar baz qux".into()),
@@ -307,7 +307,7 @@ mod tests {
   fn title_uses_h1_when_too_short() {
     assert_eq!(
       run(
-        r#"<html><head><title>hi</title></head><body><h1>foo bar</h1></body></html>"#,
+        r"<html><head><title>hi</title></head><body><h1>foo bar</h1></body></html>",
       ),
       Metadata {
         title: Some("foo bar".into()),
