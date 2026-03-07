@@ -1,13 +1,15 @@
 use super::*;
 
 mod element_limit;
+mod extract_json_ld;
 mod remove_disallowed_nodes;
 mod rewrite_font_tags;
 mod rewrite_line_breaks;
 mod unwrap_noscript_images;
 
 pub(crate) use {
-  element_limit::ElementLimit, remove_disallowed_nodes::RemoveDisallowedNodes,
+  element_limit::ElementLimit, extract_json_ld::ExtractJsonLd,
+  remove_disallowed_nodes::RemoveDisallowedNodes,
   rewrite_font_tags::RewriteFontTags, rewrite_line_breaks::RewriteLineBreaks,
   unwrap_noscript_images::UnwrapNoscriptImages,
 };
@@ -27,13 +29,9 @@ macro_rules! test {
     #[test]
     fn $name() {
       let mut document = dom_query::Document::from($content);
-
       let options = ReadabilityOptions::default();
-
       let mut context = Context::new(&mut document, &options);
-
       $stage.run(&mut context).unwrap();
-
       assert_eq!(document.html().to_string(), $expected);
     }
   };
