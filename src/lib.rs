@@ -7,7 +7,7 @@ use {
   regex::Regex,
   serde::{Deserialize, Serialize},
   stage::{
-    ElementLimit, ExtractJsonLd, ExtractLang, ExtractMetaTags,
+    ElementLimit, ExtractDir, ExtractJsonLd, ExtractLang, ExtractMetaTags,
     RemoveDisallowedNodes, RewriteFontTags, RewriteLineBreaks, Stage,
     UnwrapNoscriptImages,
   },

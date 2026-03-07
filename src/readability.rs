@@ -51,7 +51,7 @@ impl Readability {
     Ok(Article {
       byline,
       content: context.document.html().to_string(),
-      dir: None,
+      dir: context.dir,
       excerpt,
       lang: context.lang,
       length: context.document.text().to_string().len(),

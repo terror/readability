@@ -1,6 +1,7 @@
 use super::*;
 
 mod element_limit;
+mod extract_dir;
 mod extract_json_ld;
 mod extract_lang;
 mod extract_meta_tags;
@@ -10,8 +11,9 @@ mod rewrite_line_breaks;
 mod unwrap_noscript_images;
 
 pub(crate) use {
-  element_limit::ElementLimit, extract_json_ld::ExtractJsonLd,
-  extract_lang::ExtractLang, extract_meta_tags::ExtractMetaTags,
+  element_limit::ElementLimit, extract_dir::ExtractDir,
+  extract_json_ld::ExtractJsonLd, extract_lang::ExtractLang,
+  extract_meta_tags::ExtractMetaTags,
   remove_disallowed_nodes::RemoveDisallowedNodes,
   rewrite_font_tags::RewriteFontTags, rewrite_line_breaks::RewriteLineBreaks,
   unwrap_noscript_images::UnwrapNoscriptImages,
