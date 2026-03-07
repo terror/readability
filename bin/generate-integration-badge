@@ -2,9 +2,12 @@
 
 set -euo pipefail
 
-full_tests=$(grep -c '^test!(' tests/integration.rs || echo "0")
-metadata_tests=$(grep -c '^test_metadata!(' tests/integration.rs || echo "0")
-output_tests=$(grep -c '^test_output!(' tests/integration.rs || echo "0")
+full_tests=$(grep -c '^test!(' tests/integration.rs || true)
+full_tests=${full_tests:-0}
+metadata_tests=$(grep -c '^test_metadata!(' tests/integration.rs || true)
+metadata_tests=${metadata_tests:-0}
+output_tests=$(grep -c '^test_output!(' tests/integration.rs || true)
+output_tests=${output_tests:-0}
 
 implemented=$((full_tests * 2 + metadata_tests + output_tests))
 
