@@ -51,6 +51,13 @@ impl Test {
     }
   }
 
+  pub(crate) fn metadata(self, metadata: Metadata) -> Self {
+    Self {
+      metadata: Some(metadata),
+      ..self
+    }
+  }
+
   pub(crate) fn new() -> Self {
     Self {
       document: None,
@@ -60,13 +67,6 @@ impl Test {
       expected_metadata: None,
       metadata: None,
       stages: Vec::new(),
-    }
-  }
-
-  pub(crate) fn metadata(self, metadata: Metadata) -> Self {
-    Self {
-      metadata: Some(metadata),
-      ..self
     }
   }
 
