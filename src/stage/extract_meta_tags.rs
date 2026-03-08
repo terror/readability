@@ -37,7 +37,7 @@ impl Stage for ExtractMetaTags {
 
     let title = Self::extract_title(&values, context.document);
 
-    let metadata = std::mem::take(&mut context.metadata);
+    let metadata = mem::take(&mut context.metadata);
 
     context.metadata = Metadata {
       title: metadata.title.or(title),

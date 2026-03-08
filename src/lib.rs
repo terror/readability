@@ -9,9 +9,9 @@ use {
   stage::{
     ElementLimit, ExcerptFallback, ExtractDir, ExtractJsonLd, ExtractLang,
     ExtractMetaTags, RemoveDisallowedNodes, RewriteFontTags, RewriteLineBreaks,
-    Stage, UnwrapNoscriptImages,
+    Stage, UnescapeHtmlEntities, UnwrapNoscriptImages,
   },
-  std::{collections::HashMap, iter, sync::LazyLock},
+  std::{collections::HashMap, iter, mem, sync::LazyLock},
   title_extractor::TitleExtractor,
   url::Url,
 };

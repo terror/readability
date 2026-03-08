@@ -9,6 +9,7 @@ mod extract_meta_tags;
 mod remove_disallowed_nodes;
 mod rewrite_font_tags;
 mod rewrite_line_breaks;
+mod unescape_html_entities;
 mod unwrap_noscript_images;
 
 #[cfg(test)]
@@ -20,6 +21,7 @@ pub(crate) use {
   extract_lang::ExtractLang, extract_meta_tags::ExtractMetaTags,
   remove_disallowed_nodes::RemoveDisallowedNodes,
   rewrite_font_tags::RewriteFontTags, rewrite_line_breaks::RewriteLineBreaks,
+  unescape_html_entities::UnescapeHtmlEntities,
   unwrap_noscript_images::UnwrapNoscriptImages,
 };
 
