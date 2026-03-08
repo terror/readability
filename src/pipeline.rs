@@ -42,6 +42,7 @@ impl<'a> Pipeline<'a> {
       Box::new(RewriteLineBreaks),
       Box::new(RewriteFontTags),
       Box::new(ExcerptFallback),
+      Box::new(UnescapeHtmlEntities),
     ];
 
     for stage in stages {
