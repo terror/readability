@@ -11,6 +11,7 @@ pub(crate) struct Test {
   expected_html: Option<String>,
   expected_lang: Assertion<Option<String>>,
   expected_metadata: Option<Metadata>,
+  metadata: Option<Metadata>,
   stages: Vec<Box<dyn Stage>>,
 }
 
@@ -50,6 +51,13 @@ impl Test {
     }
   }
 
+  pub(crate) fn metadata(self, metadata: Metadata) -> Self {
+    Self {
+      metadata: Some(metadata),
+      ..self
+    }
+  }
+
   pub(crate) fn new() -> Self {
     Self {
       document: None,
@@ -57,6 +65,7 @@ impl Test {
       expected_html: None,
       expected_lang: Assertion::Unset,
       expected_metadata: None,
+      metadata: None,
       stages: Vec::new(),
     }
   }
@@ -74,6 +83,10 @@ impl Test {
 
     let (metadata, lang, dir) = {
       let mut context = Context::new(&mut document, &options);
+
+      if let Some(metadata) = self.metadata {
+        context.metadata = metadata;
+      }
 
       for stage in &mut self.stages {
         stage.run(&mut context).unwrap();
