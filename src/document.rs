@@ -48,7 +48,7 @@ mod tests {
   #[test]
   fn attribute_returns_none_when_missing() {
     let mut document =
-      dom_query::Document::from(r#"<html><head></head><body></body></html>"#);
+      dom_query::Document::from("<html><head></head><body></body></html>");
 
     let document = Document::new(&mut document);
 
