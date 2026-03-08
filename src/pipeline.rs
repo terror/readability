@@ -41,6 +41,7 @@ impl<'a> Pipeline<'a> {
       Box::new(RemoveDisallowedNodes),
       Box::new(RewriteLineBreaks),
       Box::new(RewriteFontTags),
+      Box::new(ExcerptFallback),
     ];
 
     for stage in stages {
