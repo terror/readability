@@ -4,16 +4,11 @@ pub(crate) struct ExtractLang;
 
 impl Stage for ExtractLang {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let lang = context
-      .document
-      .select("html")
-      .nodes()
-      .first()
-      .and_then(|node| node.attr("lang"))
+    context.lang = context
+      .document()
+      .attribute("html", "lang")
       .map(|lang| lang.trim().to_string())
       .filter(|lang| !lang.is_empty());
-
-    context.lang = lang;
 
     Ok(())
   }
