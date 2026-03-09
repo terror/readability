@@ -1,17 +1,5 @@
 use super::*;
 
-static SEP: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"\s[|\-–—\/>»]\s").unwrap());
-
-static HIERARCHICAL_SEP: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"\s[\\/>»]\s").unwrap());
-
-static STRIP_PREFIX: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"(?i)^[^|\-–—\/>»]*[|\-–—\/>»]").unwrap());
-
-static NORMALIZE: LazyLock<Regex> =
-  LazyLock::new(|| Regex::new(r"\s{2,}").unwrap());
-
 /// Titles shorter than this are considered suspect and trigger an H1 lookup.
 const MIN_TITLE_LENGTH: usize = 15;
 
@@ -86,7 +74,9 @@ impl<'a> TitleExtractor<'a> {
       .or_else(|| self.header_candidate(raw))
       .unwrap_or_else(|| raw.to_string());
 
-    let title = NORMALIZE.replace_all(title.trim(), " ").to_string();
+    let title = TITLE_NORMALIZE_WHITESPACE
+      .replace_all(title.trim(), " ")
+      .to_string();
 
     if title.is_empty() { None } else { Some(title) }
   }
@@ -110,26 +100,29 @@ impl<'a> TitleExtractor<'a> {
   }
 
   fn separator_candidate(raw: &str) -> Option<String> {
-    if !SEP.is_match(raw) {
+    if !TITLE_SEPARATOR.is_match(raw) {
       return None;
     }
 
-    let last_sep_start = SEP.find_iter(raw).last().unwrap().start();
+    let last_sep_start = TITLE_SEPARATOR.find_iter(raw).last().unwrap().start();
 
     let mut candidate = raw[..last_sep_start].to_string();
 
     let word_count = |string: &str| string.split_whitespace().count();
 
     if word_count(&candidate) < MIN_SEPARATOR_CANDIDATE_WORDS {
-      candidate = STRIP_PREFIX.replace(raw, "").trim().to_string();
+      candidate = TITLE_LEADING_JUNK.replace(raw, "").trim().to_string();
     }
 
-    candidate = NORMALIZE.replace_all(candidate.trim(), " ").to_string();
+    candidate = TITLE_NORMALIZE_WHITESPACE
+      .replace_all(candidate.trim(), " ")
+      .to_string();
 
     let candidate_words = word_count(&candidate);
-    let raw_words_without_seps = word_count(&SEP.replace_all(raw, ""));
+    let raw_words_without_seps =
+      word_count(&TITLE_SEPARATOR.replace_all(raw, ""));
 
-    let had_hierarchical = HIERARCHICAL_SEP.is_match(raw);
+    let had_hierarchical = TITLE_HIERARCHICAL_SEPARATOR.is_match(raw);
     let too_short = candidate_words <= MAX_SHORT_TITLE_WORDS;
 
     let not_one_word_shorter =

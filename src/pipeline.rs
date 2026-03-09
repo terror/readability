@@ -38,6 +38,7 @@ impl<'a> Pipeline<'a> {
       Box::new(ExtractLang),
       Box::new(ExtractJsonLd),
       Box::new(ExtractMetaTags),
+      Box::new(ExtractByline),
       Box::new(RemoveDisallowedNodes),
       Box::new(RewriteLineBreaks),
       Box::new(RewriteFontTags),

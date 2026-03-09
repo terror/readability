@@ -73,16 +73,22 @@ impl ExtractMetaTags {
 
       if let Some(property) = meta.attr("property") {
         for token in property.split_whitespace() {
-          values
-            .entry(Self::normalize_key(token))
-            .or_insert_with(|| content.clone());
+          if let Some(property) = META_PROPERTY.find(token) {
+            let key = property
+              .as_str()
+              .to_lowercase()
+              .replace(|c: char| c.is_whitespace(), "");
+
+            values.insert(key, content.clone());
+          }
         }
       }
 
       if let Some(name) = meta.attr("name") {
-        values
-          .entry(Self::normalize_key(name.as_ref()).replace('.', ":"))
-          .or_insert_with(|| content.clone());
+        values.insert(
+          Self::normalize_key(name.as_ref()).replace('.', ":"),
+          content.clone(),
+        );
       }
     }
 

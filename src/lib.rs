@@ -3,13 +3,19 @@ use {
   document::Document,
   dom_query::{NodeRef, Selection},
   metadata::Metadata,
+  node_ref_ext::NodeRefExt,
   pipeline::Pipeline,
+  re::{
+    BYLINE, MAYBE_CANDIDATE, META_PROPERTY, NUMERIC_HTML_ENTITY,
+    TITLE_HIERARCHICAL_SEPARATOR, TITLE_LEADING_JUNK,
+    TITLE_NORMALIZE_WHITESPACE, TITLE_SEPARATOR, UNLIKELY_CANDIDATE,
+  },
   regex::Regex,
   serde::{Deserialize, Serialize},
   stage::{
-    ElementLimit, ExcerptFallback, ExtractDir, ExtractJsonLd, ExtractLang,
-    ExtractMetaTags, RemoveDisallowedNodes, RewriteFontTags, RewriteLineBreaks,
-    Stage, UnescapeHtmlEntities, UnwrapNoscriptImages,
+    ElementLimit, ExcerptFallback, ExtractByline, ExtractDir, ExtractJsonLd,
+    ExtractLang, ExtractMetaTags, RemoveDisallowedNodes, RewriteFontTags,
+    RewriteLineBreaks, Stage, UnescapeHtmlEntities, UnwrapNoscriptImages,
   },
   std::{collections::HashMap, iter, mem, sync::LazyLock},
   title_extractor::TitleExtractor,
@@ -28,8 +34,10 @@ mod context;
 mod document;
 mod error;
 mod metadata;
+mod node_ref_ext;
 mod options;
 mod pipeline;
+mod re;
 mod readability;
 mod stage;
 mod title_extractor;
