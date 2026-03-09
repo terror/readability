@@ -7,9 +7,9 @@ use {
   regex::Regex,
   serde::{Deserialize, Serialize},
   stage::{
-    ElementLimit, ExcerptFallback, ExtractDir, ExtractJsonLd, ExtractLang,
-    ExtractMetaTags, RemoveDisallowedNodes, RewriteFontTags, RewriteLineBreaks,
-    Stage, UnescapeHtmlEntities, UnwrapNoscriptImages,
+    ElementLimit, ExcerptFallback, ExtractByline, ExtractDir, ExtractJsonLd,
+    ExtractLang, ExtractMetaTags, RemoveDisallowedNodes, RewriteFontTags,
+    RewriteLineBreaks, Stage, UnescapeHtmlEntities, UnwrapNoscriptImages,
   },
   std::{collections::HashMap, iter, mem, sync::LazyLock},
   title_extractor::TitleExtractor,

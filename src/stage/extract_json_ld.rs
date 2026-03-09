@@ -66,7 +66,11 @@ impl ExtractJsonLd {
     let author = article.get("author")?;
 
     if let Some(name) = author.get("name").and_then(|value| value.as_str()) {
-      return Some(name.trim().to_owned());
+      let name = name.trim();
+
+      if !name.is_empty() {
+        return Some(name.to_owned());
+      }
     }
 
     if let Some(authors) = author.as_array() {
@@ -76,6 +80,7 @@ impl ExtractJsonLd {
           author.get("name").and_then(|value| value.as_str())
         })
         .map(str::trim)
+        .filter(|name| !name.is_empty())
         .collect::<Vec<_>>()
         .join(", ");
 
@@ -95,18 +100,24 @@ impl ExtractJsonLd {
     let excerpt = article
       .get("description")
       .and_then(|value| value.as_str())
-      .map(|string| string.trim().to_owned());
+      .map(str::trim)
+      .filter(|s| !s.is_empty())
+      .map(str::to_owned);
 
     let site_name = article
       .get("publisher")
       .and_then(|publish| publish.get("name"))
       .and_then(|value| value.as_str())
-      .map(|string| string.trim().to_owned());
+      .map(str::trim)
+      .filter(|s| !s.is_empty())
+      .map(str::to_owned);
 
     let published_time = article
       .get("datePublished")
       .and_then(|value| value.as_str())
-      .map(|string| string.trim().to_owned());
+      .map(str::trim)
+      .filter(|s| !s.is_empty())
+      .map(str::to_owned);
 
     Metadata {
       byline,
@@ -118,16 +129,22 @@ impl ExtractJsonLd {
   }
 
   fn extract_title(article: &serde_json::Value) -> Option<String> {
-    let name = article.get("name").and_then(|value| value.as_str());
+    let name = article
+      .get("name")
+      .and_then(|value| value.as_str())
+      .map(str::trim)
+      .filter(|s| !s.is_empty());
 
-    let headline = article.get("headline").and_then(|value| value.as_str());
+    let headline = article
+      .get("headline")
+      .and_then(|value| value.as_str())
+      .map(str::trim)
+      .filter(|s| !s.is_empty());
 
     match (name, headline) {
-      (Some(name), Some(headline)) if name != headline => {
-        Some(name.trim().to_owned())
-      }
-      (Some(name), _) => Some(name.trim().to_owned()),
-      (None, Some(headline)) => Some(headline.trim().to_owned()),
+      (Some(name), Some(headline)) if name != headline => Some(name.to_owned()),
+      (Some(name), _) => Some(name.to_owned()),
+      (None, Some(headline)) => Some(headline.to_owned()),
       (None, None) => None,
     }
   }
