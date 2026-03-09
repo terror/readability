@@ -38,13 +38,13 @@ impl Stage for ExtractByline {
     for node in nodes {
       let rel = node.attr("rel").unwrap_or_default();
       let itemprop = node.attr("itemprop").unwrap_or_default();
+
       let class = node.attr("class").unwrap_or_default();
       let id = node.attr("id").unwrap_or_default();
-      let match_string = format!("{class} {id}");
 
       let is_byline_candidate = rel.as_ref() == "author"
         || itemprop.contains("author")
-        || BYLINE.is_match(&match_string);
+        || BYLINE.is_match(&format!("{class} {id}"));
 
       if !is_byline_candidate {
         continue;
@@ -60,6 +60,7 @@ impl Stage for ExtractByline {
           let ancestor_id = ancestor.attr("id").unwrap_or_default();
           let ancestor_match = format!("{ancestor_class} {ancestor_id}");
           let ancestor_role = ancestor.attr("role").unwrap_or_default();
+
           let tag = ancestor
             .node_name()
             .map(|n| n.to_uppercase())
@@ -91,13 +92,19 @@ impl Stage for ExtractByline {
 
       let byline = node
         .descendants_it()
-        .find(|n| {
-          n.attr("itemprop").is_some_and(|v| v.contains("name"))
-            && !n.text().trim().is_empty()
+        .find(|node| {
+          node
+            .attr("itemprop")
+            .is_some_and(|value| value.contains("name"))
+            && !node.text().trim().is_empty()
         })
-        .map_or_else(|| text.to_string(), |n| n.text().trim().to_string());
+        .map_or_else(
+          || text.to_string(),
+          |node| node.text().trim().to_string(),
+        );
 
       context.metadata.byline = Some(byline);
+
       break;
     }
 
@@ -110,23 +117,11 @@ mod tests {
   use super::*;
 
   #[test]
-  fn rel_author() {
-    Test::new()
-      .stage(ExtractByline)
-      .document(r#"<html><body><a rel="author">foo</a></body></html>"#)
-      .expected_metadata(Metadata {
-        byline: Some("foo".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn itemprop_author() {
+  fn class_author() {
     Test::new()
       .stage(ExtractByline)
       .document(
-        r#"<html><body><span itemprop="author">foo</span></body></html>"#,
+        r#"<html><body><div class="article-author">foo</div></body></html>"#,
       )
       .expected_metadata(Metadata {
         byline: Some("foo".into()),
@@ -144,58 +139,6 @@ mod tests {
         byline: Some("foo".into()),
         ..Metadata::default()
       })
-      .run();
-  }
-
-  #[test]
-  fn class_author() {
-    Test::new()
-      .stage(ExtractByline)
-      .document(
-        r#"<html><body><div class="article-author">foo</div></body></html>"#,
-      )
-      .expected_metadata(Metadata {
-        byline: Some("foo".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn id_author() {
-    Test::new()
-      .stage(ExtractByline)
-      .document(r#"<html><body><div id="author">foo</div></body></html>"#)
-      .expected_metadata(Metadata {
-        byline: Some("foo".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn prefers_itemprop_name_descendant() {
-    Test::new()
-      .stage(ExtractByline)
-      .document(
-        r#"<html><body><span itemprop="author"><span itemprop="name">foo</span> extra</span></body></html>"#,
-      )
-      .expected_metadata(Metadata {
-        byline: Some("foo".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn too_long_skipped() {
-    Test::new()
-      .stage(ExtractByline)
-      .document(&format!(
-        r#"<html><body><p class="byline">{}</p></body></html>"#,
-        "a".repeat(100)
-      ))
-      .expected_metadata(Metadata::default())
       .run();
   }
 
@@ -221,6 +164,70 @@ mod tests {
         byline: Some("foo".into()),
         ..Metadata::default()
       })
+      .run();
+  }
+
+  #[test]
+  fn id_author() {
+    Test::new()
+      .stage(ExtractByline)
+      .document(r#"<html><body><div id="author">foo</div></body></html>"#)
+      .expected_metadata(Metadata {
+        byline: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
+  }
+
+  #[test]
+  fn itemprop_author() {
+    Test::new()
+      .stage(ExtractByline)
+      .document(
+        r#"<html><body><span itemprop="author">foo</span></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        byline: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
+  }
+
+  #[test]
+  fn prefers_itemprop_name_descendant() {
+    Test::new()
+      .stage(ExtractByline)
+      .document(
+        r#"<html><body><span itemprop="author"><span itemprop="name">foo</span> extra</span></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        byline: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
+  }
+
+  #[test]
+  fn rel_author() {
+    Test::new()
+      .stage(ExtractByline)
+      .document(r#"<html><body><a rel="author">foo</a></body></html>"#)
+      .expected_metadata(Metadata {
+        byline: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
+  }
+
+  #[test]
+  fn too_long_skipped() {
+    Test::new()
+      .stage(ExtractByline)
+      .document(&format!(
+        r#"<html><body><p class="byline">{}</p></body></html>"#,
+        "a".repeat(100)
+      ))
+      .expected_metadata(Metadata::default())
       .run();
   }
 }
