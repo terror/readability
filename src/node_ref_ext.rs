@@ -65,7 +65,7 @@ mod tests {
 
   #[test]
   fn visible() {
-    assert!(!is_hidden(r#">foo"#));
+    assert!(!is_hidden(">foo"));
   }
 
   #[test]
