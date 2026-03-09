@@ -29,13 +29,6 @@ const TITLE_KEYS: &[&str] = &[
   "parsely-title",
 ];
 
-static PROPERTY_PATTERN: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(
-    r"(?i)\s*(article|dc|dcterm|og|twitter)\s*:\s*(author|creator|description|published_time|title|site_name)\s*",
-  )
-  .unwrap()
-});
-
 pub(crate) struct ExtractMetaTags;
 
 impl Stage for ExtractMetaTags {
@@ -80,7 +73,7 @@ impl ExtractMetaTags {
 
       if let Some(property) = meta.attr("property") {
         for token in property.split_whitespace() {
-          if let Some(property) = PROPERTY_PATTERN.find(token) {
+          if let Some(property) = META_PROPERTY.find(token) {
             let key = property
               .as_str()
               .to_lowercase()

@@ -4,6 +4,11 @@ use {
   dom_query::{NodeRef, Selection},
   metadata::Metadata,
   pipeline::Pipeline,
+  re::{
+    BYLINE, MAYBE_CANDIDATE, META_PROPERTY, NUMERIC_HTML_ENTITY,
+    TITLE_HIERARCHICAL_SEPARATOR, TITLE_LEADING_JUNK,
+    TITLE_NORMALIZE_WHITESPACE, TITLE_SEPARATOR, UNLIKELY_CANDIDATE,
+  },
   regex::Regex,
   serde::{Deserialize, Serialize},
   stage::{
@@ -30,6 +35,7 @@ mod error;
 mod metadata;
 mod options;
 mod pipeline;
+mod re;
 mod readability;
 mod stage;
 mod title_extractor;

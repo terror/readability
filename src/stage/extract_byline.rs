@@ -17,19 +17,6 @@ use super::*;
 /// candidate by the JS readability algorithm.
 pub(crate) struct ExtractByline;
 
-static BYLINE_RE: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(r"(?i)byline|author|dateline|writtenby|p-author").unwrap()
-});
-
-static UNLIKELY_CANDIDATES_RE: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(r"(?i)-ad-|ai2html|banner|breadcrumbs|combx|comment|community|cover-wrap|disqus|extra|footer|gdpr|header|legends|menu|related|remark|replies|rss|shoutbox|sidebar|skyscraper|social|sponsor|supplemental|ad-break|agegate|pagination|pager|popup|yom-remote").unwrap()
-});
-
-static OK_MAYBE_ITS_A_CANDIDATE_RE: LazyLock<Regex> = LazyLock::new(|| {
-  Regex::new(r"(?i)and|article|body|column|content|main|mathjax|shadow")
-    .unwrap()
-});
-
 const UNLIKELY_ROLES: &[&str] = &[
   "menu",
   "menubar",
@@ -57,7 +44,7 @@ impl Stage for ExtractByline {
 
       let is_byline_candidate = rel.as_ref() == "author"
         || itemprop.contains("author")
-        || BYLINE_RE.is_match(&match_string);
+        || BYLINE.is_match(&match_string);
 
       if !is_byline_candidate {
         continue;
@@ -78,9 +65,9 @@ impl Stage for ExtractByline {
             .map(|n| n.to_uppercase())
             .unwrap_or_default();
 
-          let is_unlikely_by_class = UNLIKELY_CANDIDATES_RE
+          let is_unlikely_by_class = UNLIKELY_CANDIDATE
             .is_match(&ancestor_match)
-            && !OK_MAYBE_ITS_A_CANDIDATE_RE.is_match(&ancestor_match)
+            && !MAYBE_CANDIDATE.is_match(&ancestor_match)
             && tag != "BODY"
             && tag != "A";
 
