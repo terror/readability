@@ -78,11 +78,7 @@ impl<'a> TitleExtractor<'a> {
       .replace_all(title.trim(), " ")
       .to_string();
 
-    if title.is_empty() {
-      None
-    } else {
-      Some(title)
-    }
+    if title.is_empty() { None } else { Some(title) }
   }
 
   fn header_candidate(&self, raw: &str) -> Option<String> {

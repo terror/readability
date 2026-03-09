@@ -38,27 +38,26 @@ impl UnescapeHtmlEntities {
   }
 
   fn unescape_numeric(s: &str) -> String {
-    static RE: LazyLock<Regex> = LazyLock::new(|| {
-      Regex::new(r"(?i)&#(?:x([0-9a-f]+)|([0-9]+));").unwrap()
-    });
+    NUMERIC_HTML_ENTITY
+      .replace_all(s, |captures: &regex::Captures| {
+        let num = if let Some(hex) = captures.get(1) {
+          u32::from_str_radix(hex.as_str(), 16).unwrap_or(0xfffd)
+        } else {
+          captures[2].parse::<u32>().unwrap_or(0xfffd)
+        };
 
-    RE.replace_all(s, |captures: &regex::Captures| {
-      let num = if let Some(hex) = captures.get(1) {
-        u32::from_str_radix(hex.as_str(), 16).unwrap_or(0xfffd)
-      } else {
-        captures[2].parse::<u32>().unwrap_or(0xfffd)
-      };
-
-      let c =
-        if num == 0 || num > 0x0010_ffff || (0xd800..=0xdfff).contains(&num) {
+        let c = if num == 0
+          || num > 0x0010_ffff
+          || (0xd800..=0xdfff).contains(&num)
+        {
           '\u{fffd}'
         } else {
           char::from_u32(num).unwrap_or('\u{fffd}')
         };
 
-      c.to_string()
-    })
-    .into_owned()
+        c.to_string()
+      })
+      .into_owned()
   }
 }
 
