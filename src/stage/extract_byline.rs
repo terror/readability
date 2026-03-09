@@ -50,9 +50,9 @@ impl Stage for ExtractByline {
         continue;
       }
 
-      let should_skip = Self::is_hidden(&node)
+      let should_skip = node.is_hidden()
         || node.ancestors(None).iter().any(|ancestor| {
-          if Self::is_hidden(ancestor) {
+          if ancestor.is_hidden() {
             return true;
           }
 
@@ -102,29 +102,6 @@ impl Stage for ExtractByline {
     }
 
     Ok(())
-  }
-}
-
-impl ExtractByline {
-  fn is_hidden(node: &NodeRef) -> bool {
-    if node.attr("hidden").is_some() {
-      return true;
-    }
-
-    if node
-      .attr("aria-hidden")
-      .is_some_and(|v| v.as_ref() == "true")
-    {
-      return true;
-    }
-
-    let style = node.attr("style").unwrap_or_default();
-    let style = style.to_lowercase();
-
-    style.contains("display:none")
-      || style.contains("display: none")
-      || style.contains("visibility:hidden")
-      || style.contains("visibility: hidden")
   }
 }
 
