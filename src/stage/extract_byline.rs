@@ -1,22 +1,9 @@
 use super::*;
 
-/// Scans the document for a byline element and stores its text in the context
-/// metadata. Only runs when no byline has already been extracted from metadata.
-///
-/// An element is a byline candidate if:
-/// - its `rel` attribute equals `"author"`, or
-/// - its `itemprop` attribute contains `"author"`, or
-/// - its `class` and `id` attributes match `/byline|author|dateline|writtenby|p-author/i`
-///
-/// and its trimmed text is non-empty and fewer than 100 characters.
-///
-/// When a candidate is found, a descendant with `itemprop` containing `"name"`
-/// and non-empty text is preferred for the byline text.
-///
-/// Candidates are skipped if any ancestor would be removed as an unlikely
-/// candidate by the JS readability algorithm.
-pub(crate) struct ExtractByline;
+/// Maximum byte length of a valid byline.
+const BYLINE_MAX_LENGTH: usize = 100;
 
+/// ARIA roles that indicate a byline candidate should be skipped.
 const UNLIKELY_ROLES: &[&str] = &[
   "menu",
   "menubar",
@@ -26,6 +13,23 @@ const UNLIKELY_ROLES: &[&str] = &[
   "alertdialog",
   "dialog",
 ];
+
+/// Scans the document for a byline element and stores its text in the context
+/// metadata. Only runs when no byline has already been extracted from metadata.
+///
+/// An element is a byline candidate if:
+/// - its `rel` attribute equals `"author"`, or
+/// - its `itemprop` attribute contains `"author"`, or
+/// - its `class` and `id` attributes match `/byline|author|dateline|writtenby|p-author/i`
+///
+/// and its trimmed text is non-empty and shorter than `BYLINE_MAX_LENGTH` bytes.
+///
+/// When a candidate is found, a descendant with `itemprop` containing `"name"`
+/// and non-empty text is preferred for the byline text.
+///
+/// Candidates are skipped if any ancestor would be removed as an unlikely
+/// candidate by the JS readability algorithm.
+pub(crate) struct ExtractByline;
 
 impl Stage for ExtractByline {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
@@ -86,7 +90,7 @@ impl Stage for ExtractByline {
       let text = node.text();
       let text = text.trim();
 
-      if text.is_empty() || text.len() >= 100 {
+      if text.is_empty() || text.len() >= BYLINE_MAX_LENGTH {
         continue;
       }
 
