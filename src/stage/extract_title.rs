@@ -50,25 +50,23 @@ impl ExtractTitle {
       .select("h1, h2")
       .nodes()
       .iter()
-      .any(|h| h.text().trim() == raw.trim());
+      .any(|heading| heading.text().trim() == raw.trim());
 
     if heading_matches {
       return None;
     }
 
-    let word_count = |s: &str| s.split_whitespace().count();
-
     let last_colon = raw.rfind(':').unwrap();
     let after_last = raw[last_colon + 1..].trim().to_string();
 
-    if word_count(&after_last) >= MIN_COLON_SUFFIX_WORDS {
+    if after_last.split_whitespace().count() >= MIN_COLON_SUFFIX_WORDS {
       return Some(after_last);
     }
 
     let first_colon = raw.find(':').unwrap();
     let before_first = &raw[..first_colon];
 
-    if word_count(before_first) > MAX_COLON_PREFIX_WORDS {
+    if before_first.split_whitespace().count() > MAX_COLON_PREFIX_WORDS {
       return None;
     }
 
@@ -122,9 +120,7 @@ impl ExtractTitle {
 
     let mut candidate = raw[..last_sep_start].to_string();
 
-    let word_count = |string: &str| string.split_whitespace().count();
-
-    if word_count(&candidate) < MIN_SEPARATOR_CANDIDATE_WORDS {
+    if candidate.split_whitespace().count() < MIN_SEPARATOR_CANDIDATE_WORDS {
       candidate = TITLE_LEADING_JUNK.replace(raw, "").trim().to_string();
     }
 
@@ -132,11 +128,15 @@ impl ExtractTitle {
       .replace_all(candidate.trim(), " ")
       .to_string();
 
-    let candidate_words = word_count(&candidate);
-    let raw_words_without_seps =
-      word_count(&TITLE_SEPARATOR.replace_all(raw, ""));
+    let candidate_words = candidate.split_whitespace().count();
+
+    let raw_words_without_seps = TITLE_SEPARATOR
+      .replace_all(raw, "")
+      .split_whitespace()
+      .count();
 
     let had_hierarchical = TITLE_HIERARCHICAL_SEPARATOR.is_match(raw);
+
     let too_short = candidate_words <= MAX_SHORT_TITLE_WORDS;
 
     let not_one_word_shorter =
