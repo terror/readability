@@ -127,7 +127,7 @@ mod tests {
   fn removes_hidden_attribute() {
     Test::new()
       .stage(RemoveHiddenNodes)
-      .document(r#"<html><body><div hidden>foo</div><p>bar</p></body></html>"#)
+      .document(r"<html><body><div hidden>foo</div><p>bar</p></body></html>")
       .expected_html("<html><head></head><body><p>bar</p></body></html>")
       .run();
   }
@@ -198,7 +198,7 @@ mod tests {
     Test::new()
       .stage(RemoveHiddenNodes)
       .document(
-        r#"<html><body><div hidden><p>nested</p></div><p>bar</p></body></html>"#,
+        r"<html><body><div hidden><p>nested</p></div><p>bar</p></body></html>",
       )
       .expected_html("<html><head></head><body><p>bar</p></body></html>")
       .run();
