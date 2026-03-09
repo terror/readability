@@ -60,7 +60,7 @@ mod tests {
 
   #[test]
   fn hidden_attribute() {
-    assert!(is_hidden(r#" hidden>foo"#));
+    assert!(is_hidden(" hidden>foo"));
   }
 
   #[test]
