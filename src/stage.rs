@@ -7,6 +7,7 @@ mod extract_dir;
 mod extract_json_ld;
 mod extract_lang;
 mod extract_meta_tags;
+mod extract_title;
 mod remove_disallowed_nodes;
 mod rewrite_font_tags;
 mod rewrite_line_breaks;
@@ -20,7 +21,7 @@ pub(crate) use {
   element_limit::ElementLimit, excerpt_fallback::ExcerptFallback,
   extract_byline::ExtractByline, extract_dir::ExtractDir,
   extract_json_ld::ExtractJsonLd, extract_lang::ExtractLang,
-  extract_meta_tags::ExtractMetaTags,
+  extract_meta_tags::ExtractMetaTags, extract_title::ExtractTitle,
   remove_disallowed_nodes::RemoveDisallowedNodes,
   rewrite_font_tags::RewriteFontTags, rewrite_line_breaks::RewriteLineBreaks,
   unescape_html_entities::UnescapeHtmlEntities,

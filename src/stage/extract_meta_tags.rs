@@ -35,7 +35,7 @@ impl Stage for ExtractMetaTags {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let values = Self::collect_meta_values(context.document);
 
-    let title = Self::extract_title(&values, context.document);
+    let title = Self::extract_title(&values);
 
     let metadata = mem::take(&mut context.metadata);
 
@@ -95,11 +95,6 @@ impl ExtractMetaTags {
     values
   }
 
-  fn extract_article_title(document: &dom_query::Document) -> Option<String> {
-    TitleExtractor::new(document)
-      .extract(document.select("title").first().text().trim())
-  }
-
   fn extract_byline(values: &HashMap<String, String>) -> Option<String> {
     let article_author = values
       .get("article:author")
@@ -109,12 +104,8 @@ impl ExtractMetaTags {
     Self::first_value(values, BYLINE_KEYS).or(article_author)
   }
 
-  fn extract_title(
-    values: &HashMap<String, String>,
-    document: &dom_query::Document,
-  ) -> Option<String> {
+  fn extract_title(values: &HashMap<String, String>) -> Option<String> {
     Self::first_value(values, TITLE_KEYS)
-      .or_else(|| Self::extract_article_title(document))
   }
 
   fn first_value(
@@ -281,50 +272,6 @@ mod tests {
       )
       .expected_metadata(Metadata {
         byline: Some("foo".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn title_strips_site_name_suffix() {
-    Test::new()
-      .stage(ExtractMetaTags)
-      .document(
-        r"<html><head><title>foo bar baz qux quux | site name</title></head><body></body></html>",
-      )
-      .expected_metadata(Metadata {
-        title: Some("foo bar baz qux quux".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn title_strips_colon_suffix() {
-    Test::new()
-      .stage(ExtractJsonLd)
-      .stage(ExtractMetaTags)
-      .document(
-        r"<html><head><title>site: foo bar baz qux</title></head><body></body></html>",
-      )
-      .expected_metadata(Metadata {
-        title: Some("foo bar baz qux".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn title_uses_h1_when_too_short() {
-    Test::new()
-      .stage(ExtractJsonLd)
-      .stage(ExtractMetaTags)
-      .document(
-        r"<html><head><title>hi</title></head><body><h1>foo bar</h1></body></html>",
-      )
-      .expected_metadata(Metadata {
-        title: Some("foo bar".into()),
         ..Metadata::default()
       })
       .run();
