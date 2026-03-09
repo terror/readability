@@ -14,11 +14,11 @@ use {
   serde::{Deserialize, Serialize},
   stage::{
     ElementLimit, ExcerptFallback, ExtractByline, ExtractDir, ExtractJsonLd,
-    ExtractLang, ExtractMetaTags, RemoveDisallowedNodes, RewriteFontTags,
-    RewriteLineBreaks, Stage, UnescapeHtmlEntities, UnwrapNoscriptImages,
+    ExtractLang, ExtractMetaTags, ExtractTitle, RemoveDisallowedNodes,
+    RewriteFontTags, RewriteLineBreaks, Stage, UnescapeHtmlEntities,
+    UnwrapNoscriptImages,
   },
   std::{collections::HashMap, iter, mem, sync::LazyLock},
-  title_extractor::TitleExtractor,
   url::Url,
 };
 
@@ -40,6 +40,5 @@ mod pipeline;
 mod re;
 mod readability;
 mod stage;
-mod title_extractor;
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;

@@ -35,22 +35,26 @@ impl Stage for ExtractMetaTags {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let values = Self::collect_meta_values(context.document);
 
-    let title = Self::extract_title(&values, context.document);
+    let article_author = values
+      .get("article:author")
+      .filter(|value| Url::parse(value).is_err())
+      .cloned();
 
     let metadata = mem::take(&mut context.metadata);
 
+    let extract =
+      |keys: &[&str]| keys.iter().find_map(|key| values.get(*key).cloned());
+
     context.metadata = Metadata {
-      title: metadata.title.or(title),
-      byline: metadata.byline.or_else(|| Self::extract_byline(&values)),
-      excerpt: metadata
-        .excerpt
-        .or_else(|| Self::first_value(&values, EXCERPT_KEYS)),
-      site_name: metadata
-        .site_name
-        .or_else(|| Self::first_value(&values, SITE_NAME_KEYS)),
+      title: metadata.title.or(extract(TITLE_KEYS)),
+      byline: metadata
+        .byline
+        .or_else(|| extract(BYLINE_KEYS).or(article_author)),
+      excerpt: metadata.excerpt.or_else(|| extract(EXCERPT_KEYS)),
+      site_name: metadata.site_name.or_else(|| extract(SITE_NAME_KEYS)),
       published_time: metadata
         .published_time
-        .or_else(|| Self::first_value(&values, PUBLISHED_TIME_KEYS)),
+        .or_else(|| extract(PUBLISHED_TIME_KEYS)),
     };
 
     Ok(())
@@ -85,54 +89,18 @@ impl ExtractMetaTags {
       }
 
       if let Some(name) = meta.attr("name") {
-        values.insert(
-          Self::normalize_key(name.as_ref()).replace('.', ":"),
-          content.clone(),
-        );
+        let key = name
+          .to_lowercase()
+          .chars()
+          .filter(|c| !c.is_whitespace())
+          .collect::<String>()
+          .replace('.', ":");
+
+        values.insert(key, content.clone());
       }
     }
 
     values
-  }
-
-  fn extract_article_title(document: &dom_query::Document) -> Option<String> {
-    TitleExtractor::new(document)
-      .extract(document.select("title").first().text().trim())
-  }
-
-  fn extract_byline(values: &HashMap<String, String>) -> Option<String> {
-    let article_author = values
-      .get("article:author")
-      .filter(|value| !Self::is_url(value))
-      .cloned();
-
-    Self::first_value(values, BYLINE_KEYS).or(article_author)
-  }
-
-  fn extract_title(
-    values: &HashMap<String, String>,
-    document: &dom_query::Document,
-  ) -> Option<String> {
-    Self::first_value(values, TITLE_KEYS)
-      .or_else(|| Self::extract_article_title(document))
-  }
-
-  fn first_value(
-    values: &HashMap<String, String>,
-    keys: &[&str],
-  ) -> Option<String> {
-    keys.iter().find_map(|key| values.get(*key).cloned())
-  }
-
-  fn is_url(s: &str) -> bool {
-    Url::parse(s).is_ok()
-  }
-
-  fn normalize_key(s: &str) -> String {
-    s.to_lowercase()
-      .chars()
-      .filter(|c| !c.is_whitespace())
-      .collect()
   }
 }
 
@@ -281,50 +249,6 @@ mod tests {
       )
       .expected_metadata(Metadata {
         byline: Some("foo".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn title_strips_site_name_suffix() {
-    Test::new()
-      .stage(ExtractMetaTags)
-      .document(
-        r"<html><head><title>foo bar baz qux quux | site name</title></head><body></body></html>",
-      )
-      .expected_metadata(Metadata {
-        title: Some("foo bar baz qux quux".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn title_strips_colon_suffix() {
-    Test::new()
-      .stage(ExtractJsonLd)
-      .stage(ExtractMetaTags)
-      .document(
-        r"<html><head><title>site: foo bar baz qux</title></head><body></body></html>",
-      )
-      .expected_metadata(Metadata {
-        title: Some("foo bar baz qux".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn title_uses_h1_when_too_short() {
-    Test::new()
-      .stage(ExtractJsonLd)
-      .stage(ExtractMetaTags)
-      .document(
-        r"<html><head><title>hi</title></head><body><h1>foo bar</h1></body></html>",
-      )
-      .expected_metadata(Metadata {
-        title: Some("foo bar".into()),
         ..Metadata::default()
       })
       .run();
