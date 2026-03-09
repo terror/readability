@@ -10,6 +10,7 @@ mod extract_meta_tags;
 mod extract_title;
 mod remove_disallowed_nodes;
 mod remove_hidden_nodes;
+mod remove_unlikely_candidates;
 mod rewrite_font_tags;
 mod rewrite_line_breaks;
 mod unescape_html_entities;
@@ -24,8 +25,9 @@ pub(crate) use {
   extract_json_ld::ExtractJsonLd, extract_lang::ExtractLang,
   extract_meta_tags::ExtractMetaTags, extract_title::ExtractTitle,
   remove_disallowed_nodes::RemoveDisallowedNodes,
-  remove_hidden_nodes::RemoveHiddenNodes, rewrite_font_tags::RewriteFontTags,
-  rewrite_line_breaks::RewriteLineBreaks,
+  remove_hidden_nodes::RemoveHiddenNodes,
+  remove_unlikely_candidates::RemoveUnlikelyCandidates,
+  rewrite_font_tags::RewriteFontTags, rewrite_line_breaks::RewriteLineBreaks,
   unescape_html_entities::UnescapeHtmlEntities,
   unwrap_noscript_images::UnwrapNoscriptImages,
 };
