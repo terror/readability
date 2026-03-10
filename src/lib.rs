@@ -14,8 +14,9 @@ use {
   stage::{
     ElementLimit, ExtractByline, ExtractDir, ExtractExcerpt, ExtractJsonLd,
     ExtractLang, ExtractMetaTags, ExtractTitle, RemoveDisallowedNodes,
-    RemoveHiddenNodes, RemoveUnlikelyCandidates, RewriteFontTags,
-    RewriteLineBreaks, Stage, UnescapeHtmlEntities, UnwrapNoscriptImages,
+    RemoveEmptyContainers, RemoveHiddenNodes, RemoveUnlikelyCandidates,
+    RewriteFontTags, RewriteLineBreaks, Stage, UnescapeHtmlEntities,
+    UnwrapNoscriptImages,
   },
   std::{collections::HashMap, iter, mem, sync::LazyLock},
   url::Url,
