@@ -1,7 +1,7 @@
 use super::*;
 
 mod element_limit;
-mod excerpt_fallback;
+mod extract_excerpt;
 mod extract_byline;
 mod extract_dir;
 mod extract_json_ld;
@@ -20,7 +20,7 @@ mod unwrap_noscript_images;
 mod test;
 
 pub(crate) use {
-  element_limit::ElementLimit, excerpt_fallback::ExcerptFallback,
+  element_limit::ElementLimit, extract_excerpt::ExtractExcerpt,
   extract_byline::ExtractByline, extract_dir::ExtractDir,
   extract_json_ld::ExtractJsonLd, extract_lang::ExtractLang,
   extract_meta_tags::ExtractMetaTags, extract_title::ExtractTitle,

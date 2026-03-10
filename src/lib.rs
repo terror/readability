@@ -12,7 +12,7 @@ use {
   regex::Regex,
   serde::{Deserialize, Serialize},
   stage::{
-    ElementLimit, ExcerptFallback, ExtractByline, ExtractDir, ExtractJsonLd,
+    ElementLimit, ExtractByline, ExtractDir, ExtractExcerpt, ExtractJsonLd,
     ExtractLang, ExtractMetaTags, ExtractTitle, RemoveDisallowedNodes,
     RemoveHiddenNodes, RemoveUnlikelyCandidates, RewriteFontTags,
     RewriteLineBreaks, Stage, UnescapeHtmlEntities, UnwrapNoscriptImages,

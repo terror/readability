@@ -45,7 +45,7 @@ impl<'a> Pipeline<'a> {
       Box::new(RewriteFontTags),
       Box::new(ExtractTitle),
       Box::new(ExtractByline),
-      Box::new(ExcerptFallback),
+      Box::new(ExtractExcerpt),
       Box::new(UnescapeHtmlEntities),
     ];
 
