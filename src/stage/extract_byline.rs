@@ -3,17 +3,6 @@ use super::*;
 /// Maximum byte length of a valid byline.
 const BYLINE_MAX_LENGTH: usize = 100;
 
-/// ARIA roles that indicate a byline candidate should be skipped.
-const UNLIKELY_ROLES: &[&str] = &[
-  "menu",
-  "menubar",
-  "complementary",
-  "navigation",
-  "alert",
-  "alertdialog",
-  "dialog",
-];
-
 /// Scans the document for a byline element and stores its text in the context
 /// metadata. Only runs when no byline has already been extracted from metadata.
 ///
@@ -26,9 +15,6 @@ const UNLIKELY_ROLES: &[&str] = &[
 ///
 /// When a candidate is found, a descendant with `itemprop` containing `"name"`
 /// and non-empty text is preferred for the byline text.
-///
-/// Candidates are skipped if any ancestor would be removed as an unlikely
-/// candidate by the JS readability algorithm.
 pub(crate) struct ExtractByline;
 
 impl Stage for ExtractByline {
@@ -51,39 +37,6 @@ impl Stage for ExtractByline {
         || BYLINE.is_match(&format!("{class} {id}"));
 
       if !is_byline_candidate {
-        continue;
-      }
-
-      let should_skip = node.is_hidden()
-        || node.ancestors(None).iter().any(|ancestor| {
-          if ancestor.is_hidden() {
-            return true;
-          }
-
-          let ancestor_class = ancestor.attr("class").unwrap_or_default();
-          let ancestor_id = ancestor.attr("id").unwrap_or_default();
-          let ancestor_match = format!("{ancestor_class} {ancestor_id}");
-          let ancestor_role = ancestor.attr("role").unwrap_or_default();
-
-          let tag = ancestor
-            .node_name()
-            .map(|n| n.to_uppercase())
-            .unwrap_or_default();
-
-          let is_unlikely_by_class = UNLIKELY_CANDIDATE
-            .is_match(&ancestor_match)
-            && !MAYBE_CANDIDATE.is_match(&ancestor_match)
-            && tag != "BODY"
-            && tag != "A";
-
-          let is_unlikely_by_role = UNLIKELY_ROLES
-            .iter()
-            .any(|&role| ancestor_role.as_ref() == role);
-
-          is_unlikely_by_class || is_unlikely_by_role
-        });
-
-      if should_skip {
         continue;
       }
 

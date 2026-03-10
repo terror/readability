@@ -62,7 +62,10 @@ impl Stage for RewriteLineBreaks {
         par.append_child(&sibling);
       }
 
-      while par.last_child().is_some_and(|n| Self::is_whitespace(&n)) {
+      while par
+        .last_child()
+        .is_some_and(|node| Self::is_whitespace(&node))
+      {
         par.last_child().unwrap().remove_from_parent();
       }
 

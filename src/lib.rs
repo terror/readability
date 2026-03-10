@@ -3,7 +3,6 @@ use {
   document::Document,
   dom_query::{NodeRef, Selection},
   metadata::Metadata,
-  node_ref_ext::NodeRefExt,
   pipeline::Pipeline,
   re::{
     BYLINE, MAYBE_CANDIDATE, META_PROPERTY, NUMERIC_HTML_ENTITY,
@@ -34,7 +33,6 @@ mod context;
 mod document;
 mod error;
 mod metadata;
-mod node_ref_ext;
 mod options;
 mod pipeline;
 mod re;
