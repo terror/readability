@@ -2,9 +2,9 @@ use super::*;
 
 /// Falls back to the first non-empty paragraph's text as the excerpt when no
 /// excerpt has been extracted from metadata.
-pub(crate) struct ExcerptFallback;
+pub(crate) struct ExtractExcerpt;
 
-impl Stage for ExcerptFallback {
+impl Stage for ExtractExcerpt {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     if context.metadata.excerpt.is_some() {
       return Ok(());
