@@ -1,9 +1,9 @@
 use super::*;
 
 mod element_limit;
-mod excerpt_fallback;
 mod extract_byline;
 mod extract_dir;
+mod extract_excerpt;
 mod extract_json_ld;
 mod extract_lang;
 mod extract_meta_tags;
@@ -20,8 +20,8 @@ mod unwrap_noscript_images;
 mod test;
 
 pub(crate) use {
-  element_limit::ElementLimit, excerpt_fallback::ExcerptFallback,
-  extract_byline::ExtractByline, extract_dir::ExtractDir,
+  element_limit::ElementLimit, extract_byline::ExtractByline,
+  extract_dir::ExtractDir, extract_excerpt::ExtractExcerpt,
   extract_json_ld::ExtractJsonLd, extract_lang::ExtractLang,
   extract_meta_tags::ExtractMetaTags, extract_title::ExtractTitle,
   remove_disallowed_nodes::RemoveDisallowedNodes,

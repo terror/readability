@@ -2,9 +2,9 @@ use super::*;
 
 /// Falls back to the first non-empty paragraph's text as the excerpt when no
 /// excerpt has been extracted from metadata.
-pub(crate) struct ExcerptFallback;
+pub(crate) struct ExtractExcerpt;
 
-impl Stage for ExcerptFallback {
+impl Stage for ExtractExcerpt {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     if context.metadata.excerpt.is_some() {
       return Ok(());
@@ -38,7 +38,7 @@ mod tests {
   #[test]
   fn fallback_from_first_paragraph() {
     Test::new()
-      .stage(ExcerptFallback)
+      .stage(ExtractExcerpt)
       .document("<html><body><p>foo</p><p>bar</p></body></html>")
       .expected_metadata(Metadata {
         excerpt: Some("foo".into()),
@@ -50,7 +50,7 @@ mod tests {
   #[test]
   fn skips_empty_paragraphs() {
     Test::new()
-      .stage(ExcerptFallback)
+      .stage(ExtractExcerpt)
       .document("<html><body><p>   </p><p>bar</p></body></html>")
       .expected_metadata(Metadata {
         excerpt: Some("bar".into()),
@@ -62,7 +62,7 @@ mod tests {
   #[test]
   fn no_paragraphs_leaves_excerpt_none() {
     Test::new()
-      .stage(ExcerptFallback)
+      .stage(ExtractExcerpt)
       .document("<html><body><div>foo</div></body></html>")
       .expected_metadata(Metadata::default())
       .run();
@@ -71,7 +71,7 @@ mod tests {
   #[test]
   fn existing_excerpt_not_overwritten() {
     Test::new()
-      .stage(ExcerptFallback)
+      .stage(ExtractExcerpt)
       .document("<html><body><p>bar</p></body></html>")
       .metadata(Metadata {
         excerpt: Some("foo".into()),
