@@ -41,6 +41,7 @@ impl<'a> Pipeline<'a> {
       Box::new(RemoveDisallowedNodes),
       Box::new(RemoveHiddenNodes),
       Box::new(RemoveUnlikelyCandidates),
+      Box::new(RemoveEmptyContainers),
       Box::new(RewriteLineBreaks),
       Box::new(RewriteFontTags),
       Box::new(ExtractTitle),
