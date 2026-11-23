@@ -75,20 +75,30 @@ impl ExtractMetaTags {
         _ => continue,
       };
 
-      if let Some(property) = meta.attr("property") {
-        for token in property.split_whitespace() {
-          if let Some(property) = META_PROPERTY.find(token) {
-            let key = property
-              .as_str()
-              .to_lowercase()
-              .replace(|c: char| c.is_whitespace(), "");
+      let property_keys = meta
+        .attr("property")
+        .unwrap_or_default()
+        .split_whitespace()
+        .filter_map(|token| META_PROPERTY.find(token))
+        .map(|property| {
+          property
+            .as_str()
+            .to_lowercase()
+            .replace(|c: char| c.is_whitespace(), "")
+        })
+        .collect::<Vec<_>>();
 
-            values.insert(key, content.clone());
-          }
+      if !property_keys.is_empty() {
+        for key in property_keys {
+          values.insert(key, content.clone());
         }
+
+        continue;
       }
 
-      if let Some(name) = meta.attr("name") {
+      if let Some(name) =
+        meta.attr("name").filter(|name| META_NAME.is_match(name))
+      {
         let key = name
           .to_lowercase()
           .chars()
@@ -237,6 +247,17 @@ mod tests {
         byline: Some("foo".into()),
         ..Metadata::default()
       })
+      .run();
+  }
+
+  #[test]
+  fn unmatched_name_ignored() {
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta name="article:author" content="foo"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata::default())
       .run();
   }
 

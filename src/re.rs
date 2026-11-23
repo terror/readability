@@ -38,6 +38,10 @@ pub(crate) static LOADING_WORDS: LazyLock<Regex> =
 pub(crate) static MAYBE_CANDIDATE: LazyLock<Regex> =
   re!(r"(?i)and|article|body|column|content|main|mathjax|shadow");
 
+pub(crate) static META_NAME: LazyLock<Regex> = re!(
+  r"(?i)^\s*(?:(dc|dcterm|og|twitter|parsely|weibo:(article|webpage))\s*[-.:]\s*)?(author|creator|pub-date|description|title|site_name)\s*$"
+);
+
 pub(crate) static META_PROPERTY: LazyLock<Regex> = re!(
   r"(?i)\s*(article|dc|dcterm|og|twitter)\s*:\s*(author|creator|description|published_time|title|site_name)\s*"
 );

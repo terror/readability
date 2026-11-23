@@ -26,10 +26,10 @@ impl Stage for FixRelativeUris {
       if base_url == document_url && uri.starts_with('#') {
         return uri.to_string();
       }
-
-      base_url
-        .join(uri)
-        .map_or_else(|_| uri.to_string(), |url| url.to_string())
+      base_url.join(uri).map_or_else(
+        |_| uri.to_string(),
+        |url| Self::normalize_drive_letter(url).to_string(),
+      )
     };
 
     let article = context.node(article);
@@ -75,6 +75,28 @@ impl Stage for FixRelativeUris {
 }
 
 impl FixRelativeUris {
+  fn normalize_drive_letter(mut url: Url) -> Url {
+    if url.scheme() != "file" {
+      return url;
+    }
+
+    let path = url.path();
+
+    let bytes = path.as_bytes();
+
+    if bytes.len() >= 3
+      && bytes[0] == b'/'
+      && bytes[1].is_ascii_alphabetic()
+      && bytes[2] == b'|'
+      && (bytes.len() == 3 || bytes[3] == b'/')
+    {
+      let path = format!("/{}:{}", char::from(bytes[1]), &path[3..]);
+      url.set_path(&path);
+    }
+
+    url
+  }
+
   fn unwrap_link(link: &NodeRef) {
     let children = link.children();
 
@@ -131,6 +153,14 @@ mod tests {
     case(
       r##"<a href="qux">foo</a><a href="#bar">baz</a><img src="/qux.png" srcset="a.png 1x, b.png 2x"><video poster="c.png"></video>"##,
       r##"<a href="http://foo.com/bar/qux">foo</a><a href="#bar">baz</a><img src="http://foo.com/qux.png" srcset="http://foo.com/bar/a.png 1x, http://foo.com/bar/b.png 2x"><video poster="http://foo.com/bar/c.png"></video>"##,
+    );
+  }
+
+  #[test]
+  fn normalizes_windows_drive_letters() {
+    case(
+      r#"<img src="file:///C|/foo.gif">"#,
+      r#"<img src="file:///C:/foo.gif">"#,
     );
   }
 
