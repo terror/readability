@@ -72,6 +72,8 @@ pub(crate) trait NodeExt {
 
   fn inner_text(&self) -> String;
 
+  fn is_element_without_content(&self) -> bool;
+
   fn is_phrasing_content(&self) -> bool;
 
   fn is_whitespace(&self) -> bool;
@@ -176,6 +178,16 @@ impl NodeExt for NodeRef<'_> {
     TITLE_NORMALIZE_WHITESPACE
       .replace_all(self.text().trim(), " ")
       .to_string()
+  }
+
+  fn is_element_without_content(&self) -> bool {
+    if !self.is_element() || !self.text().trim().is_empty() {
+      return false;
+    }
+
+    let children = self.element_children().len();
+
+    children == 0 || children == self.elements_with_tags(&["BR", "HR"]).len()
   }
 
   fn is_phrasing_content(&self) -> bool {
@@ -375,6 +387,22 @@ mod tests {
     let document = dom_query::Document::from("<p>  foo \n\n bar  </p>");
     let node = document.select("p").nodes()[0].clone();
     assert_eq!(node.inner_text(), "foo bar");
+  }
+
+  #[test]
+  fn is_element_without_content() {
+    #[track_caller]
+    fn case(html: &str, expected: bool) {
+      let document = dom_query::Document::from(html);
+      let node = document.select("div").nodes()[0].clone();
+      assert_eq!(node.is_element_without_content(), expected);
+    }
+
+    case("<div> </div>", true);
+    case("<div><br><span></span></div>", false);
+    case("<div><span><br></span></div>", true);
+    case("<div><img></div>", false);
+    case("<div>foo</div>", false);
   }
 
   #[test]

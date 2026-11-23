@@ -1,6 +1,7 @@
 use super::*;
 
 mod clean;
+mod clean_classes;
 mod clean_conditionally;
 mod clean_headers;
 mod clean_share_elements;
@@ -16,6 +17,7 @@ mod extract_lang;
 mod extract_meta_tags;
 mod extract_title;
 mod fix_lazy_images;
+mod fix_relative_uris;
 mod grab_article;
 mod mark_data_tables;
 mod remove_breaks_before_paragraphs;
@@ -30,6 +32,7 @@ mod rewrite_font_tags;
 mod rewrite_line_breaks;
 mod score_candidates;
 mod select_top_candidate;
+mod simplify_nested_elements;
 mod unescape_html_entities;
 mod unwrap_noscript_images;
 mod unwrap_single_cell_tables;
@@ -40,6 +43,7 @@ mod test;
 
 pub(crate) use {
   clean::{Clean, is_allowed_video},
+  clean_classes::CleanClasses,
   clean_conditionally::CleanConditionally,
   clean_headers::CleanHeaders,
   clean_share_elements::CleanShareElements,
@@ -55,6 +59,7 @@ pub(crate) use {
   extract_meta_tags::ExtractMetaTags,
   extract_title::ExtractTitle,
   fix_lazy_images::FixLazyImages,
+  fix_relative_uris::FixRelativeUris,
   grab_article::GrabArticle,
   mark_data_tables::MarkDataTables,
   remove_breaks_before_paragraphs::RemoveBreaksBeforeParagraphs,
@@ -69,6 +74,7 @@ pub(crate) use {
   rewrite_line_breaks::RewriteLineBreaks,
   score_candidates::ScoreCandidates,
   select_top_candidate::SelectTopCandidate,
+  simplify_nested_elements::SimplifyNestedElements,
   unescape_html_entities::UnescapeHtmlEntities,
   unwrap_noscript_images::UnwrapNoscriptImages,
   unwrap_single_cell_tables::UnwrapSingleCellTables,

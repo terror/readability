@@ -14,6 +14,7 @@ pub(crate) struct Context<'a> {
   pub(crate) scores: HashMap<NodeId, f64>,
   pub(crate) top_candidate: Option<NodeId>,
   pub(crate) top_candidate_parent: Option<NodeId>,
+  pub(crate) url: Option<Url>,
 }
 
 impl<'a> Context<'a> {
@@ -39,6 +40,7 @@ impl<'a> Context<'a> {
       scores: HashMap::new(),
       top_candidate: None,
       top_candidate_parent: None,
+      url: None,
     }
   }
 
