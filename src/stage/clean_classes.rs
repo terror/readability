@@ -8,7 +8,7 @@ impl Stage for CleanClasses {
       return Ok(());
     }
 
-    if let Some(article) = context.article {
+    if let Some(article) = context.extraction.article {
       Self::clean(&context.node(article), &context.options.preserved_classes);
     }
 

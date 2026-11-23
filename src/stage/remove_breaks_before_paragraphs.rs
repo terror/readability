@@ -4,7 +4,7 @@ pub(crate) struct RemoveBreaksBeforeParagraphs;
 
 impl Stage for RemoveBreaksBeforeParagraphs {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(article) = context.article else {
+    let Some(article) = context.extraction.article else {
       return Ok(());
     };
 

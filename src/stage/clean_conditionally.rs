@@ -25,7 +25,7 @@ impl Stage for CleanConditionally {
       return Ok(());
     }
 
-    let Some(article) = context.article else {
+    let Some(article) = context.extraction.article else {
       return Ok(());
     };
 
@@ -48,7 +48,7 @@ impl CleanConditionally {
   #[allow(clippy::cast_precision_loss)]
   fn should_remove(&self, context: &Context<'_>, node: &NodeRef) -> bool {
     let is_data_table =
-      |table: &NodeRef| context.data_tables.contains(&table.id);
+      |table: &NodeRef| context.extraction.data_tables.contains(&table.id);
 
     let text = node.inner_text();
 

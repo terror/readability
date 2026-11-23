@@ -31,7 +31,7 @@ impl Stage for SelectTopCandidate {
 
     Self::initialize(context, top_candidate);
 
-    context.top_candidate = Some(top_candidate);
+    context.extraction.top_candidate = Some(top_candidate);
 
     Ok(())
   }
@@ -43,12 +43,14 @@ impl SelectTopCandidate {
     top_candidate: NodeId,
     top_candidates: &[NodeId],
   ) -> NodeId {
-    let score = context.scores[&top_candidate];
+    let score = context.extraction.scores[&top_candidate];
 
     let alternative_ancestors = top_candidates
       .iter()
       .skip(1)
-      .filter(|id| context.scores[id] / score >= ALTERNATIVE_SCORE_RATIO)
+      .filter(|id| {
+        context.extraction.scores[id] / score >= ALTERNATIVE_SCORE_RATIO
+      })
       .map(|id| {
         context
           .node(*id)
@@ -99,16 +101,16 @@ impl SelectTopCandidate {
 
     let id = div.id;
 
-    context.scores.insert(id, score);
-    context.created_top_candidate = true;
-    context.top_candidate = Some(id);
+    context.extraction.scores.insert(id, score);
+    context.extraction.created_top_candidate = true;
+    context.extraction.top_candidate = Some(id);
   }
 
   fn higher_scoring_ancestor(
     context: &Context<'_>,
     top_candidate: NodeId,
   ) -> NodeId {
-    let mut last_score = context.scores[&top_candidate];
+    let mut last_score = context.extraction.scores[&top_candidate];
 
     let threshold = last_score / 3.0;
 
@@ -117,7 +119,7 @@ impl SelectTopCandidate {
     while let Some(node) = parent.filter(|node| node.tag() != "BODY") {
       parent = node.parent();
 
-      let Some(score) = context.scores.get(&node.id).copied() else {
+      let Some(score) = context.extraction.scores.get(&node.id).copied() else {
         continue;
       };
 
@@ -136,9 +138,9 @@ impl SelectTopCandidate {
   }
 
   fn initialize(context: &mut Context<'_>, id: NodeId) {
-    if !context.scores.contains_key(&id) {
+    if !context.extraction.scores.contains_key(&id) {
       let score = context.node(id).initial_score(context.flags.weight_classes);
-      context.scores.insert(id, score);
+      context.extraction.scores.insert(id, score);
     }
   }
 
@@ -162,15 +164,16 @@ impl SelectTopCandidate {
 
     let mut top_candidates = Vec::<NodeId>::new();
 
-    for id in context.candidates.clone() {
-      let score = context.scores[&id] * (1.0 - context.node(id).link_density());
+    for id in context.extraction.candidates.clone() {
+      let score = context.extraction.scores[&id]
+        * (1.0 - context.node(id).link_density());
 
-      context.scores.insert(id, score);
+      context.extraction.scores.insert(id, score);
 
       if let Some(index) = (0..limit).find(|index| {
         top_candidates
           .get(*index)
-          .is_none_or(|other| score > context.scores[other])
+          .is_none_or(|other| score > context.extraction.scores[other])
       }) {
         top_candidates.insert(index, id);
         top_candidates.truncate(limit);
@@ -196,7 +199,7 @@ mod tests {
     SelectTopCandidate.run(&mut context).unwrap();
 
     context
-      .node(context.top_candidate.unwrap())
+      .node(context.extraction.top_candidate.unwrap())
       .html()
       .to_string()
   }
@@ -225,7 +228,7 @@ mod tests {
 
     SelectTopCandidate.run(&mut context).unwrap();
 
-    assert!(context.created_top_candidate);
+    assert!(context.extraction.created_top_candidate);
 
     assert_eq!(
       context.document.html().to_string(),

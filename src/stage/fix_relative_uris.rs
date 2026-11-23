@@ -8,7 +8,7 @@ pub(crate) struct FixRelativeUris;
 impl Stage for FixRelativeUris {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let (Some(article), Some(document_url)) =
-      (context.article, context.url.clone())
+      (context.extraction.article, context.url.clone())
     else {
       return Ok(());
     };
@@ -131,7 +131,7 @@ mod tests {
 
     context.url = Some(Url::parse("http://foo.com/bar/baz.html").unwrap());
 
-    context.article = context
+    context.extraction.article = context
       .document
       .select("body")
       .nodes()

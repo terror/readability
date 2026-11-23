@@ -4,9 +4,10 @@ pub(crate) struct ExtractDir;
 
 impl Stage for ExtractDir {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let (Some(parent), Some(top_candidate)) =
-      (context.top_candidate_parent, context.top_candidate)
-    else {
+    let (Some(parent), Some(top_candidate)) = (
+      context.extraction.top_candidate_parent,
+      context.extraction.top_candidate,
+    ) else {
       return Ok(());
     };
 

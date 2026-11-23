@@ -1,19 +1,13 @@
 use super::*;
 
 pub(crate) struct Context<'a> {
-  pub(crate) article: Option<NodeId>,
-  pub(crate) candidates: Vec<NodeId>,
-  pub(crate) created_top_candidate: bool,
-  pub(crate) data_tables: HashSet<NodeId>,
   pub(crate) dir: Option<String>,
   pub(crate) document: &'a mut dom_query::Document,
+  pub(crate) extraction: Extraction,
   pub(crate) flags: Flags,
   pub(crate) lang: Option<String>,
   pub(crate) metadata: Metadata,
   pub(crate) options: &'a ReadabilityOptions,
-  pub(crate) scores: HashMap<NodeId, f64>,
-  pub(crate) top_candidate: Option<NodeId>,
-  pub(crate) top_candidate_parent: Option<NodeId>,
   pub(crate) url: Option<Url>,
 }
 
@@ -27,19 +21,13 @@ impl<'a> Context<'a> {
     options: &'a ReadabilityOptions,
   ) -> Self {
     Self {
-      article: None,
-      candidates: Vec::new(),
-      created_top_candidate: false,
-      data_tables: HashSet::new(),
       dir: None,
       document: html,
+      extraction: Extraction::default(),
       flags: Flags::default(),
       lang: None,
       metadata: Metadata::default(),
       options,
-      scores: HashMap::new(),
-      top_candidate: None,
-      top_candidate_parent: None,
       url: None,
     }
   }

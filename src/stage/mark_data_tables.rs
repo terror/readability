@@ -7,7 +7,7 @@ pub(crate) struct MarkDataTables;
 
 impl Stage for MarkDataTables {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(article) = context.article else {
+    let Some(article) = context.extraction.article else {
       return Ok(());
     };
 
@@ -19,7 +19,7 @@ impl Stage for MarkDataTables {
       .map(|table| table.id)
       .collect::<Vec<_>>();
 
-    context.data_tables.extend(tables);
+    context.extraction.data_tables.extend(tables);
 
     Ok(())
   }
