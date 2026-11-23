@@ -40,6 +40,15 @@ impl Readability {
     )
     .run()?;
 
+    let article = context
+      .article
+      .map(|id| context.document.tree.get_unchecked(&id))
+      .ok_or(Error::MissingArticleContent)?;
+
+    let content = article.inner_html().to_string();
+
+    let text_content = article.text().to_string();
+
     let Metadata {
       byline,
       excerpt,
@@ -50,14 +59,14 @@ impl Readability {
 
     Ok(Article {
       byline,
-      content: context.document.html().to_string(),
+      content,
       dir: context.dir,
       excerpt,
       lang: context.lang,
-      length: context.document.text().to_string().len(),
+      length: text_length(&text_content),
       published_time,
       site_name,
-      text_content: context.document.text().to_string(),
+      text_content,
       title: title.unwrap_or_default(),
     })
   }

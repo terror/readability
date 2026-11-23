@@ -24,6 +24,10 @@ pub(crate) struct RemoveUnlikelyCandidates;
 
 impl Stage for RemoveUnlikelyCandidates {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
+    if !context.flags.strip_unlikelys {
+      return Ok(());
+    }
+
     let nodes = context.document.select("*").nodes().to_vec();
 
     for node in nodes {
@@ -86,6 +90,21 @@ mod tests {
         r#"<html><body><div class="comment">foo</div><p>bar</p></body></html>"#,
       )
       .expected_html("<html><head></head><body><p>bar</p></body></html>")
+      .run();
+  }
+
+  #[test]
+  fn skips_when_flag_disabled() {
+    Test::new()
+      .stage(RemoveUnlikelyCandidates)
+      .document(r#"<html><body><div class="comment">foo</div></body></html>"#)
+      .flags(Flags {
+        strip_unlikelys: false,
+        ..Flags::default()
+      })
+      .expected_html(
+        r#"<html><head></head><body><div class="comment">foo</div></body></html>"#,
+      )
       .run();
   }
 

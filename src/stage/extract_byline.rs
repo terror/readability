@@ -43,12 +43,13 @@ impl Stage for ExtractByline {
       let text = node.text();
       let text = text.trim();
 
-      if text.is_empty() || text.len() >= BYLINE_MAX_LENGTH {
+      if text.is_empty() || text_length(text) >= BYLINE_MAX_LENGTH {
         continue;
       }
 
       let byline = node
-        .descendants_it()
+        .descendant_nodes()
+        .into_iter()
         .find(|node| {
           node
             .attr("itemprop")
@@ -61,6 +62,8 @@ impl Stage for ExtractByline {
         );
 
       context.metadata.byline = Some(byline);
+
+      node.remove_from_parent();
 
       break;
     }
@@ -84,6 +87,17 @@ mod tests {
         byline: Some("foo".into()),
         ..Metadata::default()
       })
+      .run();
+  }
+
+  #[test]
+  fn removes_byline_node() {
+    Test::new()
+      .stage(ExtractByline)
+      .document(
+        r#"<html><body><p class="byline">foo</p><p>bar</p></body></html>"#,
+      )
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
       .run();
   }
 
