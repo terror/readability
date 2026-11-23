@@ -20,6 +20,7 @@ mod fix_lazy_images;
 mod fix_relative_uris;
 mod grab_article;
 mod mark_data_tables;
+mod prepare_nodes;
 mod remove_breaks_before_paragraphs;
 mod remove_disallowed_nodes;
 mod remove_duplicate_title_header;
@@ -62,6 +63,7 @@ pub(crate) use {
   fix_relative_uris::FixRelativeUris,
   grab_article::GrabArticle,
   mark_data_tables::MarkDataTables,
+  prepare_nodes::PrepareNodes,
   remove_breaks_before_paragraphs::RemoveBreaksBeforeParagraphs,
   remove_disallowed_nodes::RemoveDisallowedNodes,
   remove_duplicate_title_header::RemoveDuplicateTitleHeader,

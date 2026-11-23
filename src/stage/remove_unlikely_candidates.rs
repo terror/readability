@@ -22,59 +22,37 @@ const UNLIKELY_ROLES: &[&str] = &[
 /// removed regardless of class or id.
 pub(crate) struct RemoveUnlikelyCandidates;
 
-impl Stage for RemoveUnlikelyCandidates {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    if !context.flags.strip_unlikelys {
-      return Ok(());
+impl Rule for RemoveUnlikelyCandidates {
+  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
+    if context.flags.strip_unlikelys && Self::is_unlikely(&context.node(node)) {
+      Action::Remove
+    } else {
+      Action::Continue
+    }
+  }
+}
+
+impl RemoveUnlikelyCandidates {
+  fn is_unlikely(node: &NodeRef) -> bool {
+    let class = node.attr("class").unwrap_or_default();
+    let id = node.attr("id").unwrap_or_default();
+    let match_string = format!("{class} {id}");
+
+    let tag = node.tag();
+
+    if UNLIKELY_CANDIDATE.is_match(&match_string)
+      && !MAYBE_CANDIDATE.is_match(&match_string)
+      && !node.has_ancestor_tag("TABLE", Some(3), |_| true)
+      && !node.has_ancestor_tag("CODE", Some(3), |_| true)
+      && tag != "BODY"
+      && tag != "A"
+    {
+      return true;
     }
 
-    let nodes = context.document.select("*").nodes().to_vec();
-
-    for node in nodes {
-      if node.parent().is_none() {
-        continue;
-      }
-
-      let tag = node.node_name().map_or_default(|node| node.to_uppercase());
-
-      if tag == "BODY" || tag == "A" {
-        continue;
-      }
-
-      let role = node.attr("role").unwrap_or_default();
-
-      if UNLIKELY_ROLES.iter().any(|&r| role.as_ref() == r) {
-        node.remove_from_parent();
-        continue;
-      }
-
-      let class = node.attr("class").unwrap_or_default();
-      let id = node.attr("id").unwrap_or_default();
-      let match_string = format!("{class} {id}");
-
-      if !UNLIKELY_CANDIDATE.is_match(&match_string) {
-        continue;
-      }
-
-      if MAYBE_CANDIDATE.is_match(&match_string) {
-        continue;
-      }
-
-      let has_table_or_code_ancestor = node.ancestors(None).iter().any(|a| {
-        a.node_name().is_some_and(|n| {
-          let upper = n.to_uppercase();
-          upper == "TABLE" || upper == "CODE"
-        })
-      });
-
-      if has_table_or_code_ancestor {
-        continue;
-      }
-
-      node.remove_from_parent();
-    }
-
-    Ok(())
+    node
+      .attr("role")
+      .is_some_and(|role| UNLIKELY_ROLES.contains(&role.as_ref()))
   }
 }
 

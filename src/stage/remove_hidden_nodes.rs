@@ -11,21 +11,13 @@ use super::*;
 /// - it carries both `aria-modal="true"` and `role="dialog"`
 pub(crate) struct RemoveHiddenNodes;
 
-impl Stage for RemoveHiddenNodes {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let nodes = context.document.select("*").nodes().to_vec();
-
-    for node in nodes {
-      if node.parent().is_none() {
-        continue;
-      }
-
-      if Self::is_hidden(&node) {
-        node.remove_from_parent();
-      }
+impl Rule for RemoveHiddenNodes {
+  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
+    if Self::is_hidden(&context.node(node)) {
+      Action::Remove
+    } else {
+      Action::Continue
     }
-
-    Ok(())
   }
 }
 

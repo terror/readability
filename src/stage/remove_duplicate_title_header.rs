@@ -2,27 +2,35 @@ use super::*;
 
 const TITLE_SIMILARITY_THRESHOLD: f64 = 0.75;
 
-pub(crate) struct RemoveDuplicateTitleHeader;
+#[derive(Default)]
+pub(crate) struct RemoveDuplicateTitleHeader {
+  removed: bool,
+}
 
-impl Stage for RemoveDuplicateTitleHeader {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let title = context.metadata.title.clone().unwrap_or_default();
-
-    let header = context
-      .document
-      .select("h1, h2")
-      .nodes()
-      .iter()
-      .find(|node| {
-        text_similarity(&title, node.text().trim()) > TITLE_SIMILARITY_THRESHOLD
-      })
-      .cloned();
-
-    if let Some(header) = header {
-      header.remove_from_parent();
+impl Rule for RemoveDuplicateTitleHeader {
+  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
+    if self.removed {
+      return Action::Continue;
     }
 
-    Ok(())
+    let node = context.node(node);
+
+    if !matches!(node.tag().as_str(), "H1" | "H2") {
+      return Action::Continue;
+    }
+
+    let title = context.metadata.title.as_deref().unwrap_or_default();
+
+    if text_similarity(title, node.text().trim()) > TITLE_SIMILARITY_THRESHOLD {
+      self.removed = true;
+      Action::Remove
+    } else {
+      Action::Continue
+    }
+  }
+
+  fn reset(&mut self) {
+    self.removed = false;
   }
 }
 
@@ -33,7 +41,7 @@ mod tests {
   #[test]
   fn removes_first_matching_header() {
     Test::new()
-      .stage(RemoveDuplicateTitleHeader)
+      .stage(RemoveDuplicateTitleHeader::default())
       .document("<html><body><h2>baz</h2><h1>foo bar</h1><h2>foo bar</h2></body></html>")
       .metadata(Metadata {
         title: Some("foo bar".into()),
@@ -48,7 +56,7 @@ mod tests {
   #[test]
   fn keeps_non_matching_header() {
     Test::new()
-      .stage(RemoveDuplicateTitleHeader)
+      .stage(RemoveDuplicateTitleHeader::default())
       .document("<html><body><h1>baz</h1></body></html>")
       .metadata(Metadata {
         title: Some("foo bar".into()),

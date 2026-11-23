@@ -17,37 +17,49 @@ const BYLINE_MAX_LENGTH: usize = 100;
 /// and non-empty text is preferred for the byline text.
 pub(crate) struct ExtractByline;
 
-impl Stage for ExtractByline {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
+impl Rule for ExtractByline {
+  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
     if context.metadata.byline.is_some() {
-      return Ok(());
+      return Action::Continue;
     }
 
-    let nodes = context.document.select("*").nodes().to_vec();
+    let byline = Self::byline(&context.node(node));
 
-    for node in nodes {
-      let rel = node.attr("rel").unwrap_or_default();
-      let itemprop = node.attr("itemprop").unwrap_or_default();
-
-      let class = node.attr("class").unwrap_or_default();
-      let id = node.attr("id").unwrap_or_default();
-
-      let is_byline_candidate = rel.as_ref() == "author"
-        || itemprop.contains("author")
-        || BYLINE.is_match(&format!("{class} {id}"));
-
-      if !is_byline_candidate {
-        continue;
+    match byline {
+      Some(byline) => {
+        context.metadata.byline = Some(byline);
+        Action::Remove
       }
+      None => Action::Continue,
+    }
+  }
+}
 
-      let text = node.text();
-      let text = text.trim();
+impl ExtractByline {
+  fn byline(node: &NodeRef) -> Option<String> {
+    let rel = node.attr("rel").unwrap_or_default();
+    let itemprop = node.attr("itemprop").unwrap_or_default();
 
-      if text.is_empty() || text_length(text) >= BYLINE_MAX_LENGTH {
-        continue;
-      }
+    let class = node.attr("class").unwrap_or_default();
+    let id = node.attr("id").unwrap_or_default();
 
-      let byline = node
+    let is_byline_candidate = rel.as_ref() == "author"
+      || itemprop.contains("author")
+      || BYLINE.is_match(&format!("{class} {id}"));
+
+    if !is_byline_candidate {
+      return None;
+    }
+
+    let text = node.text();
+    let text = text.trim();
+
+    if text.is_empty() || text_length(text) >= BYLINE_MAX_LENGTH {
+      return None;
+    }
+
+    Some(
+      node
         .descendant_nodes()
         .into_iter()
         .find(|node| {
@@ -59,16 +71,8 @@ impl Stage for ExtractByline {
         .map_or_else(
           || text.to_string(),
           |node| node.text().trim().to_string(),
-        );
-
-      context.metadata.byline = Some(byline);
-
-      node.remove_from_parent();
-
-      break;
-    }
-
-    Ok(())
+        ),
+    )
   }
 }
 
