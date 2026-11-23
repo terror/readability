@@ -21,6 +21,9 @@ pub(crate) static COMMAS: LazyLock<Regex> =
 
 pub(crate) static HASH_URL: LazyLock<Regex> = re!(r"^#.+");
 
+pub(crate) static DISPLAY_NONE: LazyLock<Regex> =
+  re!(r"(?i)(^|;)\s*display\s*:\s*none\s*(!important\s*)?(;|$)");
+
 pub(crate) static HAS_CONTENT: LazyLock<Regex> = re!(r"\S$");
 
 pub(crate) static IMAGE_EXTENSION: LazyLock<Regex> =
