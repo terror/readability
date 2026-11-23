@@ -39,11 +39,12 @@ impl Readability {
   ///
   /// Returns an error when the pipeline cannot resolve article content.
   pub fn parse(&mut self) -> Result<Article> {
-    let context = Pipeline::with_default_stages(
-      Context::new(&mut self.html, &self.options),
-      self.base_url.as_ref(),
-    )
-    .run()?;
+    let mut context = Context {
+      url: self.base_url.clone(),
+      ..Context::new(&mut self.html, &self.options)
+    };
+
+    Pipeline::default().run(&mut context)?;
 
     let article = context
       .extraction
