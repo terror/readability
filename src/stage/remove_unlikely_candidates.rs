@@ -31,10 +31,7 @@ impl Stage for RemoveUnlikelyCandidates {
         continue;
       }
 
-      let tag = node
-        .node_name()
-        .map(|node| node.to_uppercase())
-        .unwrap_or_default();
+      let tag = node.node_name().map_or_default(|node| node.to_uppercase());
 
       if tag == "BODY" || tag == "A" {
         continue;

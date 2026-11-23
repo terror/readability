@@ -37,8 +37,7 @@ impl RemoveHiddenNodes {
 
     let style = node
       .attr("style")
-      .map(|style| style.to_lowercase())
-      .unwrap_or_default();
+      .map_or_default(|style| style.to_lowercase());
 
     if style.contains("display:none") || style.contains("display: none") {
       return true;
@@ -61,17 +60,12 @@ impl RemoveHiddenNodes {
       }
     }
 
-    if node
+    node
       .attr("aria-modal")
       .is_some_and(|value| value.as_ref() == "true")
       && node
         .attr("role")
         .is_some_and(|value| value.as_ref() == "dialog")
-    {
-      return true;
-    }
-
-    false
   }
 }
 
