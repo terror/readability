@@ -6,6 +6,7 @@ enum Assertion<T> {
 }
 
 pub(crate) struct Test {
+  article: bool,
   document: Option<String>,
   expected_html: Option<String>,
   expected_lang: Assertion<Option<String>>,
@@ -16,6 +17,13 @@ pub(crate) struct Test {
 }
 
 impl Test {
+  pub(crate) fn article(self) -> Self {
+    Self {
+      article: true,
+      ..self
+    }
+  }
+
   pub(crate) fn document(self, html: &str) -> Self {
     Self {
       document: Some(html.to_owned()),
@@ -57,6 +65,7 @@ impl Test {
 
   pub(crate) fn new() -> Self {
     Self {
+      article: false,
       document: None,
       expected_html: None,
       expected_lang: Assertion::Unset,
@@ -82,6 +91,15 @@ impl Test {
       let mut context = Context::new(&mut document, &options);
 
       context.flags = self.flags;
+
+      if self.article {
+        context.article = context
+          .document
+          .select("body")
+          .nodes()
+          .first()
+          .map(|node| node.id);
+      }
 
       if let Some(metadata) = self.metadata {
         context.metadata = metadata;

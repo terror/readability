@@ -32,7 +32,7 @@ impl Stage for ExtractArticle {
 
     let top_class = top_candidate.attr("class").unwrap_or_default();
 
-    let article = context.document.tree.new_element("div");
+    let article = create_element(&context.document.tree, "div");
 
     for sibling in parent.element_children() {
       let append = sibling.id == top_candidate.id || {
@@ -56,7 +56,7 @@ impl Stage for ExtractArticle {
       }
 
       if !ALTER_TO_DIV_EXCEPTIONS.contains(&sibling.tag().as_str()) {
-        sibling.rename("div");
+        sibling.set_tag("div");
       }
 
       article.append_child(&sibling);

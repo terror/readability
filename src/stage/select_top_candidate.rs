@@ -87,7 +87,7 @@ impl SelectTopCandidate {
       return;
     };
 
-    let div = context.document.tree.new_element("div");
+    let div = create_element(&context.document.tree, "div");
 
     while let Some(child) = body.first_child() {
       div.append_child(&child);

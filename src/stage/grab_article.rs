@@ -20,6 +20,7 @@ impl Stage for GrabArticle {
       context.article = None;
       context.candidates.clear();
       context.created_top_candidate = false;
+      context.data_tables.clear();
       context.scores.clear();
       context.top_candidate = None;
       context.top_candidate_parent = None;

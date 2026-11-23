@@ -16,7 +16,7 @@ impl Stage for ConvertDivsToParagraphs {
       {
         div.replace_with(&div.element_children()[0]);
       } else if !div.has_child_block_element() {
-        div.rename("p");
+        div.set_tag("p");
       }
     }
 
@@ -52,7 +52,7 @@ impl ConvertDivsToParagraphs {
           node.remove_from_parent();
         }
 
-        let paragraph = div.tree.new_element("p");
+        let paragraph = create_element(div.tree, "p");
 
         match &next {
           Some(next) => next.insert_before(&paragraph),

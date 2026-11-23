@@ -21,7 +21,7 @@ impl Stage for WrapArticlePage {
     };
 
     let page = page.unwrap_or_else(|| {
-      let page = context.document.tree.new_element("div");
+      let page = create_element(&context.document.tree, "div");
 
       while let Some(child) = article.first_child() {
         page.append_child(&child);
@@ -51,7 +51,7 @@ mod tests {
 
     let mut context = Context::new(&mut document, &options);
 
-    let article = context.document.tree.new_element("div");
+    let article = create_element(&context.document.tree, "div");
 
     article.append_html("<p>foo</p><p>bar</p>");
 
