@@ -16,4 +16,10 @@ total=$((total * 2))
 
 percentage=$((implemented * 100 / total))
 
-echo "[![integration](https://img.shields.io/badge/integration-${implemented}%2F${total}_(${percentage}%25)-orange)](https://github.com/terror/readability/blob/master/tests/integration.rs)"
+if [ "$implemented" -eq "$total" ]; then
+  color=brightgreen
+else
+  color=orange
+fi
+
+echo "[![integration](https://img.shields.io/badge/integration-${implemented}%2F${total}_(${percentage}%25)-${color})](https://github.com/terror/readability/blob/master/tests/integration.rs)"
