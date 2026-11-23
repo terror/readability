@@ -62,7 +62,7 @@ impl ExtractTitle {
     }
   }
 
-  fn extract(document: &dom_query::Document) -> Option<String> {
+  pub(crate) fn extract(document: &dom_query::Document) -> Option<String> {
     let raw = document.select("title").first().text();
 
     let raw = TITLE_WHITESPACE.replace_all(raw.trim(), " ");

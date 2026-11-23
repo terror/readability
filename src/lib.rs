@@ -8,7 +8,7 @@ use {
     BYLINE, MAYBE_CANDIDATE, META_PROPERTY, NUMERIC_HTML_ENTITY,
     TITLE_HIERARCHICAL_SEPARATOR, TITLE_LEADING_JUNK,
     TITLE_NORMALIZE_WHITESPACE, TITLE_SEPARATOR, TITLE_WHITESPACE,
-    TITLE_WORD_SEPARATOR, UNLIKELY_CANDIDATE,
+    TITLE_WORD_SEPARATOR, TOKENIZE, UNLIKELY_CANDIDATE,
   },
   regex::Regex,
   serde::{Deserialize, Serialize},
@@ -20,6 +20,7 @@ use {
     UnwrapNoscriptImages,
   },
   std::{collections::HashMap, iter, mem, sync::LazyLock},
+  text_similarity::text_similarity,
   url::Url,
 };
 
@@ -40,5 +41,6 @@ mod pipeline;
 mod re;
 mod readability;
 mod stage;
+mod text_similarity;
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;

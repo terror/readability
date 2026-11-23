@@ -1,5 +1,7 @@
 use super::*;
 
+const HEADLINE_SIMILARITY_THRESHOLD: f64 = 0.75;
+
 const SCHEMA_ORG: &str = "schema.org";
 
 const ARTICLE_TYPES: &[&str] = &[
@@ -52,7 +54,7 @@ impl Stage for ExtractJsonLd {
         continue;
       };
 
-      context.metadata = Self::extract_metadata(article);
+      context.metadata = Self::extract_metadata(article, context.document);
 
       break;
     }
@@ -92,8 +94,11 @@ impl ExtractJsonLd {
     None
   }
 
-  fn extract_metadata(article: &serde_json::Value) -> Metadata {
-    let title = Self::extract_title(article);
+  fn extract_metadata(
+    article: &serde_json::Value,
+    document: &dom_query::Document,
+  ) -> Metadata {
+    let title = Self::extract_title(article, document);
 
     let byline = Self::extract_byline(article);
 
@@ -128,7 +133,10 @@ impl ExtractJsonLd {
     }
   }
 
-  fn extract_title(article: &serde_json::Value) -> Option<String> {
+  fn extract_title(
+    article: &serde_json::Value,
+    document: &dom_query::Document,
+  ) -> Option<String> {
     let name = article
       .get("name")
       .and_then(|value| value.as_str())
@@ -142,7 +150,17 @@ impl ExtractJsonLd {
       .filter(|s| !s.is_empty());
 
     match (name, headline) {
-      (Some(name), Some(headline)) if name != headline => Some(name.to_owned()),
+      (Some(name), Some(headline)) if name != headline => {
+        let title = ExtractTitle::extract(document).unwrap_or_default();
+
+        if text_similarity(headline, &title) > HEADLINE_SIMILARITY_THRESHOLD
+          && text_similarity(name, &title) <= HEADLINE_SIMILARITY_THRESHOLD
+        {
+          Some(headline.to_owned())
+        } else {
+          Some(name.to_owned())
+        }
+      }
       (Some(name), _) => Some(name.to_owned()),
       (None, Some(headline)) => Some(headline.to_owned()),
       (None, None) => None,
@@ -324,6 +342,27 @@ mod tests {
       )
       .expected_metadata(Metadata {
         title: Some("foo".to_string()),
+        ..Metadata::default()
+      })
+      .run();
+  }
+
+  #[test]
+  fn headline_preferred_when_matching_title() {
+    Test::new()
+      .stage(ExtractJsonLd)
+      .document(
+        r#"<html><head><title>bar baz qux quux</title><script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "Article",
+          "name": "foo",
+          "headline": "bar baz qux quux"
+        }
+        </script></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        title: Some("bar baz qux quux".to_string()),
         ..Metadata::default()
       })
       .run();

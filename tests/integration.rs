@@ -139,6 +139,7 @@ test_metadata!("003-metadata-preferred");
 test_metadata!("004-metadata-space-separated-properties");
 test_metadata!("005-unescape-html-entities");
 test_metadata!("aclu");
+test_metadata!("aktualne");
 test_metadata!("archive-of-our-own");
 test_metadata!("ars-1");
 test_metadata!("article-author-tag");
