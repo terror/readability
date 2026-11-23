@@ -1,7 +1,5 @@
 use super::*;
 
-const IMAGE_EXTENSIONS: &[&str] = &[".jpg", ".jpeg", ".png", ".webp"];
-
 const SOURCE_ATTRIBUTES: &[&str] =
   &["src", "srcset", "data-src", "data-srcset"];
 
@@ -16,75 +14,98 @@ pub(crate) struct UnwrapNoscriptImages;
 
 impl Stage for UnwrapNoscriptImages {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    Self::unwrap_noscript_images(context);
-    Self::remove_placeholder_images(context);
+    for image in context.document.select("img").nodes() {
+      if !Self::has_image_source(image) {
+        image.remove_from_parent();
+      }
+    }
+
+    for noscript in context.document.select("noscript").nodes() {
+      Self::unwrap(noscript);
+    }
+
     Ok(())
   }
 }
 
 impl UnwrapNoscriptImages {
-  fn has_image_source(node: &NodeRef) -> bool {
-    node.attrs().iter().any(|attr| {
-      SOURCE_ATTRIBUTES.contains(&attr.name.local.as_ref())
-        || IMAGE_EXTENSIONS
-          .iter()
-          .any(|ext| attr.value.to_lowercase().contains(ext))
+  fn first_image<'a>(node: &NodeRef<'a>) -> Option<NodeRef<'a>> {
+    if node.tag() == "IMG" {
+      Some(node.clone())
+    } else {
+      node.elements_with_tags(&["IMG"]).into_iter().next()
+    }
+  }
+
+  fn has_image_source(image: &NodeRef) -> bool {
+    image.attrs().iter().any(|attribute| {
+      SOURCE_ATTRIBUTES.contains(&attribute.name.local.as_ref())
+        || IMAGE_EXTENSION.is_match(&attribute.value)
     })
   }
 
-  fn remove_placeholder_images(context: &mut Context<'_>) {
-    for node in context.document.select("img").nodes().to_vec() {
-      if !Self::has_image_source(&node) {
-        node.remove_from_parent();
+  fn is_single_image(node: &NodeRef) -> bool {
+    let mut node = node.clone();
+
+    loop {
+      if node.tag() == "IMG" {
+        return true;
       }
+
+      let children = node.element_children();
+
+      if children.len() != 1 || !node.text().trim().is_empty() {
+        return false;
+      }
+
+      node = children[0].clone();
     }
   }
 
-  fn single_image<'a>(selection: &Selection<'a>) -> Option<NodeRef<'a>> {
-    if !selection.text().trim().is_empty() {
-      return None;
+  fn unwrap(noscript: &NodeRef) {
+    if !Self::is_single_image(noscript) {
+      return;
     }
 
-    let (direct, nested) = (selection.filter("img"), selection.select("img"));
+    let Some(previous) = noscript
+      .prev_element_sibling()
+      .filter(Self::is_single_image)
+    else {
+      return;
+    };
 
-    if direct.length() + nested.length() != 1 {
-      return None;
-    }
+    let (Some(replacement), Some(old_image)) =
+      (noscript.first_element_child(), Self::first_image(&previous))
+    else {
+      return;
+    };
 
-    direct.nodes().first().or(nested.nodes().first()).cloned()
-  }
+    let Some(new_image) = Self::first_image(&replacement) else {
+      return;
+    };
 
-  fn unwrap_noscript_images(context: &mut Context<'_>) {
-    for node in context.document.select("noscript").nodes().to_vec() {
-      let fragment = dom_query::Document::from(node.inner_html().as_ref());
+    for attribute in old_image.attrs() {
+      let name = attribute.name.local.as_ref();
+      let value = attribute.value.as_ref();
 
-      let Some(new_image) = Self::single_image(&fragment.select("body > *"))
-      else {
+      if value.is_empty()
+        || !(matches!(name, "src" | "srcset")
+          || IMAGE_EXTENSION.is_match(value))
+        || new_image
+          .attr(name)
+          .is_some_and(|current| current.as_ref() == value)
+      {
         continue;
-      };
-
-      let Some(prev_element_sibling) = node.prev_element_sibling() else {
-        continue;
-      };
-
-      let Some(placeholder) =
-        Self::single_image(&Selection::from(prev_element_sibling.clone()))
-      else {
-        continue;
-      };
-
-      placeholder.remove_attrs(SOURCE_ATTRIBUTES);
-
-      for attribute in &new_image.attrs() {
-        placeholder.set_attr(&attribute.name.local, &attribute.value);
       }
 
-      if placeholder.id != prev_element_sibling.id {
-        prev_element_sibling.replace_with(&placeholder);
+      if new_image.has_attr(name) {
+        new_image.set_attr(&format!("data-old-{name}"), value);
+      } else {
+        new_image.set_attr(name, value);
       }
-
-      node.remove_from_parent();
     }
+
+    previous.replace_with(&replacement);
   }
 }
 
@@ -96,8 +117,8 @@ mod tests {
   fn basic_unwrap() {
     Test::new()
       .stage(UnwrapNoscriptImages)
-      .document("<html><body><img alt=\"x\"/><noscript><img src=\"real.jpg\"/></noscript></body></html>")
-      .expected_html("<html><head></head><body><img alt=\"x\" src=\"real.jpg\"></body></html>")
+      .document(r#"<html><body><img src="foo.gif" alt="bar"><noscript><img src="baz.jpg"></noscript></body></html>"#)
+      .expected_html(r#"<html><head></head><body><img src="baz.jpg" data-old-src="foo.gif"><noscript></noscript></body></html>"#)
       .run();
   }
 
@@ -147,8 +168,8 @@ mod tests {
   fn nested_wrapper() {
     Test::new()
       .stage(UnwrapNoscriptImages)
-      .document("<html><body><div><img/></div><noscript><img src=\"real.jpg\"/></noscript></body></html>")
-      .expected_html("<html><head></head><body><img src=\"real.jpg\"></body></html>")
+      .document(r#"<html><body><div><img data-src="foo.jpg"></div><noscript><img src="bar.jpg"></noscript></body></html>"#)
+      .expected_html(r#"<html><head></head><body><img src="bar.jpg" data-src="foo.jpg"><noscript></noscript></body></html>"#)
       .run();
   }
 

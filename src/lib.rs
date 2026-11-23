@@ -1,7 +1,7 @@
 use {
   context::Context,
   document::Document,
-  dom_query::{NodeId, NodeRef, Selection, Tree},
+  dom_query::{NodeId, NodeRef, Tree},
   flags::Flags,
   metadata::Metadata,
   node_ext::{NodeExt, create_element, text_length},
@@ -23,7 +23,7 @@ use {
     CleanStyles, ConvertDivsToParagraphs, ElementLimit, ExtractArticle,
     ExtractByline, ExtractDir, ExtractExcerpt, ExtractJsonLd, ExtractLang,
     ExtractMetaTags, ExtractTitle, FixLazyImages, FixRelativeUris, GrabArticle,
-    MarkDataTables, PrepareNodes, RemoveBreaksBeforeParagraphs,
+    MarkDataTables, PrepareNodes, RemoveBreaksBeforeParagraphs, RemoveComments,
     RemoveDisallowedNodes, RemoveDuplicateTitleHeader, RemoveEmptyContainers,
     RemoveEmptyParagraphs, RemoveHiddenNodes, RemoveUnlikelyCandidates,
     RenameHeadings, RewriteFontTags, RewriteLineBreaks, ScoreCandidates,
