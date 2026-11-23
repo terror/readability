@@ -45,7 +45,6 @@ struct ExpectedMetadata {
   excerpt: Option<String>,
   lang: Option<String>,
   published_time: Option<String>,
-  #[serde(default)]
   readerable: bool,
   site_name: Option<String>,
   title: String,
@@ -85,19 +84,27 @@ impl TestFixture {
   }
 
   fn parse_article(&self) -> readability::Article {
-    let mut readability = Readability::new(
+    self.readability().parse().expect("Failed to parse article")
+  }
+
+  fn readability(&self) -> Readability {
+    Readability::new(
       &self.source_html,
       Some("http://fakehost/test/page.html"),
       ReadabilityOptions::builder()
         .classes_to_preserve(["page", "caption"])
         .build(),
     )
-    .unwrap();
-
-    readability.parse().expect("Failed to parse article")
+    .unwrap()
   }
 
   fn test_metadata(&self) {
+    assert_eq!(
+      self.readability().is_probably_readerable(),
+      self.expected_metadata.readerable,
+      "Readerable mismatch"
+    );
+
     let article = self.parse_article();
 
     assert_eq!(

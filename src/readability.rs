@@ -7,6 +7,11 @@ pub struct Readability {
 }
 
 impl Readability {
+  #[must_use]
+  pub fn is_probably_readerable(&self) -> bool {
+    readerable::is_probably_readerable(&self.html)
+  }
+
   /// Creates a new readability parser instance.
   ///
   /// # Errors
