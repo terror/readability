@@ -41,7 +41,7 @@ impl Stage for RewriteLineBreaks {
         continue;
       }
 
-      let par = context.document.tree.new_element("p");
+      let par = create_element(&context.document.tree, "p");
       node.replace_with(&par);
 
       let mut next = par.next_sibling();
@@ -70,7 +70,7 @@ impl Stage for RewriteLineBreaks {
       }
 
       if par.parent().is_some_and(|parent| parent.is("p")) {
-        par.parent().unwrap().rename("div");
+        par.parent().unwrap().set_tag("div");
       }
     }
 

@@ -20,6 +20,26 @@ const PHRASING_ELEMS: &[&str] = &[
   "TEXTAREA", "TIME", "VAR", "WBR",
 ];
 
+pub(crate) fn create_element<'a>(tree: &'a Tree, name: &str) -> NodeRef<'a> {
+  let element = tree.new_element(name);
+
+  let namespace = tree.root().first_element_child().and_then(|root| {
+    root
+      .query(|node| node.as_element().map(|element| element.name.ns.clone()))
+      .flatten()
+  });
+
+  if let Some(namespace) = namespace {
+    element.update(|node| {
+      if let Some(element) = node.as_element_mut() {
+        element.name.ns = namespace;
+      }
+    });
+  }
+
+  element
+}
+
 pub(crate) fn text_length(text: &str) -> usize {
   text.encode_utf16().count()
 }
@@ -28,6 +48,19 @@ pub(crate) trait NodeExt {
   fn class_weight(&self) -> f64;
 
   fn descendant_nodes(&self) -> Vec<Self>
+  where
+    Self: Sized;
+
+  fn elements_with_tags(&self, tags: &[&str]) -> Vec<Self>
+  where
+    Self: Sized;
+
+  fn has_ancestor_tag(
+    &self,
+    tag: &str,
+    max_depth: Option<usize>,
+    filter: impl Fn(&Self) -> bool,
+  ) -> bool
   where
     Self: Sized;
 
@@ -44,6 +77,8 @@ pub(crate) trait NodeExt {
   fn is_whitespace(&self) -> bool;
 
   fn link_density(&self) -> f64;
+
+  fn set_tag(&self, name: &str);
 
   fn tag(&self) -> String;
 }
@@ -77,6 +112,28 @@ impl NodeExt for NodeRef<'_> {
     }
 
     nodes
+  }
+
+  fn elements_with_tags(&self, tags: &[&str]) -> Vec<Self> {
+    self
+      .descendant_nodes()
+      .into_iter()
+      .filter(|node| tags.contains(&node.tag().as_str()))
+      .collect()
+  }
+
+  fn has_ancestor_tag(
+    &self,
+    tag: &str,
+    max_depth: Option<usize>,
+    filter: impl Fn(&Self) -> bool,
+  ) -> bool {
+    self
+      .ancestors(None)
+      .iter()
+      .enumerate()
+      .take_while(|(depth, _)| max_depth.is_none_or(|max| *depth <= max))
+      .any(|(_, ancestor)| ancestor.tag() == tag && filter(ancestor))
   }
 
   fn has_child_block_element(&self) -> bool {
@@ -166,6 +223,14 @@ impl NodeExt for NodeRef<'_> {
     link_length / length as f64
   }
 
+  fn set_tag(&self, name: &str) {
+    self.update(|node| {
+      if let Some(element) = node.as_element_mut() {
+        element.name.local = name.into();
+      }
+    });
+  }
+
   fn tag(&self) -> String {
     if self.is_element() {
       self.node_name().map_or_default(|name| name.to_uppercase())
@@ -211,6 +276,53 @@ mod tests {
         .collect::<Vec<_>>(),
       vec!["P", "B", "", "I"],
     );
+  }
+
+  #[test]
+  fn has_ancestor_tag() {
+    #[track_caller]
+    fn case(html: &str, max_depth: Option<usize>, expected: bool) {
+      let document = dom_query::Document::from(html);
+      let node = document.select("span").nodes()[0].clone();
+      assert_eq!(
+        node.has_ancestor_tag("TABLE", max_depth, |_| true),
+        expected
+      );
+    }
+
+    let deep = "<table><tr><td><div><div><div><span></span></div></div></div></td></tr></table>";
+
+    case(deep, Some(3), false);
+    case(deep, None, true);
+    case(
+      "<table><tr><td><span></span></td></tr></table>",
+      Some(3),
+      true,
+    );
+  }
+
+  #[test]
+  fn create_element() {
+    let document = dom_query::Document::from("<html><body></body></html>");
+
+    let body = document.select("body").nodes()[0].clone();
+
+    body.append_child(&super::create_element(&document.tree, "img"));
+
+    assert_eq!(body.html().to_string(), "<body><img></body>");
+  }
+
+  #[test]
+  fn set_tag() {
+    let document = dom_query::Document::from(
+      r#"<html><body><div class="foo">bar</div></body></html>"#,
+    );
+
+    let node = document.select("div").nodes()[0].clone();
+
+    node.set_tag("p");
+
+    assert_eq!(document.select("p.foo").length(), 1);
   }
 
   #[test]

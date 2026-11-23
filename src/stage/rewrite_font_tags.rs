@@ -9,7 +9,9 @@ pub(crate) struct RewriteFontTags;
 
 impl Stage for RewriteFontTags {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    context.document.select("font").rename("span");
+    for node in context.document.select("font").nodes() {
+      node.set_tag("span");
+    }
 
     Ok(())
   }

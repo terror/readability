@@ -6,6 +6,13 @@ macro_rules! re {
   };
 }
 
+pub(crate) static AD_WORDS: LazyLock<Regex> = re!(
+  r"(?i)^(ad(vertising|vertisement)?|pub(licité)?|werb(ung)?|广告|Реклама|Anuncio)$"
+);
+
+pub(crate) static B64_DATA_URL: LazyLock<Regex> =
+  re!(r"(?i)^data:\s*([^\s;,]+)\s*;\s*base64\s*,");
+
 pub(crate) static BYLINE: LazyLock<Regex> =
   re!(r"(?i)byline|author|dateline|writtenby|p-author");
 
@@ -15,6 +22,18 @@ pub(crate) static COMMAS: LazyLock<Regex> =
 pub(crate) static HASH_URL: LazyLock<Regex> = re!(r"^#.+");
 
 pub(crate) static HAS_CONTENT: LazyLock<Regex> = re!(r"\S$");
+
+pub(crate) static IMAGE_EXTENSION: LazyLock<Regex> =
+  re!(r"(?i)\.(jpg|jpeg|png|webp)");
+
+pub(crate) static LAZY_IMAGE_SRC: LazyLock<Regex> =
+  re!(r"^\s*\S+\.(jpg|jpeg|png|webp)\S*\s*$");
+
+pub(crate) static LAZY_IMAGE_SRCSET: LazyLock<Regex> =
+  re!(r"\.(jpg|jpeg|png|webp)\s+\d");
+
+pub(crate) static LOADING_WORDS: LazyLock<Regex> =
+  re!(r"(?i)^((loading|正在加载|Загрузка|chargement|cargando)(…|\.\.\.)?)$");
 
 pub(crate) static MAYBE_CANDIDATE: LazyLock<Regex> =
   re!(r"(?i)and|article|body|column|content|main|mathjax|shadow");
@@ -36,6 +55,9 @@ pub(crate) static POSITIVE: LazyLock<Regex> = re!(
 
 pub(crate) static SENTENCE_END: LazyLock<Regex> = re!(r"\.( |$)");
 
+pub(crate) static SHARE_ELEMENTS: LazyLock<Regex> =
+  re!(r"(?i)((?-u:\b)|_)(share|sharedaddy)((?-u:\b)|_)");
+
 pub(crate) static TITLE_HIERARCHICAL_SEPARATOR: LazyLock<Regex> =
   re!(r"\s[\\/>»]\s");
 
@@ -54,4 +76,8 @@ pub(crate) static TOKENIZE: LazyLock<Regex> = re!(r"[^A-Za-z0-9_]+");
 
 pub(crate) static UNLIKELY_CANDIDATE: LazyLock<Regex> = re!(
   r"(?i)-ad-|ai2html|banner|breadcrumbs|combx|comment|community|cover-wrap|disqus|extra|footer|gdpr|header|legends|menu|related|remark|replies|rss|shoutbox|sidebar|skyscraper|social|sponsor|supplemental|ad-break|agegate|pagination|pager|popup|yom-remote"
+);
+
+pub(crate) static VIDEOS: LazyLock<Regex> = re!(
+  r"(?i)//(www\.)?((dailymotion|youtube|youtube-nocookie|player\.vimeo|v\.qq|bilibili|live.bilibili)\.com|(archive|upload\.wikimedia)\.org|player\.twitch\.tv)"
 );
