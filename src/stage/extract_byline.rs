@@ -1,17 +1,18 @@
 use super::*;
 
-/// Maximum byte length of a valid byline.
+/// Maximum length of a valid byline, in UTF-16 code units.
 const BYLINE_MAX_LENGTH: usize = 100;
 
-/// Scans the document for a byline element and stores its text in the context
-/// metadata. Only runs when no byline has already been extracted from metadata.
+/// Stores the text of the first byline element in document order in the context
+/// metadata and removes that element from the document. Does nothing once a
+/// byline has been found, including one extracted from metadata.
 ///
 /// An element is a byline candidate if:
 /// - its `rel` attribute equals `"author"`, or
 /// - its `itemprop` attribute contains `"author"`, or
 /// - its `class` and `id` attributes match `/byline|author|dateline|writtenby|p-author/i`
 ///
-/// and its trimmed text is non-empty and shorter than `BYLINE_MAX_LENGTH` bytes.
+/// and its trimmed text is non-empty and shorter than `BYLINE_MAX_LENGTH`.
 ///
 /// When a candidate is found, a descendant with `itemprop` containing `"name"`
 /// and non-empty text is preferred for the byline text.

@@ -6,13 +6,14 @@ pub struct Article {
   pub byline: Option<String>,
   /// HTML markup representing the extracted article content.
   pub content: String,
-  /// Text direction hint sourced from the document.
+  /// Text direction from the nearest `dir` attribute on the article's
+  /// ancestors.
   pub dir: Option<String>,
   /// Summary or first paragraph of the article.
   pub excerpt: Option<String>,
   /// Language hint discovered during parsing.
   pub lang: Option<String>,
-  /// Character count of the plain-text content.
+  /// Length of the plain-text content in UTF-16 code units.
   pub length: usize,
   /// Publication timestamp for the article if present.
   pub published_time: Option<String>,

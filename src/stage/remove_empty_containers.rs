@@ -7,8 +7,9 @@ const EMPTY_CONTAINER_TAGS: &[&str] = &[
 /// Removes `div`, `section`, `header`, and heading elements that have no
 /// content.
 ///
-/// A node is considered without content when its text is empty and its only
-/// children (if any) are `<br>` or `<hr>` elements.
+/// A node is considered without content when its text is empty and it has no
+/// element children, or exactly as many element children as `<br>` and `<hr>`
+/// descendants.
 pub(crate) struct RemoveEmptyContainers;
 
 impl Rule for RemoveEmptyContainers {

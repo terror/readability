@@ -37,7 +37,8 @@ impl Readability {
   ///
   /// # Errors
   ///
-  /// Returns an error when the pipeline cannot resolve article content.
+  /// Returns an error when the document has more elements than
+  /// `max_elements` allows, or when no article content can be found.
   pub fn parse(&mut self) -> Result<Article> {
     let mut context = Context {
       url: self.base_url.clone(),

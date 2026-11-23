@@ -10,17 +10,18 @@ const MAX_TITLE_LENGTH: usize = 150;
 /// words to be used as the title. If it falls short, the first colon is tried.
 const MIN_COLON_SUFFIX_WORDS: usize = 3;
 
-/// If the text before the first colon has more than this many words, the title
-/// structure is considered unusual and the raw title is kept as-is.
+/// When the suffix after the last colon is long enough but the text before the
+/// first colon has more than this many words, the title structure is
+/// considered unusual and the raw title is kept as-is.
 const MAX_COLON_PREFIX_WORDS: usize = 5;
 
 /// After splitting on the last separator, the candidate must have at least this
 /// many words before the prefix-strip fallback is attempted.
 const MIN_SEPARATOR_CANDIDATE_WORDS: usize = 3;
 
-/// A separator candidate with this many words or fewer is discarded in favour
-/// of the raw title, unless a hierarchical separator was present and exactly
-/// one word was removed.
+/// A candidate title with this many words or fewer is discarded in favour of
+/// the raw title, unless a hierarchical separator was present and exactly one
+/// word was removed.
 const MAX_SHORT_TITLE_WORDS: usize = 4;
 
 pub(crate) struct ExtractTitle;
