@@ -17,19 +17,16 @@ impl Stage for GrabArticle {
     let mut attempts = Vec::new();
 
     loop {
-      context.article = None;
-      context.candidates.clear();
-      context.created_top_candidate = false;
-      context.data_tables.clear();
-      context.scores.clear();
-      context.top_candidate = None;
-      context.top_candidate_parent = None;
+      context.extraction = Extraction::default();
 
       for stage in &mut self.stages {
         stage.run(context)?;
       }
 
-      let article = context.article.ok_or(Error::MissingArticleContent)?;
+      let article = context
+        .extraction
+        .article
+        .ok_or(Error::MissingArticleContent)?;
 
       let length = text_length(&context.node(article).inner_text());
 
@@ -69,7 +66,7 @@ impl Stage for GrabArticle {
     }
 
     *context.document = best.document;
-    context.article = Some(best.article);
+    context.extraction.article = Some(best.article);
 
     Ok(())
   }
@@ -113,6 +110,7 @@ mod tests {
     .run(&mut context);
 
     let article = context
+      .extraction
       .article
       .map_or_default(|id| context.node(id).html().to_string());
 

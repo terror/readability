@@ -6,7 +6,7 @@ pub(crate) struct Clean(pub(crate) &'static str);
 
 impl Stage for Clean {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(article) = context.article else {
+    let Some(article) = context.extraction.article else {
       return Ok(());
     };
 

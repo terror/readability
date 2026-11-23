@@ -22,7 +22,7 @@ pub(crate) struct CleanStyles;
 
 impl Stage for CleanStyles {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    if let Some(article) = context.article {
+    if let Some(article) = context.extraction.article {
       Self::clean(&context.node(article));
     }
 

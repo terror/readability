@@ -6,7 +6,7 @@ pub(crate) struct CleanShareElements;
 
 impl Stage for CleanShareElements {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(article) = context.article else {
+    let Some(article) = context.extraction.article else {
       return Ok(());
     };
 

@@ -2,6 +2,7 @@ use {
   context::Context,
   document::Document,
   dom_query::{NodeId, NodeRef, Tree},
+  extraction::Extraction,
   flags::Flags,
   metadata::Metadata,
   node_ext::{NodeExt, create_element, text_length},
@@ -50,6 +51,7 @@ mod article;
 mod context;
 mod document;
 mod error;
+mod extraction;
 mod flags;
 mod metadata;
 mod node_ext;

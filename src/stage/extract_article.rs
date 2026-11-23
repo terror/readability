@@ -15,7 +15,7 @@ pub(crate) struct ExtractArticle;
 
 impl Stage for ExtractArticle {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(top_candidate) = context.top_candidate else {
+    let Some(top_candidate) = context.extraction.top_candidate else {
       return Ok(());
     };
 
@@ -25,7 +25,7 @@ impl Stage for ExtractArticle {
       return Ok(());
     };
 
-    let top_score = context.scores[&top_candidate.id];
+    let top_score = context.extraction.scores[&top_candidate.id];
 
     let threshold =
       MIN_SIBLING_SCORE_THRESHOLD.max(top_score * SIBLING_SCORE_RATIO);
@@ -45,6 +45,7 @@ impl Stage for ExtractArticle {
         };
 
         context
+          .extraction
           .scores
           .get(&sibling.id)
           .is_some_and(|score| score + bonus >= threshold)
@@ -64,8 +65,8 @@ impl Stage for ExtractArticle {
 
     let (article, parent) = (article.id, parent.id);
 
-    context.article = Some(article);
-    context.top_candidate_parent = Some(parent);
+    context.extraction.article = Some(article);
+    context.extraction.top_candidate_parent = Some(parent);
 
     Ok(())
   }
@@ -105,7 +106,10 @@ mod tests {
     SelectTopCandidate.run(&mut context).unwrap();
     ExtractArticle.run(&mut context).unwrap();
 
-    context.node(context.article.unwrap()).html().to_string()
+    context
+      .node(context.extraction.article.unwrap())
+      .html()
+      .to_string()
   }
 
   #[test]

@@ -49,10 +49,14 @@ impl Stage for ScoreCandidates {
           _ => level as f64 * 3.0,
         };
 
-        let entry = context.scores.entry(ancestor.id).or_insert_with(|| {
-          context.candidates.push(ancestor.id);
-          ancestor.initial_score(weight_classes)
-        });
+        let entry = context
+          .extraction
+          .scores
+          .entry(ancestor.id)
+          .or_insert_with(|| {
+            context.extraction.candidates.push(ancestor.id);
+            ancestor.initial_score(weight_classes)
+          });
 
         *entry += score / divider;
       }
@@ -80,9 +84,10 @@ mod tests {
     ScoreCandidates.run(&mut context).unwrap();
 
     let scores = context
+      .extraction
       .candidates
       .iter()
-      .map(|id| (context.node(*id).tag(), context.scores[id]))
+      .map(|id| (context.node(*id).tag(), context.extraction.scores[id]))
       .collect::<Vec<_>>();
 
     assert_eq!(
@@ -107,6 +112,6 @@ mod tests {
 
     ScoreCandidates.run(&mut context).unwrap();
 
-    assert_eq!(context.candidates, Vec::new());
+    assert_eq!(context.extraction.candidates, Vec::new());
   }
 }

@@ -46,6 +46,7 @@ impl Readability {
     .run()?;
 
     let article = context
+      .extraction
       .article
       .map(|id| context.document.tree.get_unchecked(&id))
       .ok_or(Error::MissingArticleContent)?;

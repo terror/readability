@@ -93,7 +93,7 @@ impl Test {
       context.flags = self.flags;
 
       if self.article {
-        context.article = context
+        context.extraction.article = context
           .document
           .select("body")
           .nodes()

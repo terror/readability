@@ -4,7 +4,7 @@ pub(crate) struct SimplifyNestedElements;
 
 impl Stage for SimplifyNestedElements {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    if let Some(article) = context.article {
+    if let Some(article) = context.extraction.article {
       for child in context.node(article).element_children() {
         Self::simplify(child);
       }

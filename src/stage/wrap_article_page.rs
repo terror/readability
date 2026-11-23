@@ -8,14 +8,14 @@ pub(crate) struct WrapArticlePage;
 
 impl Stage for WrapArticlePage {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(article) = context.article else {
+    let Some(article) = context.extraction.article else {
       return Ok(());
     };
 
     let article = context.node(article);
 
-    let page = if context.created_top_candidate {
-      context.top_candidate.map(|id| context.node(id))
+    let page = if context.extraction.created_top_candidate {
+      context.extraction.top_candidate.map(|id| context.node(id))
     } else {
       None
     };
@@ -55,12 +55,15 @@ mod tests {
 
     article.append_html("<p>foo</p><p>bar</p>");
 
-    context.article = Some(article.id);
+    context.extraction.article = Some(article.id);
 
     WrapArticlePage.run(&mut context).unwrap();
 
     assert_eq!(
-      context.node(context.article.unwrap()).html().to_string(),
+      context
+        .node(context.extraction.article.unwrap())
+        .html()
+        .to_string(),
       r#"<div><div id="readability-page-1" class="page"><p>foo</p><p>bar</p></div></div>"#,
     );
   }
@@ -79,7 +82,10 @@ mod tests {
     WrapArticlePage.run(&mut context).unwrap();
 
     assert_eq!(
-      context.node(context.article.unwrap()).html().to_string(),
+      context
+        .node(context.extraction.article.unwrap())
+        .html()
+        .to_string(),
       r#"<div><div id="readability-page-1" class="page">foo</div></div>"#,
     );
   }

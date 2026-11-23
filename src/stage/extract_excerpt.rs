@@ -15,7 +15,7 @@ impl Stage for ExtractExcerpt {
       return Ok(());
     }
 
-    let Some(article) = context.article else {
+    let Some(article) = context.extraction.article else {
       return Ok(());
     };
 
