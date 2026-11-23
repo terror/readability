@@ -33,6 +33,8 @@ pub(crate) static TITLE_WHITESPACE: LazyLock<Regex> = re!(r"[\t\n\x0C\r ]+");
 
 pub(crate) static TITLE_WORD_SEPARATOR: LazyLock<Regex> = re!(r"\s+");
 
+pub(crate) static TOKENIZE: LazyLock<Regex> = re!(r"[^A-Za-z0-9_]+");
+
 pub(crate) static UNLIKELY_CANDIDATE: LazyLock<Regex> = re!(
   r"(?i)-ad-|ai2html|banner|breadcrumbs|combx|comment|community|cover-wrap|disqus|extra|footer|gdpr|header|legends|menu|related|remark|replies|rss|shoutbox|sidebar|skyscraper|social|sponsor|supplemental|ad-break|agegate|pagination|pager|popup|yom-remote"
 );
