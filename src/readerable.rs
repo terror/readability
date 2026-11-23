@@ -37,9 +37,7 @@ fn is_list_paragraph(node: &NodeRef) -> bool {
 }
 
 fn is_unlikely(node: &NodeRef) -> bool {
-  let class = node.attr("class").unwrap_or_default();
-  let id = node.attr("id").unwrap_or_default();
-  let match_string = format!("{class} {id}");
+  let match_string = node.match_string();
 
   UNLIKELY_CANDIDATE.is_match(&match_string)
     && !MAYBE_CANDIDATE.is_match(&match_string)

@@ -34,9 +34,7 @@ impl Rule for RemoveUnlikelyCandidates {
 
 impl RemoveUnlikelyCandidates {
   fn is_unlikely(node: &NodeRef) -> bool {
-    let class = node.attr("class").unwrap_or_default();
-    let id = node.attr("id").unwrap_or_default();
-    let match_string = format!("{class} {id}");
+    let match_string = node.match_string();
 
     let tag = node.tag();
 
