@@ -80,6 +80,8 @@ pub(crate) trait NodeExt {
 
   fn link_density(&self) -> f64;
 
+  fn match_string(&self) -> String;
+
   fn set_tag(&self, name: &str);
 
   fn tag(&self) -> String;
@@ -175,7 +177,7 @@ impl NodeExt for NodeRef<'_> {
   }
 
   fn inner_text(&self) -> String {
-    TITLE_NORMALIZE_WHITESPACE
+    NORMALIZE_WHITESPACE
       .replace_all(self.text().trim(), " ")
       .to_string()
   }
@@ -233,6 +235,12 @@ impl NodeExt for NodeRef<'_> {
       .sum::<f64>();
 
     link_length / length as f64
+  }
+
+  fn match_string(&self) -> String {
+    let class = self.attr("class").unwrap_or_default();
+    let id = self.attr("id").unwrap_or_default();
+    format!("{class} {id}")
   }
 
   fn set_tag(&self, name: &str) {
@@ -322,6 +330,18 @@ mod tests {
     body.append_child(&super::create_element(&document.tree, "img"));
 
     assert_eq!(body.html().to_string(), "<body><img></body>");
+  }
+
+  #[test]
+  fn match_string() {
+    let document =
+      dom_query::Document::from(r#"<div class="foo" id="bar"></div><p></p>"#);
+
+    let div = document.select("div").nodes()[0].clone();
+    let paragraph = document.select("p").nodes()[0].clone();
+
+    assert_eq!(div.match_string(), "foo bar");
+    assert_eq!(paragraph.match_string(), " ");
   }
 
   #[test]

@@ -21,10 +21,7 @@ impl Stage for CleanShareElements {
 impl CleanShareElements {
   fn clean(node: &NodeRef) {
     for child in node.element_children() {
-      let class = child.attr("class").unwrap_or_default();
-      let id = child.attr("id").unwrap_or_default();
-
-      if SHARE_ELEMENTS.is_match(&format!("{class} {id}"))
+      if SHARE_ELEMENTS.is_match(&child.match_string())
         && text_length(&child.text()) < SHARE_ELEMENT_THRESHOLD
       {
         child.remove_from_parent();

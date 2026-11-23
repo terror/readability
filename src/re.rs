@@ -19,10 +19,10 @@ pub(crate) static BYLINE: LazyLock<Regex> =
 pub(crate) static COMMAS: LazyLock<Regex> =
   re!(r"[,\u{060C}\u{FE50}\u{FE10}\u{FE11}\u{2E41}\u{2E34}\u{2E32}\u{FF0C}]");
 
-pub(crate) static HASH_URL: LazyLock<Regex> = re!(r"^#.+");
-
 pub(crate) static DISPLAY_NONE: LazyLock<Regex> =
   re!(r"(?i)(^|;)\s*display\s*:\s*none\s*(!important\s*)?(;|$)");
+
+pub(crate) static HASH_URL: LazyLock<Regex> = re!(r"^#.+");
 
 pub(crate) static HAS_CONTENT: LazyLock<Regex> = re!(r"\S$");
 
@@ -53,6 +53,8 @@ pub(crate) static NEGATIVE: LazyLock<Regex> = re!(
   r"(?i)-ad-|hidden|^hid$| hid$| hid |^hid |banner|combx|comment|com-|contact|footer|gdpr|masthead|media|meta|outbrain|promo|related|scroll|share|shoutbox|sidebar|skyscraper|sponsor|shopping|tags|widget"
 );
 
+pub(crate) static NORMALIZE_WHITESPACE: LazyLock<Regex> = re!(r"\s{2,}");
+
 pub(crate) static NUMERIC_HTML_ENTITY: LazyLock<Regex> =
   re!(r"(?i)&#(?:x([0-9a-f]+)|([0-9]+));");
 
@@ -73,8 +75,6 @@ pub(crate) static TITLE_HIERARCHICAL_SEPARATOR: LazyLock<Regex> =
 
 pub(crate) static TITLE_LEADING_JUNK: LazyLock<Regex> =
   re!(r"(?i)^[^|\-–—\\/>»]*[|\-–—\\/>»]");
-
-pub(crate) static TITLE_NORMALIZE_WHITESPACE: LazyLock<Regex> = re!(r"\s{2,}");
 
 pub(crate) static TITLE_SEPARATOR: LazyLock<Regex> = re!(r"\s[|\-–—\\/>»]\s");
 

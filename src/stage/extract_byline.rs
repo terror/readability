@@ -40,12 +40,9 @@ impl ExtractByline {
     let rel = node.attr("rel").unwrap_or_default();
     let itemprop = node.attr("itemprop").unwrap_or_default();
 
-    let class = node.attr("class").unwrap_or_default();
-    let id = node.attr("id").unwrap_or_default();
-
     let is_byline_candidate = rel.as_ref() == "author"
       || itemprop.contains("author")
-      || BYLINE.is_match(&format!("{class} {id}"));
+      || BYLINE.is_match(&node.match_string());
 
     if !is_byline_candidate {
       return None;

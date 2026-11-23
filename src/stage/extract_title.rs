@@ -79,7 +79,7 @@ impl ExtractTitle {
       Self::header_candidate(&raw, document)
     };
 
-    let title = TITLE_NORMALIZE_WHITESPACE
+    let title = NORMALIZE_WHITESPACE
       .replace_all(title.trim(), " ")
       .to_string();
 
@@ -110,7 +110,7 @@ impl ExtractTitle {
       return raw.to_string();
     }
 
-    TITLE_NORMALIZE_WHITESPACE
+    NORMALIZE_WHITESPACE
       .replace_all(headers.first().text().trim(), " ")
       .to_string()
   }
