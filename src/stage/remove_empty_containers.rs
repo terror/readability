@@ -11,50 +11,17 @@ const EMPTY_CONTAINER_TAGS: &[&str] = &[
 /// children (if any) are `<br>` or `<hr>` elements.
 pub(crate) struct RemoveEmptyContainers;
 
-impl Stage for RemoveEmptyContainers {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let nodes = context.document.select("*").nodes().to_vec();
+impl Rule for RemoveEmptyContainers {
+  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
+    let node = context.node(node);
 
-    for node in nodes {
-      if node.parent().is_none() {
-        continue;
-      }
-
-      let tag = node
-        .node_name()
-        .map_or_default(|node_name| node_name.to_uppercase());
-
-      if !EMPTY_CONTAINER_TAGS.contains(&tag.as_str()) {
-        continue;
-      }
-
-      if Self::is_without_content(&node) {
-        node.remove_from_parent();
-      }
+    if EMPTY_CONTAINER_TAGS.contains(&node.tag().as_str())
+      && node.is_element_without_content()
+    {
+      Action::Remove
+    } else {
+      Action::Continue
     }
-
-    Ok(())
-  }
-}
-
-impl RemoveEmptyContainers {
-  fn is_without_content(node: &dom_query::Node) -> bool {
-    let text = node.text();
-
-    if !text.trim().is_empty() {
-      return false;
-    }
-
-    let children = node.children();
-
-    let non_br_hr = children.iter().filter(|child| {
-      child.node_name().is_some_and(|node_name| {
-        let upper = node_name.to_uppercase();
-        upper != "BR" && upper != "HR"
-      })
-    });
-
-    non_br_hr.count() == 0
   }
 }
 

@@ -16,18 +16,19 @@ use {
     VIDEOS,
   },
   regex::{Captures, Regex},
+  rule::{Action, Rule, traverse},
   serde::{Deserialize, Serialize},
   stage::{
     Clean, CleanClasses, CleanConditionally, CleanHeaders, CleanShareElements,
     CleanStyles, ConvertDivsToParagraphs, ElementLimit, ExtractArticle,
     ExtractByline, ExtractDir, ExtractExcerpt, ExtractJsonLd, ExtractLang,
     ExtractMetaTags, ExtractTitle, FixLazyImages, FixRelativeUris, GrabArticle,
-    MarkDataTables, RemoveBreaksBeforeParagraphs, RemoveDisallowedNodes,
-    RemoveDuplicateTitleHeader, RemoveEmptyContainers, RemoveEmptyParagraphs,
-    RemoveHiddenNodes, RemoveUnlikelyCandidates, RenameHeadings,
-    RewriteFontTags, RewriteLineBreaks, ScoreCandidates, SelectTopCandidate,
-    SimplifyNestedElements, Stage, UnescapeHtmlEntities, UnwrapNoscriptImages,
-    UnwrapSingleCellTables, WrapArticlePage,
+    MarkDataTables, PrepareNodes, RemoveBreaksBeforeParagraphs,
+    RemoveDisallowedNodes, RemoveDuplicateTitleHeader, RemoveEmptyContainers,
+    RemoveEmptyParagraphs, RemoveHiddenNodes, RemoveUnlikelyCandidates,
+    RenameHeadings, RewriteFontTags, RewriteLineBreaks, ScoreCandidates,
+    SelectTopCandidate, SimplifyNestedElements, Stage, UnescapeHtmlEntities,
+    UnwrapNoscriptImages, UnwrapSingleCellTables, WrapArticlePage,
   },
   std::{
     collections::{HashMap, HashSet},
@@ -56,6 +57,7 @@ mod options;
 mod pipeline;
 mod re;
 mod readability;
+mod rule;
 mod stage;
 mod text_similarity;
 

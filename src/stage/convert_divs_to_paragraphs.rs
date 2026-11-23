@@ -4,23 +4,29 @@ const MAX_LINK_DENSITY: f64 = 0.25;
 
 pub(crate) struct ConvertDivsToParagraphs;
 
-impl Stage for ConvertDivsToParagraphs {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let divs = context.document.select("div").nodes().to_vec();
+impl Rule for ConvertDivsToParagraphs {
+  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
+    let div = context.node(node);
 
-    for div in divs {
-      Self::wrap_phrasing_content(&div);
-
-      if div.has_single_tag_inside_element("P")
-        && div.link_density() < MAX_LINK_DENSITY
-      {
-        div.replace_with(&div.element_children()[0]);
-      } else if !div.has_child_block_element() {
-        div.set_tag("p");
-      }
+    if div.tag() != "DIV" {
+      return Action::Continue;
     }
 
-    Ok(())
+    Self::wrap_phrasing_content(&div);
+
+    if div.has_single_tag_inside_element("P")
+      && div.link_density() < MAX_LINK_DENSITY
+    {
+      let paragraph = div.element_children()[0].clone();
+      div.replace_with(&paragraph);
+      return Action::Replace(paragraph.id);
+    }
+
+    if !div.has_child_block_element() {
+      div.set_tag("p");
+    }
+
+    Action::Continue
   }
 }
 
