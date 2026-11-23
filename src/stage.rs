@@ -22,6 +22,7 @@ mod grab_article;
 mod mark_data_tables;
 mod prepare_nodes;
 mod remove_breaks_before_paragraphs;
+mod remove_comments;
 mod remove_disallowed_nodes;
 mod remove_duplicate_title_header;
 mod remove_empty_containers;
@@ -65,6 +66,7 @@ pub(crate) use {
   mark_data_tables::MarkDataTables,
   prepare_nodes::PrepareNodes,
   remove_breaks_before_paragraphs::RemoveBreaksBeforeParagraphs,
+  remove_comments::RemoveComments,
   remove_disallowed_nodes::RemoveDisallowedNodes,
   remove_duplicate_title_header::RemoveDuplicateTitleHeader,
   remove_empty_containers::RemoveEmptyContainers,
