@@ -15,11 +15,14 @@ const UNLIKELY_ROLES: &[&str] = &[
 /// A node is removed when its combined `class` and `id` match the
 /// `UNLIKELY_CANDIDATE` pattern and none of the following exceptions apply:
 /// - the `MAYBE_CANDIDATE` pattern also matches
-/// - the node has an ancestor `<table>` or `<code>` element
+/// - one of the node's four nearest ancestors is a `<table>` or `<code>`
+///   element
 /// - the node is `<body>` or `<a>`
 ///
 /// Additionally, nodes whose `role` attribute is in `UNLIKELY_ROLES` are
 /// removed regardless of class or id.
+///
+/// Nothing is removed once a retry has disabled the `strip_unlikelys` flag.
 pub(crate) struct RemoveUnlikelyCandidates;
 
 impl Rule for RemoveUnlikelyCandidates {

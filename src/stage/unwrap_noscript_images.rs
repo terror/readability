@@ -5,11 +5,12 @@ const SOURCE_ATTRIBUTES: &[&str] =
 
 /// Resolves lazy-loaded image placeholders paired with `<noscript>` fallbacks.
 ///
-/// For each `noscript` block that contains exactly one image, this stage looks
-/// at the previous element sibling and, when it also represents a single image
-/// placeholder, copies the real image attributes onto it. It then removes the
-/// processed `noscript` node and finally drops placeholder images that still do
-/// not contain a detectable image source attribute.
+/// First removes `<img>` elements that have no source attribute and no
+/// attribute value that looks like an image URL. Then, for each `noscript`
+/// element that contains a single image and follows an element that is itself
+/// a single image, replaces that element with the `noscript` image. Source
+/// attributes from the replaced image are copied onto the new one, prefixed
+/// with `data-old-` when the new image already has a different value.
 pub(crate) struct UnwrapNoscriptImages;
 
 impl Stage for UnwrapNoscriptImages {

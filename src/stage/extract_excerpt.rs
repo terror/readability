@@ -1,7 +1,7 @@
 use super::*;
 
-/// Falls back to the first non-empty paragraph's text as the excerpt when no
-/// excerpt has been extracted from metadata.
+/// Falls back to the text of the article's first paragraph as the excerpt when
+/// metadata did not provide a non-empty one.
 pub(crate) struct ExtractExcerpt;
 
 impl Stage for ExtractExcerpt {
