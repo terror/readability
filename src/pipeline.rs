@@ -34,7 +34,6 @@ impl<'a> Pipeline<'a> {
     let stages: Vec<Box<dyn Stage>> = vec![
       Box::new(ElementLimit),
       Box::new(UnwrapNoscriptImages),
-      Box::new(ExtractDir),
       Box::new(ExtractLang),
       Box::new(ExtractJsonLd),
       Box::new(ExtractMetaTags),
@@ -42,12 +41,21 @@ impl<'a> Pipeline<'a> {
       Box::new(RewriteLineBreaks),
       Box::new(RewriteFontTags),
       Box::new(ExtractTitle),
-      Box::new(RemoveHiddenNodes),
-      Box::new(RemoveUnlikelyCandidates),
-      Box::new(RemoveEmptyContainers),
-      Box::new(ExtractByline),
-      Box::new(ExtractExcerpt),
       Box::new(UnescapeHtmlEntities),
+      Box::new(GrabArticle::new(vec![
+        Box::new(RemoveHiddenNodes),
+        Box::new(RemoveUnlikelyCandidates),
+        Box::new(RemoveEmptyContainers),
+        Box::new(ExtractByline),
+        Box::new(RemoveDuplicateTitleHeader),
+        Box::new(ConvertDivsToParagraphs),
+        Box::new(ScoreCandidates),
+        Box::new(SelectTopCandidate),
+        Box::new(ExtractArticle),
+        Box::new(WrapArticlePage),
+        Box::new(ExtractDir),
+      ])),
+      Box::new(ExtractExcerpt),
     ];
 
     for stage in stages {

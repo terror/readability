@@ -7,10 +7,10 @@ enum Assertion<T> {
 
 pub(crate) struct Test {
   document: Option<String>,
-  expected_dir: Assertion<Option<String>>,
   expected_html: Option<String>,
   expected_lang: Assertion<Option<String>>,
   expected_metadata: Option<Metadata>,
+  flags: Flags,
   metadata: Option<Metadata>,
   stages: Vec<Box<dyn Stage>>,
 }
@@ -19,13 +19,6 @@ impl Test {
   pub(crate) fn document(self, html: &str) -> Self {
     Self {
       document: Some(html.to_owned()),
-      ..self
-    }
-  }
-
-  pub(crate) fn expected_dir(self, dir: Option<&str>) -> Self {
-    Self {
-      expected_dir: Assertion::Expect(dir.map(str::to_owned)),
       ..self
     }
   }
@@ -51,6 +44,10 @@ impl Test {
     }
   }
 
+  pub(crate) fn flags(self, flags: Flags) -> Self {
+    Self { flags, ..self }
+  }
+
   pub(crate) fn metadata(self, metadata: Metadata) -> Self {
     Self {
       metadata: Some(metadata),
@@ -61,10 +58,10 @@ impl Test {
   pub(crate) fn new() -> Self {
     Self {
       document: None,
-      expected_dir: Assertion::Unset,
       expected_html: None,
       expected_lang: Assertion::Unset,
       expected_metadata: None,
+      flags: Flags::default(),
       metadata: None,
       stages: Vec::new(),
     }
@@ -81,8 +78,10 @@ impl Test {
 
     let options = ReadabilityOptions::default();
 
-    let (metadata, lang, dir) = {
+    let (metadata, lang) = {
       let mut context = Context::new(&mut document, &options);
+
+      context.flags = self.flags;
 
       if let Some(metadata) = self.metadata {
         context.metadata = metadata;
@@ -92,7 +91,7 @@ impl Test {
         stage.run(&mut context).unwrap();
       }
 
-      (context.metadata, context.lang, context.dir)
+      (context.metadata, context.lang)
     };
 
     if let Some(expected) = self.expected_html {
@@ -105,10 +104,6 @@ impl Test {
 
     if let Assertion::Expect(expected) = self.expected_lang {
       assert_eq!(lang, expected);
-    }
-
-    if let Assertion::Expect(expected) = self.expected_dir {
-      assert_eq!(dir, expected);
     }
   }
 

@@ -6,26 +6,29 @@ pub(crate) struct ExtractExcerpt;
 
 impl Stage for ExtractExcerpt {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    if context.metadata.excerpt.is_some() {
+    if context
+      .metadata
+      .excerpt
+      .as_ref()
+      .is_some_and(|excerpt| !excerpt.is_empty())
+    {
       return Ok(());
     }
 
-    context.metadata.excerpt = context
-      .document
-      .select("p")
-      .nodes()
-      .iter()
-      .find_map(|node| {
-        let text = node.text();
+    let Some(article) = context.article else {
+      return Ok(());
+    };
 
-        let trimmed = text.trim();
+    let paragraph = context
+      .node(article)
+      .descendant_nodes()
+      .into_iter()
+      .find(|node| node.tag() == "P")
+      .map(|node| node.text().trim().to_string());
 
-        if trimmed.is_empty() {
-          None
-        } else {
-          Some(trimmed.to_string())
-        }
-      });
+    if let Some(paragraph) = paragraph {
+      context.metadata.excerpt = Some(paragraph);
+    }
 
     Ok(())
   }
@@ -35,52 +38,73 @@ impl Stage for ExtractExcerpt {
 mod tests {
   use super::*;
 
-  #[test]
-  fn fallback_from_first_paragraph() {
-    Test::new()
-      .stage(ExtractExcerpt)
-      .document("<html><body><p>foo</p><p>bar</p></body></html>")
-      .expected_metadata(Metadata {
-        excerpt: Some("foo".into()),
-        ..Metadata::default()
-      })
-      .run();
+  #[track_caller]
+  fn excerpt(html: &str, metadata: Metadata) -> Option<String> {
+    let mut document = dom_query::Document::from(html);
+
+    let options = ReadabilityOptions::default();
+
+    let mut context = Context::new(&mut document, &options);
+
+    context.metadata = metadata;
+
+    SelectTopCandidate.run(&mut context).unwrap();
+    ExtractArticle.run(&mut context).unwrap();
+    ExtractExcerpt.run(&mut context).unwrap();
+
+    context.metadata.excerpt
   }
 
   #[test]
-  fn skips_empty_paragraphs() {
-    Test::new()
-      .stage(ExtractExcerpt)
-      .document("<html><body><p>   </p><p>bar</p></body></html>")
-      .expected_metadata(Metadata {
-        excerpt: Some("bar".into()),
-        ..Metadata::default()
-      })
-      .run();
+  fn first_article_paragraph() {
+    assert_eq!(
+      excerpt(
+        "<html><body><div> foo </div><p> bar </p><p>baz</p></body></html>",
+        Metadata::default(),
+      )
+      .as_deref(),
+      Some("bar"),
+    );
   }
 
   #[test]
   fn no_paragraphs_leaves_excerpt_none() {
-    Test::new()
-      .stage(ExtractExcerpt)
-      .document("<html><body><div>foo</div></body></html>")
-      .expected_metadata(Metadata::default())
-      .run();
+    assert_eq!(
+      excerpt(
+        "<html><body><div>foo</div></body></html>",
+        Metadata::default()
+      ),
+      None,
+    );
   }
 
   #[test]
   fn existing_excerpt_not_overwritten() {
-    Test::new()
-      .stage(ExtractExcerpt)
-      .document("<html><body><p>bar</p></body></html>")
-      .metadata(Metadata {
-        excerpt: Some("foo".into()),
-        ..Metadata::default()
-      })
-      .expected_metadata(Metadata {
-        excerpt: Some("foo".into()),
-        ..Metadata::default()
-      })
-      .run();
+    assert_eq!(
+      excerpt(
+        "<html><body><p>bar</p></body></html>",
+        Metadata {
+          excerpt: Some("foo".into()),
+          ..Metadata::default()
+        },
+      )
+      .as_deref(),
+      Some("foo"),
+    );
+  }
+
+  #[test]
+  fn empty_excerpt_overwritten() {
+    assert_eq!(
+      excerpt(
+        "<html><body><p>bar</p></body></html>",
+        Metadata {
+          excerpt: Some(String::new()),
+          ..Metadata::default()
+        },
+      )
+      .as_deref(),
+      Some("bar"),
+    );
   }
 }

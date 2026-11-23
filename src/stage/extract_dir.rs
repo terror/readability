@@ -4,13 +4,22 @@ pub(crate) struct ExtractDir;
 
 impl Stage for ExtractDir {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    context.dir = ["body", "html"].iter().find_map(|selector| {
-      context
-        .document()
-        .attribute(selector, "dir")
-        .map(|dir| dir.trim().to_string())
-        .filter(|dir| !dir.is_empty())
-    });
+    let (Some(parent), Some(top_candidate)) =
+      (context.top_candidate_parent, context.top_candidate)
+    else {
+      return Ok(());
+    };
+
+    let parent = context.node(parent);
+
+    let dir = [parent.clone(), context.node(top_candidate)]
+      .into_iter()
+      .chain(parent.ancestors(None))
+      .filter(NodeRef::is_element)
+      .find_map(|node| node.attr("dir").filter(|dir| !dir.is_empty()))
+      .map(|dir| dir.to_string());
+
+    context.dir = dir;
 
     Ok(())
   }
@@ -20,41 +29,57 @@ impl Stage for ExtractDir {
 mod tests {
   use super::*;
 
-  #[test]
-  fn extracts_dir_from_html_element() {
-    Test::new()
-      .stage(ExtractDir)
-      .document(r#"<html dir="rtl"><head></head><body></body></html>"#)
-      .expected_dir(Some("rtl"))
-      .run();
+  #[track_caller]
+  fn dir(html: &str) -> Option<String> {
+    let mut document = dom_query::Document::from(html);
+
+    let options = ReadabilityOptions::default();
+
+    let mut context = Context::new(&mut document, &options);
+
+    ScoreCandidates.run(&mut context).unwrap();
+    SelectTopCandidate.run(&mut context).unwrap();
+    ExtractArticle.run(&mut context).unwrap();
+    ExtractDir.run(&mut context).unwrap();
+
+    context.dir
   }
 
   #[test]
-  fn extracts_dir_from_body_before_html() {
-    Test::new()
-      .stage(ExtractDir)
-      .document(
-        r#"<html dir="ltr"><head></head><body dir="rtl"></body></html>"#,
-      )
-      .expected_dir(Some("rtl"))
-      .run();
-  }
+  fn extracts_dir_from_ancestors() {
+    #[track_caller]
+    fn case(html: &str, expected: Option<&str>) {
+      assert_eq!(dir(html).as_deref(), expected);
+    }
 
-  #[test]
-  fn returns_none_when_no_dir() {
-    Test::new()
-      .stage(ExtractDir)
-      .document(r"<html><head></head><body></body></html>")
-      .expected_dir(None)
-      .run();
-  }
+    let paragraph = format!("<p>{}</p>", "foo, ".repeat(10));
 
-  #[test]
-  fn returns_none_when_dir_empty() {
-    Test::new()
-      .stage(ExtractDir)
-      .document(r#"<html dir=""><head></head><body></body></html>"#)
-      .expected_dir(None)
-      .run();
+    case(
+      &format!(
+        r#"<html dir="rtl"><body><div>{paragraph}</div><span></span></body></html>"#
+      ),
+      Some("rtl"),
+    );
+
+    case(
+      &format!(
+        r#"<html dir="ltr"><body dir="rtl"><div>{paragraph}</div><span></span></body></html>"#
+      ),
+      Some("rtl"),
+    );
+
+    case(
+      &format!(
+        r#"<html><body><div dir="rtl">{paragraph}</div><span></span></body></html>"#
+      ),
+      Some("rtl"),
+    );
+
+    case(
+      &format!(
+        r#"<html dir=""><body><div>{paragraph}</div><span></span></body></html>"#
+      ),
+      None,
+    );
   }
 }
