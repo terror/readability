@@ -22,8 +22,7 @@ impl Stage for RemoveEmptyContainers {
 
       let tag = node
         .node_name()
-        .map(|node_name| node_name.to_uppercase())
-        .unwrap_or_default();
+        .map_or_default(|node_name| node_name.to_uppercase());
 
       if !EMPTY_CONTAINER_TAGS.contains(&tag.as_str()) {
         continue;
