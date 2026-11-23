@@ -27,9 +27,12 @@ impl<'a> Pipeline<'a> {
 
   pub(crate) fn with_default_stages(
     context: Context<'a>,
-    _base_url: Option<&'a Url>,
+    base_url: Option<&'a Url>,
   ) -> Self {
-    let mut pipeline = Self::new(context);
+    let mut pipeline = Self::new(Context {
+      url: base_url.cloned(),
+      ..context
+    });
 
     let stages: Vec<Box<dyn Stage>> = vec![
       Box::new(ElementLimit),
@@ -79,6 +82,9 @@ impl<'a> Pipeline<'a> {
         Box::new(WrapArticlePage),
         Box::new(ExtractDir),
       ])),
+      Box::new(FixRelativeUris),
+      Box::new(SimplifyNestedElements),
+      Box::new(CleanClasses),
       Box::new(ExtractExcerpt),
     ];
 

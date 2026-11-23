@@ -58,6 +58,9 @@ pub(crate) static SENTENCE_END: LazyLock<Regex> = re!(r"\.( |$)");
 pub(crate) static SHARE_ELEMENTS: LazyLock<Regex> =
   re!(r"(?i)((?-u:\b)|_)(share|sharedaddy)((?-u:\b)|_)");
 
+pub(crate) static SRCSET_URL: LazyLock<Regex> =
+  re!(r"(\S+)(\s+[\d.]+[xw])?(\s*(?:,|$))");
+
 pub(crate) static TITLE_HIERARCHICAL_SEPARATOR: LazyLock<Regex> =
   re!(r"\s[\\/>»]\s");
 
