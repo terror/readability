@@ -73,9 +73,12 @@ impl MarkDataTables {
           .elements_with_tags(&["TD"])
           .iter()
           .map(|cell| span(cell, "colspan"))
-          .sum::<usize>();
+          .fold(0, usize::saturating_add);
 
-        (rows + span(row, "rowspan"), columns.max(row_columns))
+        (
+          rows.saturating_add(span(row, "rowspan")),
+          columns.max(row_columns),
+        )
       },
     )
   }
@@ -146,6 +149,17 @@ mod tests {
     case(&format!("<table>{}</table>", row.repeat(3)), false);
     case(
       r#"<table><tr><td colspan="5">foo</td></tr><tr><td>bar</td></tr></table>"#,
+      true,
+    );
+    case(
+      &format!(
+        "<table>{}</table>",
+        format!(
+          r#"<tr rowspan="9000000000000000000">{}</tr>"#,
+          r#"<td colspan="9000000000000000000">foo</td>"#.repeat(3),
+        )
+        .repeat(3),
+      ),
       true,
     );
   }
