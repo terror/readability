@@ -9,6 +9,8 @@ pub(crate) struct Arguments {
     help = "Path to the HTML file to parse, read from standard input if omitted"
   )]
   input: Option<PathBuf>,
+  #[arg(long, help = "Print the whole article as JSON")]
+  json: bool,
   #[arg(long, help = "URL of the page, used to resolve relative links")]
   url: Option<String>,
 }
@@ -29,7 +31,14 @@ impl Arguments {
       ParserOptions::default(),
     )?;
 
-    writeln!(stdout, "{}", parser.parse()?.content)?;
+    let article = parser.parse()?;
+
+    if self.json {
+      serde_json::to_writer(&mut stdout, &article)?;
+      writeln!(stdout)?;
+    } else {
+      writeln!(stdout, "{}", article.content)?;
+    }
 
     Ok(())
   }
@@ -53,6 +62,19 @@ mod tests {
       .unwrap();
 
     String::from_utf8(stdout).unwrap()
+  }
+
+  #[test]
+  fn prints_json() {
+    assert_eq!(
+      run(&["unclutter", "--json"], "<p>foo</p>"),
+      concat!(
+        r#"{"byline":null,"content":"<div id=\"readability-page-1\" class=\"page\"><p>foo</p></div>","#,
+        r#""dir":null,"excerpt":"foo","lang":null,"length":3,"published_time":null,"#,
+        r#""site_name":null,"text_content":"foo","title":""}"#,
+        "\n",
+      ),
+    );
   }
 
   #[test]
