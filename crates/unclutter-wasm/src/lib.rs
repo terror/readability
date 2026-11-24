@@ -2,20 +2,27 @@
 
 use {
   serde::{Deserialize, Serialize},
+  tsify::{Ts, Tsify},
   unclutter::{Parser, ParserOptions},
   wasm_bindgen::prelude::*,
 };
 
-#[derive(Debug, PartialEq, Serialize)]
+#[derive(Debug, PartialEq, Serialize, Tsify)]
 #[serde(rename_all = "camelCase")]
-struct Article {
+pub struct Article {
+  #[tsify(optional)]
   byline: Option<String>,
   content: String,
+  #[tsify(optional)]
   dir: Option<String>,
+  #[tsify(optional)]
   excerpt: Option<String>,
+  #[tsify(optional)]
   lang: Option<String>,
   length: usize,
+  #[tsify(optional)]
   published_time: Option<String>,
+  #[tsify(optional)]
   site_name: Option<String>,
   text_content: String,
   title: String,
@@ -38,9 +45,9 @@ impl From<unclutter::Article> for Article {
   }
 }
 
-#[derive(Debug, Default, Deserialize)]
+#[derive(Debug, Default, Deserialize, Tsify)]
 #[serde(default, deny_unknown_fields, rename_all = "camelCase")]
-struct Options {
+pub struct Options {
   classes_to_preserve: Vec<String>,
   keep_classes: Option<bool>,
   link_density_bias: Option<f64>,
@@ -87,18 +94,17 @@ pub fn is_readable(html: &str) -> bool {
 pub fn parse(
   html: &str,
   base_url: Option<String>,
-  options: JsValue,
-) -> Result<JsValue, JsError> {
-  let options = if options.is_undefined() || options.is_null() {
-    Options::default()
-  } else {
-    serde_wasm_bindgen::from_value::<Options>(options)?
-  };
+  options: Option<Ts<Options>>,
+) -> Result<Ts<Article>, JsError> {
+  let options = options
+    .map(|options| options.to_rust())
+    .transpose()?
+    .unwrap_or_default();
 
   let article =
     Parser::new(html, base_url.as_deref(), options.into())?.parse()?;
 
-  Ok(serde_wasm_bindgen::to_value(&Article::from(article))?)
+  Ok(Article::from(article).into_ts()?)
 }
 
 #[cfg(test)]

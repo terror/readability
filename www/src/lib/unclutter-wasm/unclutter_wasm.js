@@ -13,9 +13,9 @@ export function isReadable(html) {
 
 /**
  * @param {string} html
- * @param {string | null | undefined} base_url
- * @param {any} options
- * @returns {any}
+ * @param {string | null} [base_url]
+ * @param {Options | null} [options]
+ * @returns {Article}
  */
 export function parse(html, base_url, options) {
     let ptr0, len0, ptr1, len1;
@@ -29,7 +29,7 @@ export function parse(html, base_url, options) {
         if (ptr0) { wasm.__wbindgen_free(ptr0, len0 * 1, 1); }
         throw e;
     }
-    const ret = wasm.parse(ptr0, len0, ptr1, len1, options);
+    const ret = wasm.parse(ptr0, len0, ptr1, len1, isLikeNone(options) ? 0 : addToExternrefTable0(options));
     if (ret[2]) {
         throw takeFromExternrefTable0(ret[1]);
     }
@@ -81,10 +81,6 @@ function __wbg_get_imports() {
         },
         __wbg___wbindgen_is_function_741ff2bb612836f5: function(arg0) {
             const ret = typeof(arg0) === 'function';
-            return ret;
-        },
-        __wbg___wbindgen_is_null_c22311b1cc228e3a: function(arg0) {
-            const ret = arg0 === null;
             return ret;
         },
         __wbg___wbindgen_is_object_8b968c3ab8e96595: function(arg0) {
