@@ -1,12 +1,12 @@
 use super::*;
 
-pub struct Readability {
+pub struct Parser {
   base_url: Option<Url>,
   html: dom_query::Document,
-  options: ReadabilityOptions,
+  options: ParserOptions,
 }
 
-impl Readability {
+impl Parser {
   #[must_use]
   pub fn is_probably_readerable(&self) -> bool {
     readerable::is_probably_readerable(&self.html)
@@ -20,7 +20,7 @@ impl Readability {
   pub fn new(
     html: &str,
     base_url: Option<&str>,
-    options: ReadabilityOptions,
+    options: ParserOptions,
   ) -> Result<Self> {
     let base_url = base_url
       .map(|value| Url::parse(value).map_err(Error::from))

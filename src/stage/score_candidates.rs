@@ -77,7 +77,7 @@ mod tests {
       "a".repeat(100),
     ));
 
-    let options = ReadabilityOptions::default();
+    let options = ParserOptions::default();
 
     let mut context = Context::new(&mut document, &options);
 
@@ -106,7 +106,7 @@ mod tests {
       "<html><body><div><p>foo</p></div></body></html>",
     );
 
-    let options = ReadabilityOptions::default();
+    let options = ParserOptions::default();
 
     let mut context = Context::new(&mut document, &options);
 

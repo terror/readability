@@ -43,8 +43,8 @@ use {
 pub use crate::{
   article::Article,
   error::Error,
-  options::{ReadabilityOptions, ReadabilityOptionsBuilder},
-  readability::Readability,
+  options::{ParserOptions, ParserOptionsBuilder},
+  parser::Parser,
 };
 
 mod article;
@@ -56,9 +56,9 @@ mod flags;
 mod metadata;
 mod node_ext;
 mod options;
+mod parser;
 mod pipeline;
 mod re;
-mod readability;
 mod readerable;
 mod rule;
 mod stage;

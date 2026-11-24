@@ -5,7 +5,7 @@ use {
   pretty_assertions::assert_eq,
   serde::{Deserialize, Serialize},
   std::{fs, path::PathBuf},
-  unclutter::{Readability, ReadabilityOptions},
+  unclutter::{Parser, ParserOptions},
 };
 
 macro_rules! test_metadata {
@@ -84,14 +84,14 @@ impl TestFixture {
   }
 
   fn parse_article(&self) -> unclutter::Article {
-    self.readability().parse().expect("Failed to parse article")
+    self.parser().parse().expect("Failed to parse article")
   }
 
-  fn readability(&self) -> Readability {
-    Readability::new(
+  fn parser(&self) -> Parser {
+    Parser::new(
       &self.source_html,
       Some("http://fakehost/test/page.html"),
-      ReadabilityOptions::builder()
+      ParserOptions::builder()
         .classes_to_preserve(["page", "caption"])
         .build(),
     )
@@ -100,7 +100,7 @@ impl TestFixture {
 
   fn test_metadata(&self) {
     assert_eq!(
-      self.readability().is_probably_readerable(),
+      self.parser().is_probably_readerable(),
       self.expected_metadata.readerable,
       "Readerable mismatch"
     );

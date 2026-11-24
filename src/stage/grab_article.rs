@@ -97,7 +97,7 @@ mod tests {
   fn grab(html: &str, flags: &Rc<RefCell<Vec<Flags>>>) -> (Result, String) {
     let mut document = dom_query::Document::from(html);
 
-    let options = ReadabilityOptions::default();
+    let options = ParserOptions::default();
 
     let mut context = Context::new(&mut document, &options);
 

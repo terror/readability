@@ -1,7 +1,7 @@
 use {
   criterion::{Criterion, criterion_group, criterion_main},
   std::{fs, hint::black_box, path::PathBuf, time::Duration},
-  unclutter::{Readability, ReadabilityOptions},
+  unclutter::{Parser, ParserOptions},
 };
 
 fn parse(criterion: &mut Criterion) {
@@ -27,10 +27,10 @@ fn parse(criterion: &mut Criterion) {
     bencher.iter(|| {
       for page in &pages {
         black_box(
-          Readability::new(
+          Parser::new(
             black_box(page),
             Some("http://fakehost/test/page.html"),
-            ReadabilityOptions::default(),
+            ParserOptions::default(),
           )
           .unwrap()
           .parse()

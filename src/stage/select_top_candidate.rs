@@ -191,7 +191,7 @@ mod tests {
   fn top_candidate(html: &str) -> String {
     let mut document = dom_query::Document::from(html);
 
-    let options = ReadabilityOptions::default();
+    let options = ParserOptions::default();
 
     let mut context = Context::new(&mut document, &options);
 
@@ -222,7 +222,7 @@ mod tests {
       "<html><body>foo<span>bar</span></body></html>",
     );
 
-    let options = ReadabilityOptions::default();
+    let options = ParserOptions::default();
 
     let mut context = Context::new(&mut document, &options);
 

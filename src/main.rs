@@ -2,7 +2,7 @@ use {
   arguments::Arguments,
   clap::Parser,
   std::{backtrace::BacktraceStatus, fs, path::PathBuf, process},
-  unclutter::{Readability, ReadabilityOptions},
+  unclutter::ParserOptions,
 };
 
 mod arguments;

@@ -85,7 +85,7 @@ impl Test {
 
     let mut document = dom_query::Document::from(html);
 
-    let options = ReadabilityOptions::default();
+    let options = ParserOptions::default();
 
     let (metadata, lang) = {
       let mut context = Context::new(&mut document, &options);
