@@ -1,5 +1,5 @@
 import { SegmentedControl } from '@/ui/segmented-control';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 
 import { CodeView } from './code-view';
 
@@ -8,6 +8,7 @@ interface SourcePanelProps {
   html: string;
   onChange: (html: string) => void;
   output?: string;
+  picker: ReactNode;
 }
 
 export const SourcePanel = ({
@@ -15,12 +16,14 @@ export const SourcePanel = ({
   html,
   onChange,
   output,
+  picker,
 }: SourcePanelProps) => {
   const [view, setView] = useState<'input' | 'output'>('input');
 
   return (
     <section aria-label='Source' className='flex h-full min-h-0 flex-col'>
-      <div className='flex h-12 shrink-0 items-center px-5'>
+      <div className='flex h-14 shrink-0 items-center justify-between gap-3 px-3'>
+        {picker}
         <SegmentedControl
           label='Source view'
           value={view}

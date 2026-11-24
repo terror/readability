@@ -1,17 +1,23 @@
 import { useAppearance } from '@/hooks/use-appearance';
 import { useArticle } from '@/hooks/use-article';
 import { useDocument } from '@/hooks/use-document';
+import { useMediaQuery } from '@/hooks/use-media-query';
 import { useParserOptions } from '@/hooks/use-parser-options';
-import { usePersistedState } from '@/hooks/use-persisted-state';
 import { useUnclutter } from '@/hooks/use-unclutter';
 import { SAMPLE_BASE_URL, sampleNames } from '@/lib/samples';
+import { readStorage, writeStorage } from '@/lib/storage';
 import { Button } from '@/ui/button';
 import { Combobox } from '@/ui/combobox';
-import { IconButton } from '@/ui/icon-button';
-import { CodeIcon, InfoIcon, SpinnerIcon } from '@/ui/icons';
+import { InfoIcon, SpinnerIcon } from '@/ui/icons';
 import { Notice } from '@/ui/notice';
 import { Popover } from '@/ui/popover';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '@/ui/resizable';
 import { ReactNode } from 'react';
+import { useDefaultLayout } from 'react-resizable-panels';
 
 import { AppearancePanel } from '../components/appearance-panel';
 import { DetailsPanel } from '../components/details-panel';
@@ -19,7 +25,9 @@ import { Reader } from '../components/reader';
 import { SourcePanel } from '../components/source-panel';
 import { TopBar } from '../components/top-bar';
 
-const SOURCE_STORAGE_KEY = 'unclutter:source';
+const LAYOUT_STORAGE_KEY = 'unclutter:layout';
+
+const layoutStorage = { getItem: readStorage, setItem: writeStorage };
 
 const Message = ({ children }: { children: ReactNode }) => (
   <div className='mx-auto max-w-[668px] px-6 pt-14'>{children}</div>
@@ -31,8 +39,14 @@ const Playground = () => {
   const { options, updateOptions } = useParserOptions();
   const { document, edit, open, request } = useDocument();
 
-  const [source, setSource] = usePersistedState(SOURCE_STORAGE_KEY, 'closed');
-  const sourceOpen = source === 'open';
+  const orientation = useMediaQuery('(max-width: 767px)')
+    ? 'vertical'
+    : 'horizontal';
+
+  const { defaultLayout, onLayoutChanged } = useDefaultLayout({
+    id: `${LAYOUT_STORAGE_KEY}:${orientation}`,
+    storage: layoutStorage,
+  });
 
   const sample =
     document && sampleNames.includes(document.sample) ? document.sample : '';
@@ -109,28 +123,8 @@ const Playground = () => {
   return (
     <div className='flex h-dvh flex-col'>
       <TopBar
-        center={
-          <Combobox
-            className='w-full md:w-56'
-            empty='No test page found.'
-            label='Test page'
-            onChange={open}
-            options={sampleNames}
-            placeholder='Test pages'
-            search='Search test pages'
-            value={sample}
-          />
-        }
         actions={
           <>
-            <IconButton
-              label='Source'
-              active={sourceOpen}
-              aria-pressed={sourceOpen}
-              onClick={() => setSource(sourceOpen ? 'closed' : 'open')}
-            >
-              <CodeIcon />
-            </IconButton>
             <Popover
               label='Appearance'
               icon={
@@ -152,25 +146,40 @@ const Playground = () => {
           </>
         }
       />
-      <div className='flex min-h-0 flex-1'>
-        {sourceOpen && document && (
-          <div className='border-line min-w-0 flex-1 md:flex-none md:basis-[44%] md:border-r'>
-            <SourcePanel
-              dark={appearance.theme === 'dark'}
-              html={document.html}
-              onChange={edit}
-              output={
-                result?.status === 'ok' ? result.article.content : undefined
-              }
-            />
-          </div>
-        )}
-        <main
-          className={`min-w-0 flex-1 overflow-y-auto ${sourceOpen ? 'max-md:hidden' : ''}`}
-        >
-          {content()}
-        </main>
-      </div>
+      <ResizablePanelGroup
+        key={orientation}
+        orientation={orientation}
+        defaultLayout={defaultLayout}
+        onLayoutChanged={onLayoutChanged}
+        className='min-h-0 flex-1'
+      >
+        <ResizablePanel id='source' defaultSize='40%' minSize='20%'>
+          <SourcePanel
+            dark={appearance.theme === 'dark'}
+            html={document?.html ?? ''}
+            onChange={edit}
+            output={
+              result?.status === 'ok' ? result.article.content : undefined
+            }
+            picker={
+              <Combobox
+                className='w-48 min-w-0'
+                empty='No test page found.'
+                label='Test page'
+                onChange={open}
+                options={sampleNames}
+                placeholder='Test pages'
+                search='Search test pages'
+                value={sample}
+              />
+            }
+          />
+        </ResizablePanel>
+        <ResizableHandle />
+        <ResizablePanel id='reader' defaultSize='60%' minSize='30%'>
+          <main className='h-full overflow-y-auto'>{content()}</main>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 };

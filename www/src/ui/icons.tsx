@@ -43,6 +43,17 @@ export const CodeIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const GripVerticalIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx='9' cy='6' r='1' />
+    <circle cx='9' cy='12' r='1' />
+    <circle cx='9' cy='18' r='1' />
+    <circle cx='15' cy='6' r='1' />
+    <circle cx='15' cy='12' r='1' />
+    <circle cx='15' cy='18' r='1' />
+  </Icon>
+);
+
 export const InfoIcon = (props: IconProps) => (
   <Icon {...props}>
     <circle cx='12' cy='12' r='9' />
