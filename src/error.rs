@@ -7,8 +7,6 @@ pub enum Error {
     #[from]
     source: url::ParseError,
   },
-  #[error("invalid selector: {0}")]
-  InvalidSelector(String),
   #[error("failed to identify article content")]
   MissingArticleContent,
 }
