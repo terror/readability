@@ -21,7 +21,7 @@ impl Stage for GrabArticle {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let cache = context.document.clone();
 
-    let mut attempts = Vec::new();
+    let mut best = None::<Attempt>;
 
     loop {
       context.extraction = Extraction::default();
@@ -41,30 +41,28 @@ impl Stage for GrabArticle {
         return Ok(());
       }
 
-      let document = mem::replace(&mut *context.document, cache.clone());
-
-      attempts.push(Attempt {
+      let attempt = Attempt {
         dir: context.dir.take(),
-        document,
+        document: mem::take(&mut *context.document),
         extraction: mem::take(&mut context.extraction),
         length,
-      });
+      };
+
+      if best
+        .as_ref()
+        .is_none_or(|best| attempt.length > best.length)
+      {
+        best = Some(attempt);
+      }
 
       if !context.flags.disable_next() {
         break;
       }
+
+      *context.document = cache.clone();
     }
 
-    let best = attempts
-      .into_iter()
-      .reduce(|best, attempt| {
-        if attempt.length > best.length {
-          attempt
-        } else {
-          best
-        }
-      })
-      .ok_or(Error::MissingArticleContent)?;
+    let best = best.ok_or(Error::MissingArticleContent)?;
 
     if best.length == 0 {
       return Err(Error::MissingArticleContent);
