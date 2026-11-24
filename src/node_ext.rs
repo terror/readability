@@ -40,6 +40,19 @@ pub(crate) fn create_element<'a>(tree: &'a Tree, name: &str) -> NodeRef<'a> {
   element
 }
 
+#[allow(clippy::cast_precision_loss)]
+pub(crate) fn link_density(
+  length: usize,
+  links: usize,
+  hash_links: usize,
+) -> f64 {
+  if length == 0 {
+    return 0.0;
+  }
+
+  (links as f64 + hash_links as f64 * 0.3) / length as f64
+}
+
 pub(crate) fn text_length(text: &str) -> usize {
   text.encode_utf16().count()
 }
@@ -75,6 +88,8 @@ pub(crate) trait NodeExt {
   fn inner_text_length(&self) -> usize;
 
   fn is_element_without_content(&self) -> bool;
+
+  fn is_hash_link(&self) -> bool;
 
   fn is_phrasing_content(&self) -> bool;
 
@@ -181,31 +196,12 @@ impl NodeExt for NodeRef<'_> {
   }
 
   fn inner_text_length(&self) -> usize {
-    let mut length = 0;
-    let mut content = false;
-    let mut whitespace = false;
-
-    for node in iter::once(*self).chain(self.descendants_it()) {
-      node.query(|node| {
-        if let NodeData::Text { contents } = &node.data {
-          for character in contents.chars() {
-            if character.is_whitespace() {
-              whitespace = content;
-            } else {
-              if whitespace {
-                length += 1;
-                whitespace = false;
-              }
-
-              length += character.len_utf16();
-              content = true;
-            }
-          }
-        }
-      });
-    }
-
-    length
+    iter::once(*self)
+      .chain(self.descendants_it())
+      .fold(TextLength::default(), |length, node| {
+        length + TextLength::from(&node)
+      })
+      .length
   }
 
   fn is_element_without_content(&self) -> bool {
@@ -220,6 +216,12 @@ impl NodeExt for NodeRef<'_> {
     let children = self.element_children().len();
 
     children == 0 || children == self.elements_with_tags(&["BR", "HR"]).len()
+  }
+
+  fn is_hash_link(&self) -> bool {
+    self
+      .attr("href")
+      .is_some_and(|href| HASH_URL.is_match(&href))
   }
 
   fn is_phrasing_content(&self) -> bool {
@@ -238,32 +240,21 @@ impl NodeExt for NodeRef<'_> {
     (self.is_text() && self.text().trim().is_empty()) || self.has_tag("BR")
   }
 
-  #[allow(clippy::cast_precision_loss)]
   fn link_density(&self) -> f64 {
-    let length = self.inner_text_length();
-
-    if length == 0 {
-      return 0.0;
-    }
-
-    let link_length = self
+    let (links, hash_links) = self
       .descendants_it()
       .filter(|node| node.has_tag("A"))
-      .map(|link| {
-        let coefficient = if link
-          .attr("href")
-          .is_some_and(|href| HASH_URL.is_match(&href))
-        {
-          0.3
+      .fold((0, 0), |(links, hash_links), link| {
+        let length = link.inner_text_length();
+
+        if link.is_hash_link() {
+          (links, hash_links + length)
         } else {
-          1.0
-        };
+          (links + length, hash_links)
+        }
+      });
 
-        link.inner_text_length() as f64 * coefficient
-      })
-      .sum::<f64>();
-
-    link_length / length as f64
+    link_density(self.inner_text_length(), links, hash_links)
   }
 
   fn match_string(&self) -> String {

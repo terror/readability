@@ -113,6 +113,56 @@ impl SelectTopCandidate {
     }
   }
 
+  fn link_densities(
+    root: NodeRef<'_>,
+    candidates: &HashSet<NodeId>,
+  ) -> HashMap<NodeId, f64> {
+    let mut densities = HashMap::new();
+
+    let mut stack =
+      vec![(root, root.children_it(false), TextLength::from(&root), 0, 0)];
+
+    while let Some((_, children, ..)) = stack.last_mut() {
+      if let Some(child) = children.next() {
+        stack.push((
+          child,
+          child.children_it(false),
+          TextLength::from(&child),
+          0,
+          0,
+        ));
+        continue;
+      }
+
+      let Some((node, _, length, links, hash_links)) = stack.pop() else {
+        break;
+      };
+
+      if candidates.contains(&node.id) {
+        densities
+          .insert(node.id, link_density(length.length, links, hash_links));
+      }
+
+      if let Some((_, _, parent_length, parent_links, parent_hash_links)) =
+        stack.last_mut()
+      {
+        *parent_length = *parent_length + length;
+        *parent_links += links;
+        *parent_hash_links += hash_links;
+
+        if node.has_tag("A") {
+          if node.is_hash_link() {
+            *parent_hash_links += length.length;
+          } else {
+            *parent_links += length.length;
+          }
+        }
+      }
+    }
+
+    densities
+  }
+
   fn only_child_ancestor(
     context: &Context<'_>,
     top_candidate: NodeId,
@@ -133,9 +183,13 @@ impl SelectTopCandidate {
 
     let mut top_candidates = Vec::<NodeId>::new();
 
+    let densities = Self::link_densities(
+      context.document.root(),
+      &context.extraction.candidates.iter().copied().collect(),
+    );
+
     for id in context.extraction.candidates.clone() {
-      let score = context.extraction.scores[&id]
-        * (1.0 - context.node(id).link_density());
+      let score = context.extraction.scores[&id] * (1.0 - densities[&id]);
 
       context.extraction.scores.insert(id, score);
 
@@ -234,6 +288,24 @@ mod tests {
       context.document.html().to_string(),
       "<html><head></head><body><div>foo<span>bar</span></div></body></html>",
     );
+  }
+
+  #[test]
+  fn link_densities() {
+    let document = dom_query::Document::from(
+      r##"<html><body><div>foo <a href="/">bar</a><p> baz<a href="#qux">quux</a> </p></div><a href="/"><b>corge</b></a></body></html>"##,
+    );
+
+    let nodes = document.root().descendants();
+
+    let densities = SelectTopCandidate::link_densities(
+      document.root(),
+      &nodes.iter().map(|node| node.id).collect(),
+    );
+
+    for node in nodes {
+      assert_eq!(densities[&node.id], node.link_density());
+    }
   }
 
   #[test]
