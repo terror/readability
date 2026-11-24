@@ -1,5 +1,5 @@
 import type { Appearance } from '@/lib/appearance';
-import { formatDate, hostname, readingTime } from '@/lib/format';
+import { formatDate, readingTime } from '@/lib/format';
 import { sanitize } from '@/lib/sanitize';
 import type { Article } from '@/lib/types';
 import { Notice } from '@/ui/notice';
@@ -11,7 +11,6 @@ interface ReaderProps {
   article: Article;
   duration: number;
   readable: boolean;
-  url?: string;
 }
 
 export const Reader = ({
@@ -19,11 +18,8 @@ export const Reader = ({
   article,
   duration,
   readable,
-  url,
 }: ReaderProps) => {
   const content = useMemo(() => sanitize(article.content), [article.content]);
-
-  const host = url ? hostname(url) : undefined;
 
   const meta = [
     article.byline,
@@ -46,9 +42,6 @@ export const Reader = ({
             Details can help.
           </Notice>
         </div>
-      )}
-      {host && (
-        <p className='text-ink-3 mb-5 text-[13px] font-medium'>{host}</p>
       )}
       {article.title && (
         <h1

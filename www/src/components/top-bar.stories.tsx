@@ -1,6 +1,6 @@
+import { Combobox } from '@/ui/combobox';
 import { IconButton } from '@/ui/icon-button';
 import { CodeIcon, InfoIcon } from '@/ui/icons';
-import { LinkField } from '@/ui/link-field';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 
 import { TopBar } from './top-bar';
@@ -20,11 +20,16 @@ const meta = {
         </IconButton>
       </>
     ),
-    field: (
-      <LinkField
-        value='harborledger.example/news/riverside-tram-line'
+    center: (
+      <Combobox
+        className='w-full md:w-56'
+        empty='No test page found.'
+        label='Test page'
         onChange={() => {}}
-        onSubmit={() => {}}
+        options={['ars-1', 'nytimes-1', 'wikipedia']}
+        placeholder='Test pages'
+        search='Search test pages'
+        value='wikipedia'
       />
     ),
   },

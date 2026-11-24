@@ -20,7 +20,7 @@
     "types": ["bun", "node", "vite/client"],
     "useDefineForClassFields": true
   },
-  "include": [".storybook", "api", "server", "src"],
+  "include": [".storybook", "src"],
   "references": [
     {
       "path": "./tsconfig.node.json"
