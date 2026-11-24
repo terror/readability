@@ -29,14 +29,11 @@ impl RemoveUnlikelyCandidates {
   fn is_unlikely(node: &NodeRef) -> bool {
     let match_string = node.match_string();
 
-    let tag = node.tag();
-
     if UNLIKELY_CANDIDATE.is_match(&match_string)
       && !MAYBE_CANDIDATE.is_match(&match_string)
       && !node.has_ancestor_tag("TABLE", Some(3), |_| true)
       && !node.has_ancestor_tag("CODE", Some(3), |_| true)
-      && tag != "BODY"
-      && tag != "A"
+      && !node.has_any_tag(&["BODY", "A"])
     {
       return true;
     }

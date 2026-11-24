@@ -36,7 +36,7 @@ impl SelectTopCandidate {
 
     let mut parent = context.node(top_candidate).parent();
 
-    while let Some(node) = parent.filter(|node| node.tag() != "BODY") {
+    while let Some(node) = parent.filter(|node| !node.has_tag("BODY")) {
       let lists = alternative_ancestors
         .iter()
         .filter(|ancestors| ancestors.contains(&node.id))
@@ -85,7 +85,7 @@ impl SelectTopCandidate {
 
     let mut parent = context.node(top_candidate).parent();
 
-    while let Some(node) = parent.filter(|node| node.tag() != "BODY") {
+    while let Some(node) = parent.filter(|node| !node.has_tag("BODY")) {
       parent = node.parent();
 
       let Some(score) = context.extraction.scores.get(&node.id).copied() else {
@@ -120,7 +120,7 @@ impl SelectTopCandidate {
     let mut top_candidate = context.node(top_candidate);
 
     while let Some(parent) = top_candidate.parent().filter(|parent| {
-      parent.tag() != "BODY" && parent.element_children().len() == 1
+      !parent.has_tag("BODY") && parent.element_children().len() == 1
     }) {
       top_candidate = parent;
     }
@@ -160,7 +160,7 @@ impl Stage for SelectTopCandidate {
     let top_candidate = top_candidates
       .first()
       .copied()
-      .filter(|id| context.node(*id).tag() != "BODY");
+      .filter(|id| !context.node(*id).has_tag("BODY"));
 
     let Some(top_candidate) = top_candidate else {
       Self::create_top_candidate(context);

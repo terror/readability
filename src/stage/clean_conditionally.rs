@@ -33,7 +33,7 @@ impl CleanConditionally {
       let list_length = node
         .elements_with_tags(&["UL", "OL"])
         .iter()
-        .map(|list| text_length(&list.inner_text()))
+        .map(NodeExt::inner_text_length)
         .sum::<usize>();
 
       if content_length == 0 {
@@ -143,7 +143,7 @@ impl CleanConditionally {
 
   #[allow(clippy::cast_precision_loss)]
   fn text_density(node: &NodeRef, tags: &[&str]) -> f64 {
-    let length = text_length(&node.inner_text());
+    let length = node.inner_text_length();
 
     if length == 0 {
       return 0.0;
@@ -152,7 +152,7 @@ impl CleanConditionally {
     let children_length = node
       .elements_with_tags(tags)
       .iter()
-      .map(|child| text_length(&child.inner_text()))
+      .map(NodeExt::inner_text_length)
       .sum::<usize>();
 
     children_length as f64 / length as f64

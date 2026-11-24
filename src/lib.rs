@@ -1,7 +1,7 @@
 use {
   context::Context,
   document::Document,
-  dom_query::{NodeId, NodeRef, Tree},
+  dom_query::{NodeData, NodeId, NodeRef, Tree},
   extraction::Extraction,
   flags::Flags,
   metadata::Metadata,

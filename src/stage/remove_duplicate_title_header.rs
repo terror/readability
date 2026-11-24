@@ -15,7 +15,7 @@ impl Rule for RemoveDuplicateTitleHeader {
 
     let node = context.node(node);
 
-    if !matches!(node.tag().as_str(), "H1" | "H2") {
+    if !node.has_any_tag(&["H1", "H2"]) {
       return Action::Continue;
     }
 

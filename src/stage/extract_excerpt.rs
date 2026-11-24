@@ -21,7 +21,7 @@ impl Stage for ExtractExcerpt {
 
     let paragraph = context
       .node(article)
-      .descendant_nodes()
+      .descendants()
       .into_iter()
       .find(|node| node.tag() == "P")
       .map(|node| node.text().trim().to_string());

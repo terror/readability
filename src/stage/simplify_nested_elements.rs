@@ -4,7 +4,7 @@ pub(crate) struct SimplifyNestedElements;
 
 impl SimplifyNestedElements {
   fn simplify(node: NodeRef) {
-    let is_container = matches!(node.tag().as_str(), "DIV" | "SECTION")
+    let is_container = node.has_any_tag(&["DIV", "SECTION"])
       && !node
         .attr("id")
         .is_some_and(|id| id.starts_with("readability"));

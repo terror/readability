@@ -55,7 +55,7 @@ impl Rule for ConvertDivsToParagraphs {
   fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
     let div = context.node(node);
 
-    if div.tag() != "DIV" {
+    if !div.has_tag("DIV") {
       return Action::Continue;
     }
 
