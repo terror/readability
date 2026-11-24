@@ -10,9 +10,9 @@
 
 <p align="center">
   <picture align="center">
-    <source media="(prefers-color-scheme: dark)" srcset="assets/benchmark-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="assets/benchmark-light.svg">
-    <img alt="Shows a bar chart with benchmark results." src="assets/benchmark-light.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/terror/unclutter/master/assets/benchmark-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/terror/unclutter/master/assets/benchmark-light.svg">
+    <img alt="Shows a bar chart with benchmark results." src="https://raw.githubusercontent.com/terror/unclutter/master/assets/benchmark-light.svg">
   </picture>
 </p>
 
