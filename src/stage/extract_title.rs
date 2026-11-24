@@ -272,6 +272,30 @@ mod tests {
   }
 
   #[test]
+  fn raw_title_whitespace_collapsed() {
+    Test::new()
+      .stage(ExtractTitle)
+      .document("<html><head><title>\n  foo\n  bar\n</title></head><body></body></html>")
+      .expected_metadata(Metadata {
+        title: Some("foo bar".into()),
+        ..Metadata::default()
+      })
+      .run();
+  }
+
+  #[test]
+  fn separator_backslash() {
+    Test::new()
+      .stage(ExtractTitle)
+      .document(r"<html><head><title>foo bar baz qux quux \ site</title></head><body></body></html>")
+      .expected_metadata(Metadata {
+        title: Some("foo bar baz qux quux".into()),
+        ..Metadata::default()
+      })
+      .run();
+  }
+
+  #[test]
   fn separator_short_candidate_tries_prefix_strip() {
     Test::new()
       .stage(ExtractTitle)
@@ -314,30 +338,6 @@ mod tests {
       .document("<html><head><title>hi</title></head><body><h1>foo bar</h1></body></html>")
       .expected_metadata(Metadata {
         title: Some("hi".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn separator_backslash() {
-    Test::new()
-      .stage(ExtractTitle)
-      .document(r"<html><head><title>foo bar baz qux quux \ site</title></head><body></body></html>")
-      .expected_metadata(Metadata {
-        title: Some("foo bar baz qux quux".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn raw_title_whitespace_collapsed() {
-    Test::new()
-      .stage(ExtractTitle)
-      .document("<html><head><title>\n  foo\n  bar\n</title></head><body></body></html>")
-      .expected_metadata(Metadata {
-        title: Some("foo bar".into()),
         ..Metadata::default()
       })
       .run();

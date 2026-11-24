@@ -62,39 +62,15 @@ mod tests {
   use super::*;
 
   #[test]
-  fn removes_comment_class() {
+  fn keeps_anchor() {
     Test::new()
       .stage(RemoveUnlikelyCandidates)
       .document(
-        r#"<html><body><div class="comment">foo</div><p>bar</p></body></html>"#,
+        "<html><body><a class=\"comment\" href=\"#\">foo</a></body></html>",
       )
-      .expected_html("<html><head></head><body><p>bar</p></body></html>")
-      .run();
-  }
-
-  #[test]
-  fn skips_when_flag_disabled() {
-    Test::new()
-      .stage(RemoveUnlikelyCandidates)
-      .document(r#"<html><body><div class="comment">foo</div></body></html>"#)
-      .flags(Flags {
-        strip_unlikelys: false,
-        ..Flags::default()
-      })
       .expected_html(
-        r#"<html><head></head><body><div class="comment">foo</div></body></html>"#,
+        "<html><head></head><body><a class=\"comment\" href=\"#\">foo</a></body></html>",
       )
-      .run();
-  }
-
-  #[test]
-  fn removes_sidebar_id() {
-    Test::new()
-      .stage(RemoveUnlikelyCandidates)
-      .document(
-        r#"<html><body><div id="sidebar">foo</div><p>bar</p></body></html>"#,
-      )
-      .expected_html("<html><head></head><body><p>bar</p></body></html>")
       .run();
   }
 
@@ -123,14 +99,14 @@ mod tests {
   }
 
   #[test]
-  fn keeps_anchor() {
+  fn keeps_inside_code() {
     Test::new()
       .stage(RemoveUnlikelyCandidates)
       .document(
-        "<html><body><a class=\"comment\" href=\"#\">foo</a></body></html>",
+        r#"<html><body><code><span class="comment">foo</span></code></body></html>"#,
       )
       .expected_html(
-        "<html><head></head><body><a class=\"comment\" href=\"#\">foo</a></body></html>",
+        r#"<html><head></head><body><code><span class="comment">foo</span></code></body></html>"#,
       )
       .run();
   }
@@ -145,41 +121,6 @@ mod tests {
       .expected_html(
         r#"<html><head></head><body><table><tbody><tr><td class="comment">foo</td></tr></tbody></table></body></html>"#,
       )
-      .run();
-  }
-
-  #[test]
-  fn keeps_inside_code() {
-    Test::new()
-      .stage(RemoveUnlikelyCandidates)
-      .document(
-        r#"<html><body><code><span class="comment">foo</span></code></body></html>"#,
-      )
-      .expected_html(
-        r#"<html><head></head><body><code><span class="comment">foo</span></code></body></html>"#,
-      )
-      .run();
-  }
-
-  #[test]
-  fn removes_unlikely_role() {
-    Test::new()
-      .stage(RemoveUnlikelyCandidates)
-      .document(
-        r#"<html><body><nav role="navigation">foo</nav><p>bar</p></body></html>"#,
-      )
-      .expected_html("<html><head></head><body><p>bar</p></body></html>")
-      .run();
-  }
-
-  #[test]
-  fn removes_menu_role() {
-    Test::new()
-      .stage(RemoveUnlikelyCandidates)
-      .document(
-        r#"<html><body><div role="menu">foo</div><p>bar</p></body></html>"#,
-      )
-      .expected_html("<html><head></head><body><p>bar</p></body></html>")
       .run();
   }
 
@@ -204,6 +145,65 @@ mod tests {
         r#"<html><body><div class="sidebar"><p>nested</p></div><p>bar</p></body></html>"#,
       )
       .expected_html("<html><head></head><body><p>bar</p></body></html>")
+      .run();
+  }
+
+  #[test]
+  fn removes_comment_class() {
+    Test::new()
+      .stage(RemoveUnlikelyCandidates)
+      .document(
+        r#"<html><body><div class="comment">foo</div><p>bar</p></body></html>"#,
+      )
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
+      .run();
+  }
+
+  #[test]
+  fn removes_menu_role() {
+    Test::new()
+      .stage(RemoveUnlikelyCandidates)
+      .document(
+        r#"<html><body><div role="menu">foo</div><p>bar</p></body></html>"#,
+      )
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
+      .run();
+  }
+
+  #[test]
+  fn removes_sidebar_id() {
+    Test::new()
+      .stage(RemoveUnlikelyCandidates)
+      .document(
+        r#"<html><body><div id="sidebar">foo</div><p>bar</p></body></html>"#,
+      )
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
+      .run();
+  }
+
+  #[test]
+  fn removes_unlikely_role() {
+    Test::new()
+      .stage(RemoveUnlikelyCandidates)
+      .document(
+        r#"<html><body><nav role="navigation">foo</nav><p>bar</p></body></html>"#,
+      )
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
+      .run();
+  }
+
+  #[test]
+  fn skips_when_flag_disabled() {
+    Test::new()
+      .stage(RemoveUnlikelyCandidates)
+      .document(r#"<html><body><div class="comment">foo</div></body></html>"#)
+      .flags(Flags {
+        strip_unlikelys: false,
+        ..Flags::default()
+      })
+      .expected_html(
+        r#"<html><head></head><body><div class="comment">foo</div></body></html>"#,
+      )
       .run();
   }
 }

@@ -93,17 +93,6 @@ mod tests {
   }
 
   #[test]
-  fn removes_byline_node() {
-    Test::new()
-      .stage(ExtractByline)
-      .document(
-        r#"<html><body><p class="byline">foo</p><p>bar</p></body></html>"#,
-      )
-      .expected_html("<html><head></head><body><p>bar</p></body></html>")
-      .run();
-  }
-
-  #[test]
   fn class_byline() {
     Test::new()
       .stage(ExtractByline)
@@ -189,6 +178,17 @@ mod tests {
         byline: Some("foo".into()),
         ..Metadata::default()
       })
+      .run();
+  }
+
+  #[test]
+  fn removes_byline_node() {
+    Test::new()
+      .stage(ExtractByline)
+      .document(
+        r#"<html><body><p class="byline">foo</p><p>bar</p></body></html>"#,
+      )
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
       .run();
   }
 

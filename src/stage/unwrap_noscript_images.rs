@@ -124,21 +124,32 @@ mod tests {
   }
 
   #[test]
-  fn remove_placeholder_without_src() {
-    Test::new()
-      .stage(UnwrapNoscriptImages)
-      .document("<html><body><img class=\"lazy\"/></body></html>")
-      .expected_html("<html><head></head><body></body></html>")
-      .run();
-  }
-
-  #[test]
   fn keep_valid_image() {
     Test::new()
       .stage(UnwrapNoscriptImages)
       .document("<html><body><img src=\"valid.jpg\"/></body></html>")
       .expected_html(
         "<html><head></head><body><img src=\"valid.jpg\"></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn nested_wrapper() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document(r#"<html><body><div><img data-src="foo.jpg"></div><noscript><img src="bar.jpg"></noscript></body></html>"#)
+      .expected_html(r#"<html><head></head><body><img src="bar.jpg" data-src="foo.jpg"><noscript></noscript></body></html>"#)
+      .run();
+  }
+
+  #[test]
+  fn no_previous_sibling_unchanged() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><noscript><img src=\"x.jpg\"/></noscript></body></html>")
+      .expected_html(
+        "<html><head></head><body><noscript><img src=\"x.jpg\"></noscript></body></html>",
       )
       .run();
   }
@@ -155,32 +166,23 @@ mod tests {
   }
 
   #[test]
-  fn no_previous_sibling_unchanged() {
-    Test::new()
-      .stage(UnwrapNoscriptImages)
-      .document("<html><body><noscript><img src=\"x.jpg\"/></noscript></body></html>")
-      .expected_html(
-        "<html><head></head><body><noscript><img src=\"x.jpg\"></noscript></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
-  fn nested_wrapper() {
-    Test::new()
-      .stage(UnwrapNoscriptImages)
-      .document(r#"<html><body><div><img data-src="foo.jpg"></div><noscript><img src="bar.jpg"></noscript></body></html>"#)
-      .expected_html(r#"<html><head></head><body><img src="bar.jpg" data-src="foo.jpg"><noscript></noscript></body></html>"#)
-      .run();
-  }
-
-  #[test]
   fn preserves_data_src() {
     Test::new()
       .stage(UnwrapNoscriptImages)
       .document("<html><body><img data-src=\"lazy.jpg\"/></body></html>")
       .expected_html(
         "<html><head></head><body><img data-src=\"lazy.jpg\"></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn preserves_image_extension_in_attr() {
+    Test::new()
+      .stage(UnwrapNoscriptImages)
+      .document("<html><body><img data-lazy=\"image.png\"/></body></html>")
+      .expected_html(
+        "<html><head></head><body><img data-lazy=\"image.png\"></body></html>",
       )
       .run();
   }
@@ -197,13 +199,11 @@ mod tests {
   }
 
   #[test]
-  fn preserves_image_extension_in_attr() {
+  fn remove_placeholder_without_src() {
     Test::new()
       .stage(UnwrapNoscriptImages)
-      .document("<html><body><img data-lazy=\"image.png\"/></body></html>")
-      .expected_html(
-        "<html><head></head><body><img data-lazy=\"image.png\"></body></html>",
-      )
+      .document("<html><body><img class=\"lazy\"/></body></html>")
+      .expected_html("<html><head></head><body></body></html>")
       .run();
   }
 }

@@ -31,19 +31,59 @@ mod tests {
   use super::*;
 
   #[test]
-  fn removes_empty_div() {
+  fn keeps_div_with_non_br_hr_child() {
     Test::new()
       .stage(RemoveEmptyContainers)
-      .document("<html><body><div></div><p>foo</p></body></html>")
+      .document("<html><body><div><img src=\"foo.jpg\"></div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div><img src=\"foo.jpg\"></div></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn keeps_div_with_text() {
+    Test::new()
+      .stage(RemoveEmptyContainers)
+      .document("<html><body><div>foo</div></body></html>")
+      .expected_html("<html><head></head><body><div>foo</div></body></html>")
+      .run();
+  }
+
+  #[test]
+  fn keeps_non_target_empty_tag() {
+    Test::new()
+      .stage(RemoveEmptyContainers)
+      .document("<html><body><span></span><p>foo</p></body></html>")
+      .expected_html(
+        "<html><head></head><body><span></span><p>foo</p></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn removes_div_with_only_br() {
+    Test::new()
+      .stage(RemoveEmptyContainers)
+      .document("<html><body><div><br></div><p>foo</p></body></html>")
       .expected_html("<html><head></head><body><p>foo</p></body></html>")
       .run();
   }
 
   #[test]
-  fn removes_empty_section() {
+  fn removes_div_with_only_hr() {
     Test::new()
       .stage(RemoveEmptyContainers)
-      .document("<html><body><section></section><p>foo</p></body></html>")
+      .document("<html><body><div><hr></div><p>foo</p></body></html>")
+      .expected_html("<html><head></head><body><p>foo</p></body></html>")
+      .run();
+  }
+
+  #[test]
+  fn removes_empty_div() {
+    Test::new()
+      .stage(RemoveEmptyContainers)
+      .document("<html><body><div></div><p>foo</p></body></html>")
       .expected_html("<html><head></head><body><p>foo</p></body></html>")
       .run();
   }
@@ -79,51 +119,11 @@ mod tests {
   }
 
   #[test]
-  fn keeps_div_with_text() {
+  fn removes_empty_section() {
     Test::new()
       .stage(RemoveEmptyContainers)
-      .document("<html><body><div>foo</div></body></html>")
-      .expected_html("<html><head></head><body><div>foo</div></body></html>")
-      .run();
-  }
-
-  #[test]
-  fn keeps_div_with_non_br_hr_child() {
-    Test::new()
-      .stage(RemoveEmptyContainers)
-      .document("<html><body><div><img src=\"foo.jpg\"></div></body></html>")
-      .expected_html(
-        "<html><head></head><body><div><img src=\"foo.jpg\"></div></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
-  fn removes_div_with_only_br() {
-    Test::new()
-      .stage(RemoveEmptyContainers)
-      .document("<html><body><div><br></div><p>foo</p></body></html>")
+      .document("<html><body><section></section><p>foo</p></body></html>")
       .expected_html("<html><head></head><body><p>foo</p></body></html>")
-      .run();
-  }
-
-  #[test]
-  fn removes_div_with_only_hr() {
-    Test::new()
-      .stage(RemoveEmptyContainers)
-      .document("<html><body><div><hr></div><p>foo</p></body></html>")
-      .expected_html("<html><head></head><body><p>foo</p></body></html>")
-      .run();
-  }
-
-  #[test]
-  fn keeps_non_target_empty_tag() {
-    Test::new()
-      .stage(RemoveEmptyContainers)
-      .document("<html><body><span></span><p>foo</p></body></html>")
-      .expected_html(
-        "<html><head></head><body><span></span><p>foo</p></body></html>",
-      )
       .run();
   }
 }

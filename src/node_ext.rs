@@ -281,6 +281,17 @@ mod tests {
   }
 
   #[test]
+  fn create_element() {
+    let document = dom_query::Document::from("<html><body></body></html>");
+
+    let body = document.select("body").nodes()[0].clone();
+
+    body.append_child(&super::create_element(&document.tree, "img"));
+
+    assert_eq!(body.html().to_string(), "<body><img></body>");
+  }
+
+  #[test]
   fn descendant_nodes() {
     let document = dom_query::Document::from(
       "<div><p><b>foo</b></p><i></i></div><span></span>",
@@ -322,39 +333,16 @@ mod tests {
   }
 
   #[test]
-  fn create_element() {
-    let document = dom_query::Document::from("<html><body></body></html>");
+  fn has_child_block_element() {
+    #[track_caller]
+    fn case(html: &str, expected: bool) {
+      let document = dom_query::Document::from(html);
+      let node = document.select("div").nodes()[0].clone();
+      assert_eq!(node.has_child_block_element(), expected);
+    }
 
-    let body = document.select("body").nodes()[0].clone();
-
-    body.append_child(&super::create_element(&document.tree, "img"));
-
-    assert_eq!(body.html().to_string(), "<body><img></body>");
-  }
-
-  #[test]
-  fn match_string() {
-    let document =
-      dom_query::Document::from(r#"<div class="foo" id="bar"></div><p></p>"#);
-
-    let div = document.select("div").nodes()[0].clone();
-    let paragraph = document.select("p").nodes()[0].clone();
-
-    assert_eq!(div.match_string(), "foo bar");
-    assert_eq!(paragraph.match_string(), " ");
-  }
-
-  #[test]
-  fn set_tag() {
-    let document = dom_query::Document::from(
-      r#"<html><body><div class="foo">bar</div></body></html>"#,
-    );
-
-    let node = document.select("div").nodes()[0].clone();
-
-    node.set_tag("p");
-
-    assert_eq!(document.select("p.foo").length(), 1);
+    case("<div><span><img></span></div>", true);
+    case("<div><span>foo</span></div>", false);
   }
 
   #[test]
@@ -369,19 +357,6 @@ mod tests {
     case("<div> <p>foo</p> </div>", true);
     case("<div>bar<p>foo</p></div>", false);
     case("<div><p>foo</p><p>bar</p></div>", false);
-    case("<div><span>foo</span></div>", false);
-  }
-
-  #[test]
-  fn has_child_block_element() {
-    #[track_caller]
-    fn case(html: &str, expected: bool) {
-      let document = dom_query::Document::from(html);
-      let node = document.select("div").nodes()[0].clone();
-      assert_eq!(node.has_child_block_element(), expected);
-    }
-
-    case("<div><span><img></span></div>", true);
     case("<div><span>foo</span></div>", false);
   }
 
@@ -453,5 +428,30 @@ mod tests {
     case(r##"<div><a href="#x">foo</a>bar</div>"##, 0.15);
     case("<div></div>", 0.0);
     case(r#"<div>foo</div><a href="/">bar</a>"#, 0.0);
+  }
+
+  #[test]
+  fn match_string() {
+    let document =
+      dom_query::Document::from(r#"<div class="foo" id="bar"></div><p></p>"#);
+
+    let div = document.select("div").nodes()[0].clone();
+    let paragraph = document.select("p").nodes()[0].clone();
+
+    assert_eq!(div.match_string(), "foo bar");
+    assert_eq!(paragraph.match_string(), " ");
+  }
+
+  #[test]
+  fn set_tag() {
+    let document = dom_query::Document::from(
+      r#"<html><body><div class="foo">bar</div></body></html>"#,
+    );
+
+    let node = document.select("div").nodes()[0].clone();
+
+    node.set_tag("p");
+
+    assert_eq!(document.select("p.foo").length(), 1);
   }
 }

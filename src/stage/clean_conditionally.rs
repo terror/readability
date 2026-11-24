@@ -201,16 +201,12 @@ mod tests {
   }
 
   #[test]
-  fn removes_negative_weight() {
-    case("DIV", r#"<div class="sidebar"><p>foo</p></div>"#, "");
-  }
-
-  #[test]
-  fn removes_linky_div() {
+  fn keeps_comma_heavy_div() {
+    let text = "foo, ".repeat(10);
     case(
       "DIV",
-      r#"<div><p><a href="/">foo bar baz</a> qux</p></div>"#,
-      "",
+      &format!(r#"<div><a href="/">{text}</a></div>"#),
+      &format!(r#"<div><a href="/">{text}</a></div>"#),
     );
   }
 
@@ -224,12 +220,11 @@ mod tests {
   }
 
   #[test]
-  fn keeps_comma_heavy_div() {
-    let text = "foo, ".repeat(10);
+  fn keeps_image_lists() {
     case(
-      "DIV",
-      &format!(r#"<div><a href="/">{text}</a></div>"#),
-      &format!(r#"<div><a href="/">{text}</a></div>"#),
+      "UL",
+      r#"<ul><li><img src="foo"></li><li><img src="bar"></li></ul>"#,
+      r#"<ul><li><img src="foo"></li><li><img src="bar"></li></ul>"#,
     );
   }
 
@@ -239,12 +234,17 @@ mod tests {
   }
 
   #[test]
-  fn keeps_image_lists() {
+  fn removes_linky_div() {
     case(
-      "UL",
-      r#"<ul><li><img src="foo"></li><li><img src="bar"></li></ul>"#,
-      r#"<ul><li><img src="foo"></li><li><img src="bar"></li></ul>"#,
+      "DIV",
+      r#"<div><p><a href="/">foo bar baz</a> qux</p></div>"#,
+      "",
     );
+  }
+
+  #[test]
+  fn removes_negative_weight() {
+    case("DIV", r#"<div class="sidebar"><p>foo</p></div>"#, "");
   }
 
   #[test]

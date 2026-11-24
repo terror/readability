@@ -33,17 +33,6 @@ mod tests {
   }
 
   #[test]
-  fn preserves_font_tag_content() {
-    Test::new()
-      .stage(RewriteFontTags)
-      .document("<html><body><font>Hello <b>world</b></font></body></html>")
-      .expected_html(
-        "<html><head></head><body><span>Hello <b>world</b></span></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
   fn converts_multiple_font_tags() {
     Test::new()
       .stage(RewriteFontTags)
@@ -65,6 +54,17 @@ mod tests {
       )
       .expected_html(
         "<html><head></head><body><span>Outer <span>Inner</span></span></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn preserves_font_tag_content() {
+    Test::new()
+      .stage(RewriteFontTags)
+      .document("<html><body><font>Hello <b>world</b></font></body></html>")
+      .expected_html(
+        "<html><head></head><body><span>Hello <b>world</b></span></body></html>",
       )
       .run();
   }

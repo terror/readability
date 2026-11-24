@@ -44,6 +44,28 @@ mod tests {
   use super::*;
 
   #[test]
+  fn reuses_created_top_candidate() {
+    let mut document =
+      dom_query::Document::from("<html><body>foo</body></html>");
+
+    let options = ReadabilityOptions::default();
+
+    let mut context = Context::new(&mut document, &options);
+
+    SelectTopCandidate.run(&mut context).unwrap();
+    ExtractArticle.run(&mut context).unwrap();
+    WrapArticlePage.run(&mut context).unwrap();
+
+    assert_eq!(
+      context
+        .node(context.extraction.article.unwrap())
+        .html()
+        .to_string(),
+      r#"<div><div id="readability-page-1" class="page">foo</div></div>"#,
+    );
+  }
+
+  #[test]
   fn wraps_article_children() {
     let mut document = dom_query::Document::from("<html><body></body></html>");
 
@@ -65,28 +87,6 @@ mod tests {
         .html()
         .to_string(),
       r#"<div><div id="readability-page-1" class="page"><p>foo</p><p>bar</p></div></div>"#,
-    );
-  }
-
-  #[test]
-  fn reuses_created_top_candidate() {
-    let mut document =
-      dom_query::Document::from("<html><body>foo</body></html>");
-
-    let options = ReadabilityOptions::default();
-
-    let mut context = Context::new(&mut document, &options);
-
-    SelectTopCandidate.run(&mut context).unwrap();
-    ExtractArticle.run(&mut context).unwrap();
-    WrapArticlePage.run(&mut context).unwrap();
-
-    assert_eq!(
-      context
-        .node(context.extraction.article.unwrap())
-        .html()
-        .to_string(),
-      r#"<div><div id="readability-page-1" class="page">foo</div></div>"#,
     );
   }
 }

@@ -20,6 +20,15 @@ mod tests {
   use super::*;
 
   #[test]
+  fn removes_noscript_tags() {
+    Test::new()
+      .stage(RemoveDisallowedNodes)
+      .document("<html><body><noscript>Enable JS</noscript><p>Content</p></body></html>")
+      .expected_html("<html><head></head><body><p>Content</p></body></html>")
+      .run();
+  }
+
+  #[test]
   fn removes_script_tags() {
     Test::new()
       .stage(RemoveDisallowedNodes)
@@ -35,15 +44,6 @@ mod tests {
     Test::new()
       .stage(RemoveDisallowedNodes)
       .document("<html><head><style>body { color: red; }</style></head><body><p>Content</p></body></html>")
-      .expected_html("<html><head></head><body><p>Content</p></body></html>")
-      .run();
-  }
-
-  #[test]
-  fn removes_noscript_tags() {
-    Test::new()
-      .stage(RemoveDisallowedNodes)
-      .document("<html><body><noscript>Enable JS</noscript><p>Content</p></body></html>")
       .expected_html("<html><head></head><body><p>Content</p></body></html>")
       .run();
   }

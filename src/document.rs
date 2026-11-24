@@ -35,6 +35,16 @@ mod tests {
   use super::*;
 
   #[test]
+  fn attribute_returns_none_when_missing() {
+    let mut document =
+      dom_query::Document::from("<html><head></head><body></body></html>");
+
+    let document = Document::new(&mut document);
+
+    assert_eq!(document.attribute("html", "lang"), None);
+  }
+
+  #[test]
   fn attribute_returns_value() {
     let mut document = dom_query::Document::from(
       r#"<html lang=" en "><head></head><body></body></html>"#,
@@ -43,16 +53,6 @@ mod tests {
     let document = Document::new(&mut document);
 
     assert_eq!(document.attribute("html", "lang").as_deref(), Some(" en "));
-  }
-
-  #[test]
-  fn attribute_returns_none_when_missing() {
-    let mut document =
-      dom_query::Document::from("<html><head></head><body></body></html>");
-
-    let document = Document::new(&mut document);
-
-    assert_eq!(document.attribute("html", "lang"), None);
   }
 
   #[test]

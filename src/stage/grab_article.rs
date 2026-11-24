@@ -118,21 +118,12 @@ mod tests {
   }
 
   #[test]
-  fn single_attempt_when_long_enough() {
+  fn fails_without_content() {
     let flags = Rc::new(RefCell::new(Vec::new()));
 
-    let paragraph = format!("<p>{}</p>", "foo ".repeat(200));
+    let (result, _) = grab("<html><body></body></html>", &flags);
 
-    let (result, article) = grab(
-      &format!("<html><body><div>{paragraph}</div></body></html>"),
-      &flags,
-    );
-
-    result.unwrap();
-
-    assert_eq!(article, format!("<div><div>{paragraph}</div></div>"));
-
-    assert_eq!(*flags.borrow(), vec![Flags::default()]);
+    assert!(matches!(result, Err(Error::MissingArticleContent)));
   }
 
   #[test]
@@ -159,11 +150,20 @@ mod tests {
   }
 
   #[test]
-  fn fails_without_content() {
+  fn single_attempt_when_long_enough() {
     let flags = Rc::new(RefCell::new(Vec::new()));
 
-    let (result, _) = grab("<html><body></body></html>", &flags);
+    let paragraph = format!("<p>{}</p>", "foo ".repeat(200));
 
-    assert!(matches!(result, Err(Error::MissingArticleContent)));
+    let (result, article) = grab(
+      &format!("<html><body><div>{paragraph}</div></body></html>"),
+      &flags,
+    );
+
+    result.unwrap();
+
+    assert_eq!(article, format!("<div><div>{paragraph}</div></div>"));
+
+    assert_eq!(*flags.borrow(), vec![Flags::default()]);
   }
 }

@@ -111,6 +111,54 @@ mod tests {
   use super::*;
 
   #[test]
+  fn anchor_with_phrasing_children_is_phrasing() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document(
+        "<html><body><div>foo<br><br><a href=\"#\"><b>link</b></a></div></body></html>",
+      )
+      .expected_html(
+        "<html><head></head><body><div>foo<p><a href=\"#\"><b>link</b></a></p></div></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn collects_phrasing_content() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document(
+        "<html><body><div>foo<br><br>bar <b>baz</b></div></body></html>",
+      )
+      .expected_html(
+        "<html><head></head><body><div>foo<p>bar <b>baz</b></p></div></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn handles_br_at_end() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><div>foo<br><br></div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>foo<p></p></div></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn parent_p_becomes_div() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><p>foo<br><br>bar</p></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
   fn replaces_double_br_with_p() {
     Test::new()
       .stage(RewriteLineBreaks)
@@ -133,6 +181,41 @@ mod tests {
   }
 
   #[test]
+  fn stops_at_block_element() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document(
+        "<html><body><div>foo<br><br>bar<div>block</div></div></body></html>",
+      )
+      .expected_html(
+        "<html><head></head><body><div>foo<p>bar</p><div>block</div></div></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn stops_at_next_br_chain() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><div>a<br><br>b<br><br>c</div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>a<p>b</p><p>c</p></div></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn trims_trailing_whitespace_nodes() {
+    Test::new()
+      .stage(RewriteLineBreaks)
+      .document("<html><body><div>foo<br><br>bar<br></div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
   fn triple_br_becomes_single_p() {
     Test::new()
       .stage(RewriteLineBreaks)
@@ -150,89 +233,6 @@ mod tests {
       .document("<html><body><div>foo<br> <br>bar</div></body></html>")
       .expected_html(
         "<html><head></head><body><div>foo<p> bar</p></div></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
-  fn stops_at_next_br_chain() {
-    Test::new()
-      .stage(RewriteLineBreaks)
-      .document("<html><body><div>a<br><br>b<br><br>c</div></body></html>")
-      .expected_html(
-        "<html><head></head><body><div>a<p>b</p><p>c</p></div></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
-  fn collects_phrasing_content() {
-    Test::new()
-      .stage(RewriteLineBreaks)
-      .document(
-        "<html><body><div>foo<br><br>bar <b>baz</b></div></body></html>",
-      )
-      .expected_html(
-        "<html><head></head><body><div>foo<p>bar <b>baz</b></p></div></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
-  fn stops_at_block_element() {
-    Test::new()
-      .stage(RewriteLineBreaks)
-      .document(
-        "<html><body><div>foo<br><br>bar<div>block</div></div></body></html>",
-      )
-      .expected_html(
-        "<html><head></head><body><div>foo<p>bar</p><div>block</div></div></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
-  fn trims_trailing_whitespace_nodes() {
-    Test::new()
-      .stage(RewriteLineBreaks)
-      .document("<html><body><div>foo<br><br>bar<br></div></body></html>")
-      .expected_html(
-        "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
-  fn parent_p_becomes_div() {
-    Test::new()
-      .stage(RewriteLineBreaks)
-      .document("<html><body><p>foo<br><br>bar</p></body></html>")
-      .expected_html(
-        "<html><head></head><body><div>foo<p>bar</p></div></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
-  fn handles_br_at_end() {
-    Test::new()
-      .stage(RewriteLineBreaks)
-      .document("<html><body><div>foo<br><br></div></body></html>")
-      .expected_html(
-        "<html><head></head><body><div>foo<p></p></div></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
-  fn anchor_with_phrasing_children_is_phrasing() {
-    Test::new()
-      .stage(RewriteLineBreaks)
-      .document(
-        "<html><body><div>foo<br><br><a href=\"#\"><b>link</b></a></div></body></html>",
-      )
-      .expected_html(
-        "<html><head></head><body><div>foo<p><a href=\"#\"><b>link</b></a></p></div></body></html>",
       )
       .run();
   }
