@@ -30,6 +30,12 @@ export const ArrowIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const ChevronIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d='m6 9 6 6 6-6' />
+  </Icon>
+);
+
 export const CodeIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d='m8 8-4 4 4 4' />

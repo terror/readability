@@ -15,9 +15,7 @@ const Panel = () => {
         dark={document.documentElement.dataset.theme === 'dark'}
         html={html}
         onChange={setHtml}
-        onOpenSample={() => {}}
         output={article.content}
-        sample='news'
       />
     </div>
   );
