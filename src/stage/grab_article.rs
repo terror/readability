@@ -1,8 +1,9 @@
 use super::*;
 
 struct Attempt {
-  article: NodeId,
+  dir: Option<String>,
   document: dom_query::Document,
+  extraction: Extraction,
   length: usize,
 }
 
@@ -43,8 +44,9 @@ impl Stage for GrabArticle {
       let document = mem::replace(&mut *context.document, cache.clone());
 
       attempts.push(Attempt {
-        article,
+        dir: context.dir.take(),
         document,
+        extraction: mem::take(&mut context.extraction),
         length,
       });
 
@@ -69,7 +71,8 @@ impl Stage for GrabArticle {
     }
 
     *context.document = best.document;
-    context.extraction.article = Some(best.article);
+    context.extraction = best.extraction;
+    context.dir = best.dir;
 
     Ok(())
   }
@@ -162,5 +165,53 @@ mod tests {
     assert_eq!(article, format!("<div><div>{paragraph}</div></div>"));
 
     assert_eq!(*flags.borrow(), vec![Flags::default()]);
+  }
+
+  #[test]
+  fn restores_best_attempt_state() {
+    struct Attempts(usize);
+
+    impl Stage for Attempts {
+      fn run(&mut self, context: &mut Context<'_>) -> Result {
+        let article = create_element(&context.document.tree, "div");
+
+        article.append_child(
+          &context
+            .document
+            .tree
+            .new_text(["foo", "foo bar", "bar", "baz"][self.0]),
+        );
+
+        self.0 += 1;
+
+        context.dir = Some(self.0.to_string());
+        context.extraction.article = Some(article.id);
+        context.extraction.top_candidate = Some(article.id);
+
+        Ok(())
+      }
+    }
+
+    let mut document = dom_query::Document::from("<p>foo</p>");
+
+    let options = ParserOptions::default();
+
+    let mut context = Context::new(&mut document, &options);
+
+    GrabArticle::new(vec![Box::new(Attempts(0))])
+      .run(&mut context)
+      .unwrap();
+
+    assert_eq!(context.dir.as_deref(), Some("2"));
+
+    assert_eq!(context.extraction.top_candidate, context.extraction.article);
+
+    assert_eq!(
+      context
+        .node(context.extraction.article.unwrap())
+        .html()
+        .to_string(),
+      "<div>foo bar</div>",
+    );
   }
 }
