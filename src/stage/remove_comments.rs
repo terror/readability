@@ -4,7 +4,7 @@ pub(crate) struct RemoveComments;
 
 impl Stage for RemoveComments {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    for node in context.document.root().descendant_nodes() {
+    for node in context.document.root().descendants() {
       if node.is_comment() {
         node.remove_from_parent();
       }

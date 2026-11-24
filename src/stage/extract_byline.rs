@@ -40,7 +40,7 @@ impl ExtractByline {
 
     Some(
       node
-        .descendant_nodes()
+        .descendants()
         .into_iter()
         .find(|node| {
           node

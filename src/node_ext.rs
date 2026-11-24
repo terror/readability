@@ -47,10 +47,6 @@ pub(crate) fn text_length(text: &str) -> usize {
 pub(crate) trait NodeExt {
   fn class_weight(&self) -> f64;
 
-  fn descendant_nodes(&self) -> Vec<Self>
-  where
-    Self: Sized;
-
   fn elements_with_tags(&self, tags: &[&str]) -> Vec<Self>
   where
     Self: Sized;
@@ -68,9 +64,13 @@ pub(crate) trait NodeExt {
 
   fn has_single_tag_inside_element(&self, tag: &str) -> bool;
 
+  fn has_tag(&self, tag: &str) -> bool;
+
   fn initial_score(&self, weight_classes: bool) -> f64;
 
   fn inner_text(&self) -> String;
+
+  fn inner_text_length(&self) -> usize;
 
   fn is_element_without_content(&self) -> bool;
 
@@ -105,24 +105,10 @@ impl NodeExt for NodeRef<'_> {
       .sum()
   }
 
-  fn descendant_nodes(&self) -> Vec<Self> {
-    let mut nodes = Vec::new();
-
-    let mut stack = self.children().into_iter().rev().collect::<Vec<_>>();
-
-    while let Some(node) = stack.pop() {
-      stack.extend(node.children().into_iter().rev());
-      nodes.push(node);
-    }
-
-    nodes
-  }
-
   fn elements_with_tags(&self, tags: &[&str]) -> Vec<Self> {
     self
-      .descendant_nodes()
-      .into_iter()
-      .filter(|node| tags.contains(&node.tag().as_str()))
+      .descendants_it()
+      .filter(|node| tags.iter().any(|tag| node.has_tag(tag)))
       .collect()
   }
 
@@ -133,16 +119,15 @@ impl NodeExt for NodeRef<'_> {
     filter: impl Fn(&Self) -> bool,
   ) -> bool {
     self
-      .ancestors(None)
-      .iter()
+      .ancestors_it(None)
       .enumerate()
       .take_while(|(depth, _)| max_depth.is_none_or(|max| *depth <= max))
-      .any(|(_, ancestor)| ancestor.tag() == tag && filter(ancestor))
+      .any(|(_, ancestor)| ancestor.has_tag(tag) && filter(&ancestor))
   }
 
   fn has_child_block_element(&self) -> bool {
-    self.children().iter().any(|child| {
-      DIV_TO_P_ELEMS.contains(&child.tag().as_str())
+    self.children_it(false).any(|child| {
+      DIV_TO_P_ELEMS.iter().any(|tag| child.has_tag(tag))
         || child.has_child_block_element()
     })
   }
@@ -150,7 +135,7 @@ impl NodeExt for NodeRef<'_> {
   fn has_single_tag_inside_element(&self, tag: &str) -> bool {
     let children = self.element_children();
 
-    if children.len() != 1 || children[0].tag() != tag {
+    if children.len() != 1 || !children[0].has_tag(tag) {
       return false;
     }
 
@@ -158,6 +143,12 @@ impl NodeExt for NodeRef<'_> {
       .children()
       .iter()
       .any(|child| child.is_text() && HAS_CONTENT.is_match(&child.text()))
+  }
+
+  fn has_tag(&self, tag: &str) -> bool {
+    self.element_ref().is_some_and(|element| {
+      element.name.local.as_ref().eq_ignore_ascii_case(tag)
+    })
   }
 
   fn initial_score(&self, weight_classes: bool) -> f64 {
@@ -182,8 +173,36 @@ impl NodeExt for NodeRef<'_> {
       .to_string()
   }
 
+  fn inner_text_length(&self) -> usize {
+    let mut length = 0;
+    let mut content = false;
+    let mut whitespace = false;
+
+    for node in iter::once(*self).chain(self.descendants_it()) {
+      node.query(|node| {
+        if let NodeData::Text { contents } = &node.data {
+          for character in contents.chars() {
+            if character.is_whitespace() {
+              whitespace = content;
+            } else {
+              if whitespace {
+                length += 1;
+                whitespace = false;
+              }
+
+              length += character.len_utf16();
+              content = true;
+            }
+          }
+        }
+      });
+    }
+
+    length
+  }
+
   fn is_element_without_content(&self) -> bool {
-    if !self.is_element() || !self.text().trim().is_empty() {
+    if !self.is_element() || self.inner_text_length() > 0 {
       return false;
     }
 
@@ -197,29 +216,28 @@ impl NodeExt for NodeRef<'_> {
       return true;
     }
 
-    let tag = self.tag();
-
-    PHRASING_ELEMS.contains(&tag.as_str())
-      || (matches!(tag.as_str(), "A" | "DEL" | "INS")
-        && self.children().iter().all(NodeExt::is_phrasing_content))
+    PHRASING_ELEMS.iter().any(|tag| self.has_tag(tag))
+      || (["A", "DEL", "INS"].iter().any(|tag| self.has_tag(tag))
+        && self
+          .children_it(false)
+          .all(|child| child.is_phrasing_content()))
   }
 
   fn is_whitespace(&self) -> bool {
-    (self.is_text() && self.text().trim().is_empty()) || self.tag() == "BR"
+    (self.is_text() && self.text().trim().is_empty()) || self.has_tag("BR")
   }
 
   #[allow(clippy::cast_precision_loss)]
   fn link_density(&self) -> f64 {
-    let length = text_length(&self.inner_text());
+    let length = self.inner_text_length();
 
     if length == 0 {
       return 0.0;
     }
 
     let link_length = self
-      .descendant_nodes()
-      .iter()
-      .filter(|node| node.tag() == "A")
+      .descendants_it()
+      .filter(|node| node.has_tag("A"))
       .map(|link| {
         let coefficient = if link
           .attr("href")
@@ -230,7 +248,7 @@ impl NodeExt for NodeRef<'_> {
           1.0
         };
 
-        text_length(&link.inner_text()) as f64 * coefficient
+        link.inner_text_length() as f64 * coefficient
       })
       .sum::<f64>();
 
@@ -292,24 +310,6 @@ mod tests {
   }
 
   #[test]
-  fn descendant_nodes() {
-    let document = dom_query::Document::from(
-      "<div><p><b>foo</b></p><i></i></div><span></span>",
-    );
-
-    let node = document.select("div").nodes()[0];
-
-    assert_eq!(
-      node
-        .descendant_nodes()
-        .iter()
-        .map(NodeExt::tag)
-        .collect::<Vec<_>>(),
-      vec!["P", "B", "", "I"],
-    );
-  }
-
-  #[test]
   fn has_ancestor_tag() {
     #[track_caller]
     fn case(html: &str, max_depth: Option<usize>, expected: bool) {
@@ -361,6 +361,21 @@ mod tests {
   }
 
   #[test]
+  fn has_tag() {
+    #[track_caller]
+    fn case(html: &str, selector: &str, tag: &str, expected: bool) {
+      let document = dom_query::Document::from(html);
+      let node = document.select(selector).nodes()[0];
+      assert_eq!(node.has_tag(tag), expected);
+    }
+
+    case("<div></div>", "div", "DIV", true);
+    case("<div></div>", "div", "div", true);
+    case("<div></div>", "div", "P", false);
+    case("<div>foo</div>", "div", "", false);
+  }
+
+  #[test]
   fn initial_score() {
     #[track_caller]
     fn case(html: &str, selector: &str, weight_classes: bool, expected: f64) {
@@ -382,6 +397,23 @@ mod tests {
     let document = dom_query::Document::from("<p>  foo \n\n bar  </p>");
     let node = document.select("p").nodes()[0];
     assert_eq!(node.inner_text(), "foo bar");
+  }
+
+  #[test]
+  fn inner_text_length() {
+    #[track_caller]
+    fn case(html: &str) {
+      let document = dom_query::Document::from(html);
+      let node = document.select("div").nodes()[0];
+      assert_eq!(node.inner_text_length(), text_length(&node.inner_text()));
+    }
+
+    case("<div></div>");
+    case("<div> \n </div>");
+    case("<div>  foo \n\n bar  </div>");
+    case("<div>foo<b> </b>bar</div>");
+    case("<div>foo<b>  </b> bar</div>");
+    case("<div> <p>foo</p>\n<p>\u{1F600} bar\u{a0}</p> </div>");
   }
 
   #[test]
