@@ -12,8 +12,7 @@ impl Arguments {
   pub(crate) fn run(self) -> Result {
     let html = fs::read_to_string(&self.input)?;
 
-    let mut parser =
-      unclutter::Parser::new(&html, None, ParserOptions::default())?;
+    let parser = unclutter::Parser::new(&html, None, ParserOptions::default())?;
 
     println!("{}", parser.parse()?.content);
 

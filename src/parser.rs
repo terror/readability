@@ -39,7 +39,7 @@ impl Parser {
   ///
   /// Returns an error when the document has more elements than
   /// `max_elements` allows, or when no article content can be found.
-  pub fn parse(&mut self) -> Result<Article> {
+  pub fn parse(mut self) -> Result<Article> {
     let mut context = Context {
       url: self.base_url.clone(),
       ..Context::new(&mut self.html, &self.options)
