@@ -113,6 +113,18 @@ mod tests {
   }
 
   #[test]
+  fn alters_top_candidate_to_div() {
+    let paragraph = format!("<p>{}</p>", "foo, ".repeat(10));
+
+    assert_eq!(
+      article(&format!(
+        "<html><body><form>{paragraph}{paragraph}</form><span></span></body></html>"
+      )),
+      format!("<div><div>{paragraph}{paragraph}</div></div>"),
+    );
+  }
+
+  #[test]
   fn appends_content_siblings() {
     let paragraph = format!("<p>{}</p>", "foo, ".repeat(10));
 
@@ -123,18 +135,6 @@ mod tests {
       format!(
         r#"<div><div id="foo">{paragraph}{paragraph}</div><p>bar.</p></div>"#
       ),
-    );
-  }
-
-  #[test]
-  fn alters_top_candidate_to_div() {
-    let paragraph = format!("<p>{}</p>", "foo, ".repeat(10));
-
-    assert_eq!(
-      article(&format!(
-        "<html><body><form>{paragraph}{paragraph}</form><span></span></body></html>"
-      )),
-      format!("<div><div>{paragraph}{paragraph}</div></div>"),
     );
   }
 }

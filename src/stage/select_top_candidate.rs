@@ -205,14 +205,14 @@ mod tests {
   }
 
   #[test]
-  fn selects_highest_scoring_candidate() {
+  fn climbs_to_only_child_parent() {
     let paragraph = format!("<p>{}</p>", "foo, ".repeat(10));
 
     assert_eq!(
       top_candidate(&format!(
-        r#"<html><body><div id="foo">{paragraph}{paragraph}</div><div id="bar"><span></span>{paragraph}</div></body></html>"#
+        "<html><body><section><div>{paragraph}</div></section><span></span></body></html>"
       )),
-      format!(r#"<div id="foo">{paragraph}{paragraph}</div>"#),
+      format!("<section><div>{paragraph}</div></section>"),
     );
   }
 
@@ -237,14 +237,14 @@ mod tests {
   }
 
   #[test]
-  fn climbs_to_only_child_parent() {
+  fn selects_highest_scoring_candidate() {
     let paragraph = format!("<p>{}</p>", "foo, ".repeat(10));
 
     assert_eq!(
       top_candidate(&format!(
-        "<html><body><section><div>{paragraph}</div></section><span></span></body></html>"
+        r#"<html><body><div id="foo">{paragraph}{paragraph}</div><div id="bar"><span></span>{paragraph}</div></body></html>"#
       )),
-      format!("<section><div>{paragraph}</div></section>"),
+      format!(r#"<div id="foo">{paragraph}{paragraph}</div>"#),
     );
   }
 }

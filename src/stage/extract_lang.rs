@@ -28,10 +28,21 @@ mod tests {
   }
 
   #[test]
-  fn returns_none_when_no_lang() {
+  fn extracts_lang_with_xmlns() {
     Test::new()
       .stage(ExtractLang)
-      .document(r"<html><head></head><body></body></html>")
+      .document(
+        r#"<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"><head></head><body></body></html>"#,
+      )
+      .expected_lang(Some("en"))
+      .run();
+  }
+
+  #[test]
+  fn extracts_xml_lang() {
+    Test::new()
+      .stage(ExtractLang)
+      .document(r#"<html xml:lang="fr"><head></head><body></body></html>"#)
       .expected_lang(None)
       .run();
   }
@@ -46,22 +57,11 @@ mod tests {
   }
 
   #[test]
-  fn extracts_xml_lang() {
+  fn returns_none_when_no_lang() {
     Test::new()
       .stage(ExtractLang)
-      .document(r#"<html xml:lang="fr"><head></head><body></body></html>"#)
+      .document(r"<html><head></head><body></body></html>")
       .expected_lang(None)
-      .run();
-  }
-
-  #[test]
-  fn extracts_lang_with_xmlns() {
-    Test::new()
-      .stage(ExtractLang)
-      .document(
-        r#"<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"><head></head><body></body></html>"#,
-      )
-      .expected_lang(Some("en"))
       .run();
   }
 }

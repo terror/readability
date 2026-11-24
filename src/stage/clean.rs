@@ -41,16 +41,6 @@ mod tests {
   use super::*;
 
   #[test]
-  fn removes_elements() {
-    Test::new()
-      .stage(Clean("ASIDE"))
-      .article()
-      .document("<html><body><aside>foo</aside><p>bar</p></body></html>")
-      .expected_html("<html><head></head><body><p>bar</p></body></html>")
-      .run();
-  }
-
-  #[test]
   fn keeps_allowed_videos() {
     Test::new()
       .stage(Clean("IFRAME"))
@@ -61,6 +51,16 @@ mod tests {
       .expected_html(
         r#"<html><head></head><body><iframe src="https://www.youtube.com/embed/foo"></iframe></body></html>"#,
       )
+      .run();
+  }
+
+  #[test]
+  fn removes_elements() {
+    Test::new()
+      .stage(Clean("ASIDE"))
+      .article()
+      .document("<html><body><aside>foo</aside><p>bar</p></body></html>")
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
       .run();
   }
 }

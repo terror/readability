@@ -149,14 +149,6 @@ mod tests {
   }
 
   #[test]
-  fn resolves_links_and_media() {
-    case(
-      r##"<a href="qux">foo</a><a href="#bar">baz</a><img src="/qux.png" srcset="a.png 1x, b.png 2x"><video poster="c.png"></video>"##,
-      r##"<a href="http://foo.com/bar/qux">foo</a><a href="#bar">baz</a><img src="http://foo.com/qux.png" srcset="http://foo.com/bar/a.png 1x, http://foo.com/bar/b.png 2x"><video poster="http://foo.com/bar/c.png"></video>"##,
-    );
-  }
-
-  #[test]
   fn normalizes_windows_drive_letters() {
     case(
       r#"<img src="file:///C|/foo.gif">"#,
@@ -169,6 +161,14 @@ mod tests {
     case(
       r##"<html><head><base href="/qux/"></head><body><a href="foo">bar</a><a href="#baz">qux</a></body></html>"##,
       r#"<a href="http://foo.com/qux/foo">bar</a><a href="http://foo.com/qux/#baz">qux</a>"#,
+    );
+  }
+
+  #[test]
+  fn resolves_links_and_media() {
+    case(
+      r##"<a href="qux">foo</a><a href="#bar">baz</a><img src="/qux.png" srcset="a.png 1x, b.png 2x"><video poster="c.png"></video>"##,
+      r##"<a href="http://foo.com/bar/qux">foo</a><a href="#bar">baz</a><img src="http://foo.com/qux.png" srcset="http://foo.com/bar/a.png 1x, http://foo.com/bar/b.png 2x"><video poster="http://foo.com/bar/c.png"></video>"##,
     );
   }
 

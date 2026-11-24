@@ -66,6 +66,78 @@ mod tests {
   use super::*;
 
   #[test]
+  fn keeps_aria_hidden_false() {
+    Test::new()
+      .stage(RemoveHiddenNodes)
+      .document(
+        r#"<html><body><div aria-hidden="false">foo</div><p>bar</p></body></html>"#,
+      )
+      .expected_html(
+        r#"<html><head></head><body><div aria-hidden="false">foo</div><p>bar</p></body></html>"#,
+      )
+      .run();
+  }
+
+  #[test]
+  fn keeps_aria_modal_without_dialog_role() {
+    Test::new()
+      .stage(RemoveHiddenNodes)
+      .document(
+        r#"<html><body><div aria-modal="true" role="alertdialog">foo</div><p>bar</p></body></html>"#,
+      )
+      .expected_html(
+        r#"<html><head></head><body><div aria-modal="true" role="alertdialog">foo</div><p>bar</p></body></html>"#,
+      )
+      .run();
+  }
+
+  #[test]
+  fn keeps_fallback_image_despite_aria_hidden() {
+    Test::new()
+      .stage(RemoveHiddenNodes)
+      .document(
+        r#"<html><body><img aria-hidden="true" class="fallback-image" src="x.png"/><p>bar</p></body></html>"#,
+      )
+      .expected_html(
+        r#"<html><head></head><body><img aria-hidden="true" class="fallback-image" src="x.png"><p>bar</p></body></html>"#,
+      )
+      .run();
+  }
+
+  #[test]
+  fn removes_aria_hidden_true() {
+    Test::new()
+      .stage(RemoveHiddenNodes)
+      .document(
+        r#"<html><body><div aria-hidden="true">foo</div><p>bar</p></body></html>"#,
+      )
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
+      .run();
+  }
+
+  #[test]
+  fn removes_aria_modal_dialog() {
+    Test::new()
+      .stage(RemoveHiddenNodes)
+      .document(
+        r#"<html><body><div aria-modal="true" role="dialog">foo</div><p>bar</p></body></html>"#,
+      )
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
+      .run();
+  }
+
+  #[test]
+  fn removes_children_with_parent() {
+    Test::new()
+      .stage(RemoveHiddenNodes)
+      .document(
+        r"<html><body><div hidden><p>nested</p></div><p>bar</p></body></html>",
+      )
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
+      .run();
+  }
+
+  #[test]
   fn removes_display_none() {
     Test::new()
       .stage(RemoveHiddenNodes)
@@ -88,6 +160,15 @@ mod tests {
   }
 
   #[test]
+  fn removes_hidden_attribute() {
+    Test::new()
+      .stage(RemoveHiddenNodes)
+      .document(r"<html><body><div hidden>foo</div><p>bar</p></body></html>")
+      .expected_html("<html><head></head><body><p>bar</p></body></html>")
+      .run();
+  }
+
+  #[test]
   fn removes_visibility_hidden() {
     Test::new()
       .stage(RemoveHiddenNodes)
@@ -104,87 +185,6 @@ mod tests {
       .stage(RemoveHiddenNodes)
       .document(
         r#"<html><body><div style="visibility: hidden">foo</div><p>bar</p></body></html>"#,
-      )
-      .expected_html("<html><head></head><body><p>bar</p></body></html>")
-      .run();
-  }
-
-  #[test]
-  fn removes_hidden_attribute() {
-    Test::new()
-      .stage(RemoveHiddenNodes)
-      .document(r"<html><body><div hidden>foo</div><p>bar</p></body></html>")
-      .expected_html("<html><head></head><body><p>bar</p></body></html>")
-      .run();
-  }
-
-  #[test]
-  fn removes_aria_hidden_true() {
-    Test::new()
-      .stage(RemoveHiddenNodes)
-      .document(
-        r#"<html><body><div aria-hidden="true">foo</div><p>bar</p></body></html>"#,
-      )
-      .expected_html("<html><head></head><body><p>bar</p></body></html>")
-      .run();
-  }
-
-  #[test]
-  fn keeps_aria_hidden_false() {
-    Test::new()
-      .stage(RemoveHiddenNodes)
-      .document(
-        r#"<html><body><div aria-hidden="false">foo</div><p>bar</p></body></html>"#,
-      )
-      .expected_html(
-        r#"<html><head></head><body><div aria-hidden="false">foo</div><p>bar</p></body></html>"#,
-      )
-      .run();
-  }
-
-  #[test]
-  fn keeps_fallback_image_despite_aria_hidden() {
-    Test::new()
-      .stage(RemoveHiddenNodes)
-      .document(
-        r#"<html><body><img aria-hidden="true" class="fallback-image" src="x.png"/><p>bar</p></body></html>"#,
-      )
-      .expected_html(
-        r#"<html><head></head><body><img aria-hidden="true" class="fallback-image" src="x.png"><p>bar</p></body></html>"#,
-      )
-      .run();
-  }
-
-  #[test]
-  fn removes_aria_modal_dialog() {
-    Test::new()
-      .stage(RemoveHiddenNodes)
-      .document(
-        r#"<html><body><div aria-modal="true" role="dialog">foo</div><p>bar</p></body></html>"#,
-      )
-      .expected_html("<html><head></head><body><p>bar</p></body></html>")
-      .run();
-  }
-
-  #[test]
-  fn keeps_aria_modal_without_dialog_role() {
-    Test::new()
-      .stage(RemoveHiddenNodes)
-      .document(
-        r#"<html><body><div aria-modal="true" role="alertdialog">foo</div><p>bar</p></body></html>"#,
-      )
-      .expected_html(
-        r#"<html><head></head><body><div aria-modal="true" role="alertdialog">foo</div><p>bar</p></body></html>"#,
-      )
-      .run();
-  }
-
-  #[test]
-  fn removes_children_with_parent() {
-    Test::new()
-      .stage(RemoveHiddenNodes)
-      .document(
-        r"<html><body><div hidden><p>nested</p></div><p>bar</p></body></html>",
       )
       .expected_html("<html><head></head><body><p>bar</p></body></html>")
       .run();

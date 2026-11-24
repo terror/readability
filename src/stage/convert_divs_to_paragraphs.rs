@@ -95,15 +95,6 @@ mod tests {
   }
 
   #[test]
-  fn replaces_div_with_single_paragraph() {
-    Test::new()
-      .stage(ConvertDivsToParagraphs)
-      .document("<html><body><div> <p>foo</p> </div></body></html>")
-      .expected_html("<html><head></head><body><p>foo</p></body></html>")
-      .run();
-  }
-
-  #[test]
   fn keeps_div_with_single_link_paragraph() {
     Test::new()
       .stage(ConvertDivsToParagraphs)
@@ -117,6 +108,26 @@ mod tests {
   }
 
   #[test]
+  fn removes_whitespace_only_runs() {
+    Test::new()
+      .stage(ConvertDivsToParagraphs)
+      .document("<html><body><div> <br> <p>foo</p><p>bar</p></div></body></html>")
+      .expected_html(
+        "<html><head></head><body><div><p>foo</p><p>bar</p></div></body></html>",
+      )
+      .run();
+  }
+
+  #[test]
+  fn replaces_div_with_single_paragraph() {
+    Test::new()
+      .stage(ConvertDivsToParagraphs)
+      .document("<html><body><div> <p>foo</p> </div></body></html>")
+      .expected_html("<html><head></head><body><p>foo</p></body></html>")
+      .run();
+  }
+
+  #[test]
   fn wraps_phrasing_content() {
     Test::new()
       .stage(ConvertDivsToParagraphs)
@@ -125,17 +136,6 @@ mod tests {
       )
       .expected_html(
         "<html><head></head><body><div><p>foo <b>bar</b></p><p>baz</p><p>qux</p></div></body></html>",
-      )
-      .run();
-  }
-
-  #[test]
-  fn removes_whitespace_only_runs() {
-    Test::new()
-      .stage(ConvertDivsToParagraphs)
-      .document("<html><body><div> <br> <p>foo</p><p>bar</p></div></body></html>")
-      .expected_html(
-        "<html><head></head><body><div><p>foo</p><p>bar</p></div></body></html>",
       )
       .run();
   }

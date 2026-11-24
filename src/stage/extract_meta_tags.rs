@@ -119,44 +119,27 @@ mod tests {
   use super::*;
 
   #[test]
-  fn og_title() {
+  fn article_author_non_url_used() {
     Test::new()
       .stage(ExtractMetaTags)
       .document(
-        r#"<html><head><meta property="og:title" content="foo"/></head><body></body></html>"#,
+        r#"<html><head><meta property="article:author" content="foo bar"/></head><body></body></html>"#,
       )
       .expected_metadata(Metadata {
-        title: Some("foo".into()),
+        byline: Some("foo bar".into()),
         ..Metadata::default()
       })
       .run();
   }
 
   #[test]
-  fn og_description() {
+  fn article_author_url_ignored() {
     Test::new()
       .stage(ExtractMetaTags)
       .document(
-        r#"<html><head><meta property="og:description" content="foo"/></head><body></body></html>"#,
+        r#"<html><head><meta property="article:author" content="https://example.com/author"/></head><body></body></html>"#,
       )
-      .expected_metadata(Metadata {
-        excerpt: Some("foo".into()),
-        ..Metadata::default()
-      })
-      .run();
-  }
-
-  #[test]
-  fn og_site_name() {
-    Test::new()
-      .stage(ExtractMetaTags)
-      .document(
-        r#"<html><head><meta property="og:site_name" content="foo"/></head><body></body></html>"#,
-      )
-      .expected_metadata(Metadata {
-        site_name: Some("foo".into()),
-        ..Metadata::default()
-      })
+      .expected_metadata(Metadata::default())
       .run();
   }
 
@@ -175,27 +158,60 @@ mod tests {
   }
 
   #[test]
-  fn article_author_url_ignored() {
+  fn author_meta() {
     Test::new()
       .stage(ExtractMetaTags)
       .document(
-        r#"<html><head><meta property="article:author" content="https://example.com/author"/></head><body></body></html>"#,
+        r#"<html><head><meta name="author" content="foo"/></head><body></body></html>"#,
       )
-      .expected_metadata(Metadata::default())
+      .expected_metadata(Metadata {
+        byline: Some("foo".into()),
+        ..Metadata::default()
+      })
       .run();
   }
 
   #[test]
-  fn article_author_non_url_used() {
+  fn dc_creator() {
     Test::new()
       .stage(ExtractMetaTags)
       .document(
-        r#"<html><head><meta property="article:author" content="foo bar"/></head><body></body></html>"#,
+        r#"<html><head><meta name="dc.creator" content="foo"/></head><body></body></html>"#,
       )
       .expected_metadata(Metadata {
-        byline: Some("foo bar".into()),
+        byline: Some("foo".into()),
         ..Metadata::default()
       })
+      .run();
+  }
+
+  #[test]
+  fn dc_title_preferred_over_og_title() {
+    Test::new()
+      .stage(ExtractJsonLd)
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head>
+          <meta name="dc.title" content="foo"/>
+          <meta property="og:title" content="bar"/>
+        </head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata {
+        title: Some("foo".into()),
+        ..Metadata::default()
+      })
+      .run();
+  }
+
+  #[test]
+  fn empty_content_ignored() {
+    Test::new()
+      .stage(ExtractJsonLd)
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta property="og:title" content=""/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata::default())
       .run();
   }
 
@@ -237,51 +253,39 @@ mod tests {
   }
 
   #[test]
-  fn author_meta() {
+  fn og_description() {
     Test::new()
       .stage(ExtractMetaTags)
       .document(
-        r#"<html><head><meta name="author" content="foo"/></head><body></body></html>"#,
+        r#"<html><head><meta property="og:description" content="foo"/></head><body></body></html>"#,
       )
       .expected_metadata(Metadata {
-        byline: Some("foo".into()),
+        excerpt: Some("foo".into()),
         ..Metadata::default()
       })
       .run();
   }
 
   #[test]
-  fn unmatched_name_ignored() {
+  fn og_site_name() {
     Test::new()
       .stage(ExtractMetaTags)
       .document(
-        r#"<html><head><meta name="article:author" content="foo"/></head><body></body></html>"#,
-      )
-      .expected_metadata(Metadata::default())
-      .run();
-  }
-
-  #[test]
-  fn dc_creator() {
-    Test::new()
-      .stage(ExtractMetaTags)
-      .document(
-        r#"<html><head><meta name="dc.creator" content="foo"/></head><body></body></html>"#,
+        r#"<html><head><meta property="og:site_name" content="foo"/></head><body></body></html>"#,
       )
       .expected_metadata(Metadata {
-        byline: Some("foo".into()),
+        site_name: Some("foo".into()),
         ..Metadata::default()
       })
       .run();
   }
 
   #[test]
-  fn twitter_title_fallback() {
+  fn og_title() {
     Test::new()
-      .stage(ExtractJsonLd)
       .stage(ExtractMetaTags)
       .document(
-        r#"<html><head><meta name="twitter:title" content="foo"/></head><body></body></html>"#,
+        r#"<html><head><meta property="og:title" content="foo"/></head><body></body></html>"#,
       )
       .expected_metadata(Metadata {
         title: Some("foo".into()),
@@ -306,32 +310,28 @@ mod tests {
   }
 
   #[test]
-  fn empty_content_ignored() {
+  fn twitter_title_fallback() {
     Test::new()
       .stage(ExtractJsonLd)
       .stage(ExtractMetaTags)
       .document(
-        r#"<html><head><meta property="og:title" content=""/></head><body></body></html>"#,
-      )
-      .expected_metadata(Metadata::default())
-      .run();
-  }
-
-  #[test]
-  fn dc_title_preferred_over_og_title() {
-    Test::new()
-      .stage(ExtractJsonLd)
-      .stage(ExtractMetaTags)
-      .document(
-        r#"<html><head>
-          <meta name="dc.title" content="foo"/>
-          <meta property="og:title" content="bar"/>
-        </head><body></body></html>"#,
+        r#"<html><head><meta name="twitter:title" content="foo"/></head><body></body></html>"#,
       )
       .expected_metadata(Metadata {
         title: Some("foo".into()),
         ..Metadata::default()
       })
+      .run();
+  }
+
+  #[test]
+  fn unmatched_name_ignored() {
+    Test::new()
+      .stage(ExtractMetaTags)
+      .document(
+        r#"<html><head><meta name="article:author" content="foo"/></head><body></body></html>"#,
+      )
+      .expected_metadata(Metadata::default())
       .run();
   }
 }

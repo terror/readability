@@ -56,25 +56,17 @@ mod tests {
   }
 
   #[test]
-  fn first_article_paragraph() {
+  fn empty_excerpt_overwritten() {
     assert_eq!(
       excerpt(
-        "<html><body><div> foo </div><p> bar </p><p>baz</p></body></html>",
-        Metadata::default(),
+        "<html><body><p>bar</p></body></html>",
+        Metadata {
+          excerpt: Some(String::new()),
+          ..Metadata::default()
+        },
       )
       .as_deref(),
       Some("bar"),
-    );
-  }
-
-  #[test]
-  fn no_paragraphs_leaves_excerpt_none() {
-    assert_eq!(
-      excerpt(
-        "<html><body><div>foo</div></body></html>",
-        Metadata::default()
-      ),
-      None,
     );
   }
 
@@ -94,17 +86,25 @@ mod tests {
   }
 
   #[test]
-  fn empty_excerpt_overwritten() {
+  fn first_article_paragraph() {
     assert_eq!(
       excerpt(
-        "<html><body><p>bar</p></body></html>",
-        Metadata {
-          excerpt: Some(String::new()),
-          ..Metadata::default()
-        },
+        "<html><body><div> foo </div><p> bar </p><p>baz</p></body></html>",
+        Metadata::default(),
       )
       .as_deref(),
       Some("bar"),
+    );
+  }
+
+  #[test]
+  fn no_paragraphs_leaves_excerpt_none() {
+    assert_eq!(
+      excerpt(
+        "<html><body><div>foo</div></body></html>",
+        Metadata::default()
+      ),
+      None,
     );
   }
 }
