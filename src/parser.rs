@@ -12,7 +12,7 @@ impl Parser {
     readerable::is_probably_readerable(&self.html)
   }
 
-  /// Creates a new readability parser instance.
+  /// Creates a new parser instance.
   ///
   /// # Errors
   ///
