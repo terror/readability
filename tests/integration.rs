@@ -92,7 +92,7 @@ impl TestFixture {
       &self.source_html,
       Some("http://fakehost/test/page.html"),
       ParserOptions::builder()
-        .classes_to_preserve(["page", "caption"])
+        .classes_to_preserve(["caption"])
         .build(),
     )
     .unwrap()
