@@ -151,9 +151,9 @@ impl NodeExt for NodeRef<'_> {
   }
 
   fn has_child_block_element(&self) -> bool {
-    self.children_it(false).any(|child| {
-      child.has_any_tag(DIV_TO_P_ELEMS) || child.has_child_block_element()
-    })
+    self
+      .descendants_it()
+      .any(|node| node.has_any_tag(DIV_TO_P_ELEMS))
   }
 
   fn has_single_tag_inside_element(&self, tag: &str) -> bool {
@@ -225,15 +225,21 @@ impl NodeExt for NodeRef<'_> {
   }
 
   fn is_phrasing_content(&self) -> bool {
-    if self.is_text() {
-      return true;
+    let mut stack = vec![*self];
+
+    while let Some(node) = stack.pop() {
+      if node.is_text() || node.has_any_tag(PHRASING_ELEMS) {
+        continue;
+      }
+
+      if !node.has_any_tag(&["A", "DEL", "INS"]) {
+        return false;
+      }
+
+      stack.extend(node.children_it(false));
     }
 
-    self.has_any_tag(PHRASING_ELEMS)
-      || (self.has_any_tag(&["A", "DEL", "INS"])
-        && self
-          .children_it(false)
-          .all(|child| child.is_phrasing_content()))
+    true
   }
 
   fn is_whitespace(&self) -> bool {

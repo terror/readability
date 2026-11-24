@@ -79,3 +79,25 @@ impl Parser {
     })
   }
 }
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn deeply_nested_elements() {
+    let depth = 10_000;
+
+    let html = format!(
+      "<div>{}{}{}</div>",
+      "<span>".repeat(depth),
+      "foo ".repeat(200),
+      "</span>".repeat(depth),
+    );
+
+    Parser::new(&html, None, ParserOptions::default())
+      .unwrap()
+      .parse()
+      .unwrap();
+  }
+}
