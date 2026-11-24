@@ -85,9 +85,8 @@ checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 [[package]]
 name = "assert-html-eq"
 version = "0.1.0"
-source = "git+https://github.com/terror/assert-html-eq#b754f2026d170d53566f0dbaa69ba92cffc736c7"
+source = "git+https://github.com/terror/assert-html-eq#abeb7ceeab2f937219aa97ee933578af376ab34b"
 dependencies = [
- "ego-tree",
  "pretty_assertions",
  "scraper",
  "unicode-normalization",
