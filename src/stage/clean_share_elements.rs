@@ -4,28 +4,24 @@ const SHARE_ELEMENT_THRESHOLD: usize = 500;
 
 pub(crate) struct CleanShareElements;
 
-impl CleanShareElements {
-  fn clean(node: &NodeRef) {
-    for child in node.element_children() {
-      if SHARE_ELEMENTS.is_match(&child.match_string())
-        && text_length(&child.text()) < SHARE_ELEMENT_THRESHOLD
-      {
-        child.remove_from_parent();
-      } else {
-        Self::clean(&child);
-      }
-    }
-  }
-}
-
 impl Stage for CleanShareElements {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let Some(article) = context.extraction.article else {
       return Ok(());
     };
 
-    for child in context.node(article).element_children() {
-      Self::clean(&child);
+    let mut stack = context.node(article).element_children();
+
+    while let Some(node) = stack.pop() {
+      for child in node.element_children() {
+        if SHARE_ELEMENTS.is_match(&child.match_string())
+          && text_length(&child.text()) < SHARE_ELEMENT_THRESHOLD
+        {
+          child.remove_from_parent();
+        } else {
+          stack.push(child);
+        }
+      }
     }
 
     Ok(())

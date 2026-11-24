@@ -20,30 +20,28 @@ const PRESENTATIONAL_ATTRIBUTES: &[&str] = &[
 
 pub(crate) struct CleanStyles;
 
-impl CleanStyles {
-  fn clean(node: &NodeRef) {
-    let tag = node.tag();
-
-    if tag == "SVG" {
-      return;
-    }
-
-    node.remove_attrs(PRESENTATIONAL_ATTRIBUTES);
-
-    if DEPRECATED_SIZE_ATTRIBUTE_ELEMS.contains(&tag.as_str()) {
-      node.remove_attrs(&["width", "height"]);
-    }
-
-    for child in node.element_children() {
-      Self::clean(&child);
-    }
-  }
-}
-
 impl Stage for CleanStyles {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    if let Some(article) = context.extraction.article {
-      Self::clean(&context.node(article));
+    let Some(article) = context.extraction.article else {
+      return Ok(());
+    };
+
+    let mut stack = vec![context.node(article)];
+
+    while let Some(node) = stack.pop() {
+      let tag = node.tag();
+
+      if tag == "SVG" {
+        continue;
+      }
+
+      node.remove_attrs(PRESENTATIONAL_ATTRIBUTES);
+
+      if DEPRECATED_SIZE_ATTRIBUTE_ELEMS.contains(&tag.as_str()) {
+        node.remove_attrs(&["width", "height"]);
+      }
+
+      stack.extend(node.element_children());
     }
 
     Ok(())
