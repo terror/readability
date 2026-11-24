@@ -1,7 +1,7 @@
 use {
   criterion::{Criterion, criterion_group, criterion_main},
-  readability::{Readability, ReadabilityOptions},
   std::{fs, hint::black_box, path::PathBuf, time::Duration},
+  unclutter::{Readability, ReadabilityOptions},
 };
 
 fn parse(criterion: &mut Criterion) {

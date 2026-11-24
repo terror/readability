@@ -3,9 +3,9 @@
 use {
   assert_html_eq::assert_html_eq,
   pretty_assertions::assert_eq,
-  readability::{Readability, ReadabilityOptions},
   serde::{Deserialize, Serialize},
   std::{fs, path::PathBuf},
+  unclutter::{Readability, ReadabilityOptions},
 };
 
 macro_rules! test_metadata {
@@ -83,7 +83,7 @@ impl TestFixture {
     }
   }
 
-  fn parse_article(&self) -> readability::Article {
+  fn parse_article(&self) -> unclutter::Article {
     self.readability().parse().expect("Failed to parse article")
   }
 

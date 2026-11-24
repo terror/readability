@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Parser)]
-#[command(name = "readability")]
+#[command(name = "unclutter")]
 #[command(about = "Extract readable content from HTML files", long_about = None)]
 pub(crate) struct Arguments {
   #[arg(value_name = "FILE", help = "Path to the HTML file to parse")]

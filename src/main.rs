@@ -1,8 +1,8 @@
 use {
   arguments::Arguments,
   clap::Parser,
-  readability::{Readability, ReadabilityOptions},
   std::{backtrace::BacktraceStatus, fs, path::PathBuf, process},
+  unclutter::{Readability, ReadabilityOptions},
 };
 
 mod arguments;
