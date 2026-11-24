@@ -1,7 +1,13 @@
 use {
   arguments::Arguments,
   clap::Parser,
-  std::{backtrace::BacktraceStatus, fs, path::PathBuf, process},
+  std::{
+    backtrace::BacktraceStatus,
+    fs,
+    io::{self, Read, Write},
+    path::PathBuf,
+    process,
+  },
   unclutter::ParserOptions,
 };
 
