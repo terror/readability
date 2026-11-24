@@ -1,9 +1,5 @@
 #[derive(Debug, Clone)]
 pub struct ParserOptions {
-  /// Whether to enable logging of debug messages.
-  ///
-  /// Default: false
-  pub debug: bool,
   /// Whether to preserve all classes on HTML elements.
   ///
   /// Default: false
@@ -44,7 +40,6 @@ impl ParserOptions {
 impl Default for ParserOptions {
   fn default() -> Self {
     Self {
-      debug: false,
       keep_classes: false,
       link_density_bias: 0.0,
       max_elements: None,
@@ -81,16 +76,6 @@ impl ParserOptionsBuilder {
           .into_iter()
           .chain(classes.into_iter().map(Into::into))
           .collect(),
-        ..self.inner
-      },
-    }
-  }
-
-  #[must_use]
-  pub fn debug(self, debug: bool) -> Self {
-    Self {
-      inner: ParserOptions {
-        debug,
         ..self.inner
       },
     }
