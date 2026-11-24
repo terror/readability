@@ -3,22 +3,15 @@ import { formatDate, readingTime } from '@/lib/format';
 import { sanitize } from '@/lib/sanitize';
 import type { Article } from '@/lib/types';
 import { Notice } from '@/ui/notice';
-import { Status } from '@/ui/status';
 import { CSSProperties, useMemo } from 'react';
 
 interface ReaderProps {
   appearance: Appearance;
   article: Article;
-  duration: number;
   readable: boolean;
 }
 
-export const Reader = ({
-  appearance,
-  article,
-  duration,
-  readable,
-}: ReaderProps) => {
+export const Reader = ({ appearance, article, readable }: ReaderProps) => {
   const content = useMemo(() => sanitize(article.content), [article.content]);
 
   const meta = [
@@ -59,13 +52,6 @@ export const Reader = ({
         style={{ '--reader-size': `${appearance.textSize}px` } as CSSProperties}
         dangerouslySetInnerHTML={{ __html: content }}
       />
-      <footer className='border-line text-ink-3 mt-14 flex flex-wrap gap-x-4 gap-y-2 border-t pt-5 text-[13px] tabular-nums'>
-        <Status tone={readable ? 'ok' : 'warn'}>
-          {readable ? 'Readable' : 'Probably not an article'}
-        </Status>
-        <span>{article.length.toLocaleString()} characters</span>
-        <span>Extracted in {duration.toFixed(1)} ms</span>
-      </footer>
     </article>
   );
 };
