@@ -7,7 +7,7 @@ pub struct ParserOptions {
   /// A weighting applied to the link density calculation.
   ///
   /// Default: 0.0
-  pub link_density_bias: f32,
+  pub link_density_bias: f64,
   /// The maximum number of DOM elements to parse before aborting.
   ///
   /// Default: None
@@ -92,7 +92,7 @@ impl ParserOptionsBuilder {
   }
 
   #[must_use]
-  pub fn link_density_bias(self, link_density_bias: f32) -> Self {
+  pub fn link_density_bias(self, link_density_bias: f64) -> Self {
     Self {
       inner: ParserOptions {
         link_density_bias,
