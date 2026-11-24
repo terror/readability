@@ -13,6 +13,7 @@ import {
 import { CheckIcon, ChevronsUpDownIcon } from './icons';
 
 interface ComboboxProps {
+  align?: 'center' | 'end' | 'start';
   className?: string;
   empty: string;
   label: string;
@@ -24,6 +25,7 @@ interface ComboboxProps {
 }
 
 export const Combobox = ({
+  align = 'start',
   className,
   empty,
   label,
@@ -56,7 +58,7 @@ export const Combobox = ({
       </PopoverPrimitive.Trigger>
       <PopoverPrimitive.Portal>
         <PopoverPrimitive.Content
-          align='end'
+          align={align}
           sideOffset={8}
           collisionPadding={16}
           className='shadow-pop data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 z-50 w-64 origin-(--radix-popover-content-transform-origin) rounded-lg outline-none'

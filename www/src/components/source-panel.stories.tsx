@@ -1,3 +1,4 @@
+import { Combobox } from '@/ui/combobox';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 
@@ -16,6 +17,18 @@ const Panel = () => {
         html={html}
         onChange={setHtml}
         output={article.content}
+        picker={
+          <Combobox
+            className='w-48'
+            empty='No test page found.'
+            label='Test page'
+            onChange={() => {}}
+            options={['ars-1', 'nytimes-1', 'wikipedia']}
+            placeholder='Test pages'
+            search='Search test pages'
+            value='wikipedia'
+          />
+        }
       />
     </div>
   );
