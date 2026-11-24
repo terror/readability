@@ -49,6 +49,9 @@ pub(crate) static META_PROPERTY: LazyLock<Regex> = re!(
   r"(?i)\s*(article|dc|dcterm|og|twitter)\s*:\s*(author|creator|description|published_time|title|site_name)\s*"
 );
 
+pub(crate) static NAMED_HTML_ENTITY: LazyLock<Regex> =
+  re!(r"&(quot|amp|apos|lt|gt);");
+
 pub(crate) static NEGATIVE: LazyLock<Regex> = re!(
   r"(?i)-ad-|hidden|^hid$| hid$| hid |^hid |banner|combx|comment|com-|contact|footer|gdpr|masthead|media|meta|outbrain|promo|related|scroll|share|shoutbox|sidebar|skyscraper|sponsor|shopping|tags|widget"
 );
