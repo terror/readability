@@ -30,6 +30,19 @@ export const ArrowIcon = (props: IconProps) => (
   </Icon>
 );
 
+export const CheckIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d='m5 12 5 5L20 7' />
+  </Icon>
+);
+
+export const ChevronsUpDownIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <path d='m7 15 5 5 5-5' />
+    <path d='m7 9 5-5 5 5' />
+  </Icon>
+);
+
 export const CodeIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d='m8 8-4 4 4 4' />
@@ -49,6 +62,13 @@ export const LinkIcon = (props: IconProps) => (
   <Icon {...props}>
     <path d='M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1' />
     <path d='M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1' />
+  </Icon>
+);
+
+export const SearchIcon = (props: IconProps) => (
+  <Icon {...props}>
+    <circle cx='11' cy='11' r='7' />
+    <path d='m20 20-3.5-3.5' />
   </Icon>
 );
 

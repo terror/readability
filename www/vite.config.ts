@@ -27,6 +27,7 @@ const api = (): Plugin => ({
 export default defineConfig({
   css: { devSourcemap: true },
   plugins: [react(), tailwindcss(), api()],
+  server: { fs: { allow: ['..'] } },
   resolve: {
     alias: {
       '@': path.resolve(import.meta.dirname, './src'),

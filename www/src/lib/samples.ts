@@ -1,13 +1,25 @@
-import blog from '../../samples/blog.html?raw';
-import minimal from '../../samples/minimal.html?raw';
-import news from '../../samples/news.html?raw';
+const pages = import.meta.glob<string>(
+  '../../../submodules/readability/test/test-pages/*/source.html',
+  { import: 'default', query: '?raw' }
+);
 
-export const samples = [
-  { name: 'news', code: news },
-  { name: 'blog', code: blog },
-  { name: 'minimal', code: minimal },
-].map((sample) => ({ ...sample, code: sample.code.trim() }));
+export const DEFAULT_SAMPLE = 'wikipedia';
 
-export function getSample(name: string) {
-  return samples.find((sample) => sample.name === name) ?? samples[0];
+export const SAMPLE_BASE_URL = 'http://fakehost/test/page.html';
+
+export const samples = Object.entries(pages)
+  .map(([path, load]) => ({
+    load,
+    name: /test-pages\/([^/]+)\//.exec(path)?.[1] ?? path,
+  }))
+  .sort((a, b) => a.name.localeCompare(b.name));
+
+export const sampleNames = samples.map(({ name }) => name);
+
+export async function loadSample(name: string): Promise<string> {
+  const sample = samples.find((sample) => sample.name === name);
+
+  if (!sample) throw new Error(`There is no test page named ${name}.`);
+
+  return sample.load();
 }
