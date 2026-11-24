@@ -1,5 +1,5 @@
 #[derive(Debug, Clone)]
-pub struct ReadabilityOptions {
+pub struct ParserOptions {
   /// Whether to enable logging of debug messages.
   ///
   /// Default: false
@@ -34,14 +34,14 @@ pub struct ReadabilityOptions {
   pub use_json_ld: bool,
 }
 
-impl ReadabilityOptions {
+impl ParserOptions {
   #[must_use]
-  pub fn builder() -> ReadabilityOptionsBuilder {
-    ReadabilityOptionsBuilder::default()
+  pub fn builder() -> ParserOptionsBuilder {
+    ParserOptionsBuilder::default()
   }
 }
 
-impl Default for ReadabilityOptions {
+impl Default for ParserOptions {
   fn default() -> Self {
     Self {
       debug: false,
@@ -57,13 +57,13 @@ impl Default for ReadabilityOptions {
 }
 
 #[derive(Default)]
-pub struct ReadabilityOptionsBuilder {
-  inner: ReadabilityOptions,
+pub struct ParserOptionsBuilder {
+  inner: ParserOptions,
 }
 
-impl ReadabilityOptionsBuilder {
+impl ParserOptionsBuilder {
   #[must_use]
-  pub fn build(self) -> ReadabilityOptions {
+  pub fn build(self) -> ParserOptions {
     self.inner
   }
 
@@ -74,7 +74,7 @@ impl ReadabilityOptionsBuilder {
     S: Into<String>,
   {
     Self {
-      inner: ReadabilityOptions {
+      inner: ParserOptions {
         preserved_classes: classes.into_iter().map(Into::into).collect(),
         ..self.inner
       },
@@ -84,7 +84,7 @@ impl ReadabilityOptionsBuilder {
   #[must_use]
   pub fn debug(self, debug: bool) -> Self {
     Self {
-      inner: ReadabilityOptions {
+      inner: ParserOptions {
         debug,
         ..self.inner
       },
@@ -94,7 +94,7 @@ impl ReadabilityOptionsBuilder {
   #[must_use]
   pub fn keep_classes(self, keep_classes: bool) -> Self {
     Self {
-      inner: ReadabilityOptions {
+      inner: ParserOptions {
         keep_classes,
         ..self.inner
       },
@@ -104,7 +104,7 @@ impl ReadabilityOptionsBuilder {
   #[must_use]
   pub fn link_density_bias(self, link_density_bias: f32) -> Self {
     Self {
-      inner: ReadabilityOptions {
+      inner: ParserOptions {
         link_density_bias,
         ..self.inner
       },
@@ -114,7 +114,7 @@ impl ReadabilityOptionsBuilder {
   #[must_use]
   pub fn max_elements(self, max_elements: Option<usize>) -> Self {
     Self {
-      inner: ReadabilityOptions {
+      inner: ParserOptions {
         max_elements,
         ..self.inner
       },
@@ -124,7 +124,7 @@ impl ReadabilityOptionsBuilder {
   #[must_use]
   pub fn min_text_length(self, min_text_length: usize) -> Self {
     Self {
-      inner: ReadabilityOptions {
+      inner: ParserOptions {
         min_text_length,
         ..self.inner
       },
@@ -134,7 +134,7 @@ impl ReadabilityOptionsBuilder {
   #[must_use]
   pub fn n_top_candidates(self, n_top_candidates: usize) -> Self {
     Self {
-      inner: ReadabilityOptions {
+      inner: ParserOptions {
         n_top_candidates,
         ..self.inner
       },
@@ -144,7 +144,7 @@ impl ReadabilityOptionsBuilder {
   #[must_use]
   pub fn use_json_ld(self, use_json_ld: bool) -> Self {
     Self {
-      inner: ReadabilityOptions {
+      inner: ParserOptions {
         use_json_ld,
         ..self.inner
       },

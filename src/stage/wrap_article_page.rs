@@ -48,7 +48,7 @@ mod tests {
     let mut document =
       dom_query::Document::from("<html><body>foo</body></html>");
 
-    let options = ReadabilityOptions::default();
+    let options = ParserOptions::default();
 
     let mut context = Context::new(&mut document, &options);
 
@@ -69,7 +69,7 @@ mod tests {
   fn wraps_article_children() {
     let mut document = dom_query::Document::from("<html><body></body></html>");
 
-    let options = ReadabilityOptions::default();
+    let options = ParserOptions::default();
 
     let mut context = Context::new(&mut document, &options);
 

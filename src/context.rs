@@ -7,7 +7,7 @@ pub(crate) struct Context<'a> {
   pub(crate) flags: Flags,
   pub(crate) lang: Option<String>,
   pub(crate) metadata: Metadata,
-  pub(crate) options: &'a ReadabilityOptions,
+  pub(crate) options: &'a ParserOptions,
   pub(crate) url: Option<Url>,
 }
 
@@ -18,7 +18,7 @@ impl<'a> Context<'a> {
 
   pub(crate) fn new(
     html: &'a mut dom_query::Document,
-    options: &'a ReadabilityOptions,
+    options: &'a ParserOptions,
   ) -> Self {
     Self {
       dir: None,
@@ -36,7 +36,7 @@ impl<'a> Context<'a> {
     self.document.tree.get_unchecked(&id)
   }
 
-  pub(crate) fn options(&self) -> &ReadabilityOptions {
+  pub(crate) fn options(&self) -> &ParserOptions {
     self.options
   }
 }

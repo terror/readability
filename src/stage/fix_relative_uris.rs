@@ -125,7 +125,7 @@ mod tests {
   fn case(html: &str, expected: &str) {
     let mut document = dom_query::Document::from(html);
 
-    let options = ReadabilityOptions::default();
+    let options = ParserOptions::default();
 
     let mut context = Context::new(&mut document, &options);
 
