@@ -9,7 +9,7 @@ pub(crate) struct ElementLimit;
 
 impl Stage for ElementLimit {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(limit) = context.options().max_elements.filter(|limit| *limit > 0)
+    let Some(limit) = context.options.max_elements.filter(|limit| *limit > 0)
     else {
       return Ok(());
     };
