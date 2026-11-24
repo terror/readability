@@ -26,18 +26,6 @@ const MAX_SHORT_TITLE_WORDS: usize = 4;
 
 pub(crate) struct ExtractTitle;
 
-impl Stage for ExtractTitle {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    if context.metadata.title.is_some() {
-      return Ok(());
-    }
-
-    context.metadata.title = Self::extract(context.document);
-
-    Ok(())
-  }
-}
-
 impl ExtractTitle {
   fn colon_candidate(raw: &str, document: &dom_query::Document) -> String {
     let heading_matches = document
@@ -130,6 +118,18 @@ impl ExtractTitle {
 
   fn word_count(s: &str) -> usize {
     TITLE_WORD_SEPARATOR.split(s).count()
+  }
+}
+
+impl Stage for ExtractTitle {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    if context.metadata.title.is_some() {
+      return Ok(());
+    }
+
+    context.metadata.title = Self::extract(context.document);
+
+    Ok(())
   }
 }
 

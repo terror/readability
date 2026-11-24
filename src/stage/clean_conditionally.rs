@@ -19,31 +19,6 @@ const TEXTISH_TAGS: &[&str] = &[
 
 pub(crate) struct CleanConditionally(pub(crate) &'static str);
 
-impl Stage for CleanConditionally {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    if !context.flags.clean_conditionally {
-      return Ok(());
-    }
-
-    let Some(article) = context.extraction.article else {
-      return Ok(());
-    };
-
-    for node in context
-      .node(article)
-      .elements_with_tags(&[self.0])
-      .iter()
-      .rev()
-    {
-      if node.parent().is_some() && self.should_remove(context, node) {
-        node.remove_from_parent();
-      }
-    }
-
-    Ok(())
-  }
-}
-
 impl CleanConditionally {
   #[allow(clippy::cast_precision_loss)]
   fn should_remove(&self, context: &Context<'_>, node: &NodeRef) -> bool {
@@ -181,6 +156,31 @@ impl CleanConditionally {
       .sum::<usize>();
 
     children_length as f64 / length as f64
+  }
+}
+
+impl Stage for CleanConditionally {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    if !context.flags.clean_conditionally {
+      return Ok(());
+    }
+
+    let Some(article) = context.extraction.article else {
+      return Ok(());
+    };
+
+    for node in context
+      .node(article)
+      .elements_with_tags(&[self.0])
+      .iter()
+      .rev()
+    {
+      if node.parent().is_some() && self.should_remove(context, node) {
+        node.remove_from_parent();
+      }
+    }
+
+    Ok(())
   }
 }
 

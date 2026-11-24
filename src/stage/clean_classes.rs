@@ -2,20 +2,6 @@ use super::*;
 
 pub(crate) struct CleanClasses;
 
-impl Stage for CleanClasses {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    if context.options.keep_classes {
-      return Ok(());
-    }
-
-    if let Some(article) = context.extraction.article {
-      Self::clean(&context.node(article), &context.options.preserved_classes);
-    }
-
-    Ok(())
-  }
-}
-
 impl CleanClasses {
   fn clean(node: &NodeRef, preserved: &[String]) {
     let class = node
@@ -35,6 +21,20 @@ impl CleanClasses {
     for child in node.element_children() {
       Self::clean(&child, preserved);
     }
+  }
+}
+
+impl Stage for CleanClasses {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    if context.options.keep_classes {
+      return Ok(());
+    }
+
+    if let Some(article) = context.extraction.article {
+      Self::clean(&context.node(article), &context.options.preserved_classes);
+    }
+
+    Ok(())
   }
 }
 

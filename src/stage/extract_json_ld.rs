@@ -28,41 +28,6 @@ const ARTICLE_TYPES: &[&str] = &[
 
 pub(crate) struct ExtractJsonLd;
 
-impl Stage for ExtractJsonLd {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let scripts = context
-      .document
-      .select("script[type='application/ld+json']")
-      .nodes()
-      .to_vec();
-
-    for script in scripts {
-      let text = script.text();
-
-      let text = text.trim();
-
-      let text = text
-        .trim_start_matches("<![CDATA[")
-        .trim_end_matches("]]>")
-        .trim();
-
-      let Ok(value) = serde_json::from_str::<serde_json::Value>(text) else {
-        continue;
-      };
-
-      let Some(article) = Self::find_article(&value) else {
-        continue;
-      };
-
-      context.metadata = Self::extract_metadata(article, context.document);
-
-      break;
-    }
-
-    Ok(())
-  }
-}
-
 impl ExtractJsonLd {
   fn extract_byline(article: &serde_json::Value) -> Option<String> {
     let author = article.get("author")?;
@@ -210,6 +175,41 @@ impl ExtractJsonLd {
         .is_some_and(|string| string.contains(SCHEMA_ORG)),
       _ => false,
     }
+  }
+}
+
+impl Stage for ExtractJsonLd {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    let scripts = context
+      .document
+      .select("script[type='application/ld+json']")
+      .nodes()
+      .to_vec();
+
+    for script in scripts {
+      let text = script.text();
+
+      let text = text.trim();
+
+      let text = text
+        .trim_start_matches("<![CDATA[")
+        .trim_end_matches("]]>")
+        .trim();
+
+      let Ok(value) = serde_json::from_str::<serde_json::Value>(text) else {
+        continue;
+      };
+
+      let Some(article) = Self::find_article(&value) else {
+        continue;
+      };
+
+      context.metadata = Self::extract_metadata(article, context.document);
+
+      break;
+    }
+
+    Ok(())
   }
 }
 

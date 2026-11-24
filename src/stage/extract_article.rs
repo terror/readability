@@ -13,6 +13,25 @@ const SIBLING_SCORE_RATIO: f64 = 0.2;
 
 pub(crate) struct ExtractArticle;
 
+impl ExtractArticle {
+  fn is_content_paragraph(node: &NodeRef) -> bool {
+    let link_density = node.link_density();
+
+    let text = node.inner_text();
+
+    let length = text_length(&text);
+
+    if length > MIN_PARAGRAPH_LENGTH {
+      link_density < MAX_PARAGRAPH_LINK_DENSITY
+    } else {
+      length > 0
+        && length < MIN_PARAGRAPH_LENGTH
+        && link_density == 0.0
+        && SENTENCE_END.is_match(&text)
+    }
+  }
+}
+
 impl Stage for ExtractArticle {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let Some(top_candidate) = context.extraction.top_candidate else {
@@ -69,25 +88,6 @@ impl Stage for ExtractArticle {
     context.extraction.top_candidate_parent = Some(parent);
 
     Ok(())
-  }
-}
-
-impl ExtractArticle {
-  fn is_content_paragraph(node: &NodeRef) -> bool {
-    let link_density = node.link_density();
-
-    let text = node.inner_text();
-
-    let length = text_length(&text);
-
-    if length > MIN_PARAGRAPH_LENGTH {
-      link_density < MAX_PARAGRAPH_LINK_DENSITY
-    } else {
-      length > 0
-        && length < MIN_PARAGRAPH_LENGTH
-        && link_density == 0.0
-        && SENTENCE_END.is_match(&text)
-    }
   }
 }
 

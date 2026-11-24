@@ -25,16 +25,6 @@ const UNLIKELY_ROLES: &[&str] = &[
 /// Nothing is removed once a retry has disabled the `strip_unlikelys` flag.
 pub(crate) struct RemoveUnlikelyCandidates;
 
-impl Rule for RemoveUnlikelyCandidates {
-  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
-    if context.flags.strip_unlikelys && Self::is_unlikely(&context.node(node)) {
-      Action::Remove
-    } else {
-      Action::Continue
-    }
-  }
-}
-
 impl RemoveUnlikelyCandidates {
   fn is_unlikely(node: &NodeRef) -> bool {
     let match_string = node.match_string();
@@ -54,6 +44,16 @@ impl RemoveUnlikelyCandidates {
     node
       .attr("role")
       .is_some_and(|role| UNLIKELY_ROLES.contains(&role.as_ref()))
+  }
+}
+
+impl Rule for RemoveUnlikelyCandidates {
+  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
+    if context.flags.strip_unlikelys && Self::is_unlikely(&context.node(node)) {
+      Action::Remove
+    } else {
+      Action::Continue
+    }
   }
 }
 

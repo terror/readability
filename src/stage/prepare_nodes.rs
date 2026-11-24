@@ -4,6 +4,12 @@ pub(crate) struct PrepareNodes {
   rules: Vec<Box<dyn Rule>>,
 }
 
+impl PrepareNodes {
+  pub(crate) fn new(rules: Vec<Box<dyn Rule>>) -> Self {
+    Self { rules }
+  }
+}
+
 impl Stage for PrepareNodes {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let mut rules = self
@@ -15,12 +21,6 @@ impl Stage for PrepareNodes {
     traverse(context, &mut rules);
 
     Ok(())
-  }
-}
-
-impl PrepareNodes {
-  pub(crate) fn new(rules: Vec<Box<dyn Rule>>) -> Self {
-    Self { rules }
   }
 }
 

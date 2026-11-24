@@ -17,6 +17,34 @@ const PHRASING_ELEMENTS: &[&str] = &[
 /// otherwise be produced.
 pub(crate) struct RewriteLineBreaks;
 
+impl RewriteLineBreaks {
+  fn is_phrasing_content(node: &NodeRef) -> bool {
+    if node.is_text() {
+      return true;
+    }
+
+    let Some(name) = node.node_name() else {
+      return false;
+    };
+
+    let name_lower = name.to_ascii_lowercase();
+
+    PHRASING_ELEMENTS.contains(&name_lower.as_ref())
+      || matches!(name_lower.as_ref(), "a" | "del" | "ins")
+        && node.children().iter().all(Self::is_phrasing_content)
+  }
+
+  fn is_whitespace(node: &NodeRef) -> bool {
+    (node.is_text() && node.text().trim().is_empty()) || node.is("br")
+  }
+
+  fn next_significant<'a>(start: Option<&NodeRef<'a>>) -> Option<NodeRef<'a>> {
+    iter::successors(start.cloned(), NodeRef::next_sibling).find(|node| {
+      node.is_element() || (node.is_text() && !node.text().trim().is_empty())
+    })
+  }
+}
+
 impl Stage for RewriteLineBreaks {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     for node in context.document.select("br").nodes().to_vec() {
@@ -75,34 +103,6 @@ impl Stage for RewriteLineBreaks {
     }
 
     Ok(())
-  }
-}
-
-impl RewriteLineBreaks {
-  fn is_phrasing_content(node: &NodeRef) -> bool {
-    if node.is_text() {
-      return true;
-    }
-
-    let Some(name) = node.node_name() else {
-      return false;
-    };
-
-    let name_lower = name.to_ascii_lowercase();
-
-    PHRASING_ELEMENTS.contains(&name_lower.as_ref())
-      || matches!(name_lower.as_ref(), "a" | "del" | "ins")
-        && node.children().iter().all(Self::is_phrasing_content)
-  }
-
-  fn is_whitespace(node: &NodeRef) -> bool {
-    (node.is_text() && node.text().trim().is_empty()) || node.is("br")
-  }
-
-  fn next_significant<'a>(start: Option<&NodeRef<'a>>) -> Option<NodeRef<'a>> {
-    iter::successors(start.cloned(), NodeRef::next_sibling).find(|node| {
-      node.is_element() || (node.is_text() && !node.text().trim().is_empty())
-    })
   }
 }
 

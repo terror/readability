@@ -4,32 +4,6 @@ const MAX_LINK_DENSITY: f64 = 0.25;
 
 pub(crate) struct ConvertDivsToParagraphs;
 
-impl Rule for ConvertDivsToParagraphs {
-  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
-    let div = context.node(node);
-
-    if div.tag() != "DIV" {
-      return Action::Continue;
-    }
-
-    Self::wrap_phrasing_content(&div);
-
-    if div.has_single_tag_inside_element("P")
-      && div.link_density() < MAX_LINK_DENSITY
-    {
-      let paragraph = div.element_children()[0].clone();
-      div.replace_with(&paragraph);
-      return Action::Replace(paragraph.id);
-    }
-
-    if !div.has_child_block_element() {
-      div.set_tag("p");
-    }
-
-    Action::Continue
-  }
-}
-
 impl ConvertDivsToParagraphs {
   fn wrap_phrasing_content(div: &NodeRef) {
     let mut child = div.first_child();
@@ -76,6 +50,32 @@ impl ConvertDivsToParagraphs {
 
       child = next;
     }
+  }
+}
+
+impl Rule for ConvertDivsToParagraphs {
+  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
+    let div = context.node(node);
+
+    if div.tag() != "DIV" {
+      return Action::Continue;
+    }
+
+    Self::wrap_phrasing_content(&div);
+
+    if div.has_single_tag_inside_element("P")
+      && div.link_density() < MAX_LINK_DENSITY
+    {
+      let paragraph = div.element_children()[0].clone();
+      div.replace_with(&paragraph);
+      return Action::Replace(paragraph.id);
+    }
+
+    if !div.has_child_block_element() {
+      div.set_tag("p");
+    }
+
+    Action::Continue
   }
 }
 

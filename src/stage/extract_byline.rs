@@ -18,24 +18,6 @@ const BYLINE_MAX_LENGTH: usize = 100;
 /// and non-empty text is preferred for the byline text.
 pub(crate) struct ExtractByline;
 
-impl Rule for ExtractByline {
-  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
-    if context.metadata.byline.is_some() {
-      return Action::Continue;
-    }
-
-    let byline = Self::byline(&context.node(node));
-
-    match byline {
-      Some(byline) => {
-        context.metadata.byline = Some(byline);
-        Action::Remove
-      }
-      None => Action::Continue,
-    }
-  }
-}
-
 impl ExtractByline {
   fn byline(node: &NodeRef) -> Option<String> {
     let rel = node.attr("rel").unwrap_or_default();
@@ -71,6 +53,24 @@ impl ExtractByline {
           |node| node.text().trim().to_string(),
         ),
     )
+  }
+}
+
+impl Rule for ExtractByline {
+  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
+    if context.metadata.byline.is_some() {
+      return Action::Continue;
+    }
+
+    let byline = Self::byline(&context.node(node));
+
+    match byline {
+      Some(byline) => {
+        context.metadata.byline = Some(byline);
+        Action::Remove
+      }
+      None => Action::Continue,
+    }
   }
 }
 

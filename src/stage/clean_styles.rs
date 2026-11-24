@@ -20,16 +20,6 @@ const PRESENTATIONAL_ATTRIBUTES: &[&str] = &[
 
 pub(crate) struct CleanStyles;
 
-impl Stage for CleanStyles {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    if let Some(article) = context.extraction.article {
-      Self::clean(&context.node(article));
-    }
-
-    Ok(())
-  }
-}
-
 impl CleanStyles {
   fn clean(node: &NodeRef) {
     let tag = node.tag();
@@ -47,6 +37,16 @@ impl CleanStyles {
     for child in node.element_children() {
       Self::clean(&child);
     }
+  }
+}
+
+impl Stage for CleanStyles {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    if let Some(article) = context.extraction.article {
+      Self::clean(&context.node(article));
+    }
+
+    Ok(())
   }
 }
 

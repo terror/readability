@@ -34,6 +34,13 @@ pub struct ReadabilityOptions {
   pub use_json_ld: bool,
 }
 
+impl ReadabilityOptions {
+  #[must_use]
+  pub fn builder() -> ReadabilityOptionsBuilder {
+    ReadabilityOptionsBuilder::default()
+  }
+}
+
 impl Default for ReadabilityOptions {
   fn default() -> Self {
     Self {
@@ -46,13 +53,6 @@ impl Default for ReadabilityOptions {
       preserved_classes: vec!["page".to_string()],
       use_json_ld: true,
     }
-  }
-}
-
-impl ReadabilityOptions {
-  #[must_use]
-  pub fn builder() -> ReadabilityOptionsBuilder {
-    ReadabilityOptionsBuilder::default()
   }
 }
 

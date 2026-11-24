@@ -5,26 +5,6 @@ const DATA_TABLE_DESCENDANTS: &[&str] =
 
 pub(crate) struct MarkDataTables;
 
-impl Stage for MarkDataTables {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(article) = context.extraction.article else {
-      return Ok(());
-    };
-
-    let tables = context
-      .node(article)
-      .elements_with_tags(&["TABLE"])
-      .into_iter()
-      .filter(Self::is_data_table)
-      .map(|table| table.id)
-      .collect::<Vec<_>>();
-
-    context.extraction.data_tables.extend(tables);
-
-    Ok(())
-  }
-}
-
 impl MarkDataTables {
   fn is_data_table(table: &NodeRef) -> bool {
     if table
@@ -98,6 +78,26 @@ impl MarkDataTables {
         (rows + span(row, "rowspan"), columns.max(row_columns))
       },
     )
+  }
+}
+
+impl Stage for MarkDataTables {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    let Some(article) = context.extraction.article else {
+      return Ok(());
+    };
+
+    let tables = context
+      .node(article)
+      .elements_with_tags(&["TABLE"])
+      .into_iter()
+      .filter(Self::is_data_table)
+      .map(|table| table.id)
+      .collect::<Vec<_>>();
+
+    context.extraction.data_tables.extend(tables);
+
+    Ok(())
   }
 }
 
