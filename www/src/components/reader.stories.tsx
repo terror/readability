@@ -8,7 +8,6 @@ const meta = {
   args: {
     appearance: defaultAppearance,
     article,
-    duration: 3.2,
     readable: true,
   },
   component: Reader,

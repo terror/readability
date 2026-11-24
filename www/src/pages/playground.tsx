@@ -114,7 +114,6 @@ const Playground = () => {
       <Reader
         appearance={appearance}
         article={result.article}
-        duration={result.duration}
         readable={result.readable}
       />
     );
