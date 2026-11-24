@@ -5,7 +5,7 @@ use {
   extraction::Extraction,
   flags::Flags,
   metadata::Metadata,
-  node_ext::{NodeExt, create_element, text_length},
+  node_ext::{NodeExt, create_element, link_density, text_length},
   pipeline::Pipeline,
   re::{
     AD_WORDS, B64_DATA_URL, BYLINE, COMMAS, DISPLAY_NONE, HAS_CONTENT,
@@ -34,8 +34,10 @@ use {
   std::{
     collections::{HashMap, HashSet},
     iter, mem,
+    ops::Add,
     sync::LazyLock,
   },
+  text_length::TextLength,
   text_similarity::text_similarity,
   url::Url,
 };
@@ -62,6 +64,7 @@ mod re;
 mod readable;
 mod rule;
 mod stage;
+mod text_length;
 mod text_similarity;
 
 pub type Result<T = (), E = Error> = std::result::Result<T, E>;
