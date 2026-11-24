@@ -65,6 +65,9 @@ pub(crate) static POSITIVE: LazyLock<Regex> = re!(
   r"(?i)article|body|content|entry|hentry|h-entry|main|page|pagination|post|text|blog|story"
 );
 
+pub(crate) static SCHEMA_ORG: LazyLock<Regex> =
+  re!(r"^https?://schema\.org/?$");
+
 pub(crate) static SENTENCE_END: LazyLock<Regex> = re!(r"\.( |$)");
 
 pub(crate) static SHARE_ELEMENTS: LazyLock<Regex> =

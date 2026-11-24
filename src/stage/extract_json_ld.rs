@@ -2,8 +2,6 @@ use super::*;
 
 const HEADLINE_SIMILARITY_THRESHOLD: f64 = 0.75;
 
-const SCHEMA_ORG: &str = "schema.org";
-
 const ARTICLE_TYPES: &[&str] = &[
   "Article",
   "AdvertiserContentArticle",
@@ -168,11 +166,11 @@ impl ExtractJsonLd {
 
   fn is_schema_org(context: &serde_json::Value) -> bool {
     match context {
-      serde_json::Value::String(string) => string.contains(SCHEMA_ORG),
+      serde_json::Value::String(string) => SCHEMA_ORG.is_match(string),
       serde_json::Value::Object(object) => object
         .get("@vocab")
         .and_then(|value| value.as_str())
-        .is_some_and(|string| string.contains(SCHEMA_ORG)),
+        .is_some_and(|string| SCHEMA_ORG.is_match(string)),
       _ => false,
     }
   }
@@ -216,6 +214,23 @@ impl Stage for ExtractJsonLd {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn schema_org_context() {
+    #[track_caller]
+    fn case(context: serde_json::Value, expected: bool) {
+      assert_eq!(ExtractJsonLd::is_schema_org(&context), expected);
+    }
+
+    case(serde_json::json!("https://schema.org"), true);
+    case(serde_json::json!("http://schema.org/"), true);
+    case(serde_json::json!({ "@vocab": "https://schema.org/" }), true);
+    case(serde_json::json!("https://schema.org.foo"), false);
+    case(
+      serde_json::json!({ "@vocab": "https://foo.schema.org" }),
+      false,
+    );
+  }
 
   #[test]
   fn array_of_objects_picks_article() {
