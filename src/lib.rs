@@ -17,19 +17,22 @@ use {
     TITLE_WORD_SEPARATOR, TOKENIZE, UNLIKELY_CANDIDATE, VIDEOS,
   },
   regex::{Captures, Regex},
-  rule::{Action, Rule, traverse},
+  rule::{
+    ConvertDivsToParagraphs, ExtractByline, RemoveDuplicateTitleHeader,
+    RemoveEmptyContainers, RemoveHiddenNodes, RemoveUnlikelyCandidates, Rule,
+    traverse,
+  },
   serde::{Deserialize, Serialize},
   stage::{
     Clean, CleanClasses, CleanConditionally, CleanHeaders, CleanShareElements,
-    CleanStyles, ConvertDivsToParagraphs, ElementLimit, ExtractArticle,
-    ExtractByline, ExtractDir, ExtractExcerpt, ExtractJsonLd, ExtractLang,
-    ExtractMetaTags, ExtractTitle, FixLazyImages, FixRelativeUris, GrabArticle,
-    MarkDataTables, PrepareNodes, RemoveBreaksBeforeParagraphs, RemoveComments,
-    RemoveDisallowedNodes, RemoveDuplicateTitleHeader, RemoveEmptyContainers,
-    RemoveEmptyParagraphs, RemoveHiddenNodes, RemoveUnlikelyCandidates,
-    RenameHeadings, RewriteFontTags, RewriteLineBreaks, ScoreCandidates,
-    SelectTopCandidate, SimplifyNestedElements, Stage, UnescapeHtmlEntities,
-    UnwrapNoscriptImages, UnwrapSingleCellTables, WrapArticlePage,
+    CleanStyles, ElementLimit, ExtractArticle, ExtractDir, ExtractExcerpt,
+    ExtractJsonLd, ExtractLang, ExtractMetaTags, ExtractTitle, FixLazyImages,
+    FixRelativeUris, GrabArticle, MarkDataTables, PrepareNodes,
+    RemoveBreaksBeforeParagraphs, RemoveComments, RemoveDisallowedNodes,
+    RemoveEmptyParagraphs, RenameHeadings, RewriteFontTags, RewriteLineBreaks,
+    ScoreCandidates, SelectTopCandidate, SimplifyNestedElements, Stage,
+    UnescapeHtmlEntities, UnwrapNoscriptImages, UnwrapSingleCellTables,
+    WrapArticlePage,
   },
   std::{
     collections::{HashMap, HashSet},
@@ -41,6 +44,9 @@ use {
   text_similarity::text_similarity,
   url::Url,
 };
+
+#[cfg(test)]
+use stage::Test;
 
 pub use crate::{
   article::Article,
