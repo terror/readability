@@ -9,6 +9,8 @@ pub(crate) struct Arguments {
     help = "Path to the HTML file to parse, read from standard input if omitted"
   )]
   input: Option<PathBuf>,
+  #[arg(long, help = "URL of the page, used to resolve relative links")]
+  url: Option<String>,
 }
 
 impl Arguments {
@@ -21,7 +23,11 @@ impl Arguments {
       html
     };
 
-    let parser = unclutter::Parser::new(&html, None, ParserOptions::default())?;
+    let parser = unclutter::Parser::new(
+      &html,
+      self.url.as_deref(),
+      ParserOptions::default(),
+    )?;
 
     writeln!(stdout, "{}", parser.parse()?.content)?;
 
@@ -37,18 +43,34 @@ impl Arguments {
 mod tests {
   use {super::*, clap::error::ErrorKind};
 
-  #[test]
-  fn reads_stdin() {
+  #[track_caller]
+  fn run(arguments: &[&str], stdin: &str) -> String {
     let mut stdout = Vec::new();
 
-    Arguments::try_parse_from(["unclutter"])
+    Arguments::try_parse_from(arguments)
       .unwrap()
-      .execute("<p>foo</p>".as_bytes(), &mut stdout)
+      .execute(stdin.as_bytes(), &mut stdout)
       .unwrap();
 
+    String::from_utf8(stdout).unwrap()
+  }
+
+  #[test]
+  fn reads_stdin() {
     assert_eq!(
-      String::from_utf8(stdout).unwrap(),
+      run(&["unclutter"], "<p>foo</p>"),
       "<div id=\"readability-page-1\" class=\"page\"><p>foo</p></div>\n",
+    );
+  }
+
+  #[test]
+  fn resolves_relative_links() {
+    assert_eq!(
+      run(
+        &["unclutter", "--url", "http://foo.com/bar/"],
+        r#"<p>foo<img src="baz.png"></p>"#,
+      ),
+      "<div id=\"readability-page-1\" class=\"page\"><p>foo<img src=\"http://foo.com/bar/baz.png\"></p></div>\n",
     );
   }
 
