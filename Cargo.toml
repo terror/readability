@@ -24,6 +24,10 @@ undocumented_unsafe_blocks = "deny"
 unnecessary_wraps = "allow"
 wildcard_imports = "allow"
 
+[[bench]]
+name = "parse"
+harness = false
+
 [dependencies]
 anyhow = "1.0.100"
 clap = { version = "4.5.54", features = ["derive"] }
@@ -36,5 +40,6 @@ url = "2.5.8"
 
 [dev-dependencies]
 assert-html-eq = { git = "https://github.com/terror/assert-html-eq" }
+criterion = "0.8.2"
 paste = "1.0"
 pretty_assertions = "1.4"
