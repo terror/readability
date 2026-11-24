@@ -25,9 +25,9 @@ impl CleanConditionally {
     let is_data_table =
       |table: &NodeRef| context.extraction.data_tables.contains(&table.id);
 
-    let text = node.inner_text();
+    let text = node.text();
 
-    let content_length = text_length(&text);
+    let content_length = node.inner_text_length();
 
     let is_list = matches!(self.0, "UL" | "OL") || {
       let list_length = node
@@ -94,7 +94,7 @@ impl CleanConditionally {
 
     let embed_count = embeds.len();
 
-    if AD_WORDS.is_match(&text) || LOADING_WORDS.is_match(&text) {
+    if AD_WORDS.is_match(text.trim()) || LOADING_WORDS.is_match(text.trim()) {
       return true;
     }
 

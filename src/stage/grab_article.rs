@@ -34,7 +34,7 @@ impl Stage for GrabArticle {
         .article
         .ok_or(Error::MissingArticleContent)?;
 
-      let length = text_length(&context.node(article).inner_text());
+      let length = context.node(article).inner_text_length();
 
       if length >= context.options.min_text_length {
         return Ok(());

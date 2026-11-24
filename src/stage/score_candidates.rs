@@ -20,9 +20,9 @@ impl Stage for ScoreCandidates {
         continue;
       }
 
-      let text = element.inner_text();
+      let text = element.text();
 
-      let length = text_length(&text);
+      let length = element.inner_text_length();
 
       if length < MIN_PARAGRAPH_LENGTH {
         continue;
