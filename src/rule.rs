@@ -1,5 +1,21 @@
 use super::*;
 
+mod convert_divs_to_paragraphs;
+mod extract_byline;
+mod remove_duplicate_title_header;
+mod remove_empty_containers;
+mod remove_hidden_nodes;
+mod remove_unlikely_candidates;
+
+pub(crate) use {
+  convert_divs_to_paragraphs::ConvertDivsToParagraphs,
+  extract_byline::ExtractByline,
+  remove_duplicate_title_header::RemoveDuplicateTitleHeader,
+  remove_empty_containers::RemoveEmptyContainers,
+  remove_hidden_nodes::RemoveHiddenNodes,
+  remove_unlikely_candidates::RemoveUnlikelyCandidates,
+};
+
 pub(crate) enum Action {
   Continue,
   Remove,

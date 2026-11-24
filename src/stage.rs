@@ -6,10 +6,8 @@ mod clean_conditionally;
 mod clean_headers;
 mod clean_share_elements;
 mod clean_styles;
-mod convert_divs_to_paragraphs;
 mod element_limit;
 mod extract_article;
-mod extract_byline;
 mod extract_dir;
 mod extract_excerpt;
 mod extract_json_ld;
@@ -24,11 +22,7 @@ mod prepare_nodes;
 mod remove_breaks_before_paragraphs;
 mod remove_comments;
 mod remove_disallowed_nodes;
-mod remove_duplicate_title_header;
-mod remove_empty_containers;
 mod remove_empty_paragraphs;
-mod remove_hidden_nodes;
-mod remove_unlikely_candidates;
 mod rename_headings;
 mod rewrite_font_tags;
 mod rewrite_line_breaks;
@@ -50,10 +44,8 @@ pub(crate) use {
   clean_headers::CleanHeaders,
   clean_share_elements::CleanShareElements,
   clean_styles::CleanStyles,
-  convert_divs_to_paragraphs::ConvertDivsToParagraphs,
   element_limit::ElementLimit,
   extract_article::ExtractArticle,
-  extract_byline::ExtractByline,
   extract_dir::ExtractDir,
   extract_excerpt::ExtractExcerpt,
   extract_json_ld::ExtractJsonLd,
@@ -68,11 +60,7 @@ pub(crate) use {
   remove_breaks_before_paragraphs::RemoveBreaksBeforeParagraphs,
   remove_comments::RemoveComments,
   remove_disallowed_nodes::RemoveDisallowedNodes,
-  remove_duplicate_title_header::RemoveDuplicateTitleHeader,
-  remove_empty_containers::RemoveEmptyContainers,
   remove_empty_paragraphs::RemoveEmptyParagraphs,
-  remove_hidden_nodes::RemoveHiddenNodes,
-  remove_unlikely_candidates::RemoveUnlikelyCandidates,
   rename_headings::RenameHeadings,
   rewrite_font_tags::RewriteFontTags,
   rewrite_line_breaks::RewriteLineBreaks,
