@@ -1,5 +1,9 @@
 #[derive(Debug, Clone)]
 pub struct ParserOptions {
+  /// A list of specific class names to preserve when `keep_classes` is false.
+  ///
+  /// Default: \["page"\]
+  pub classes_to_preserve: Vec<String>,
   /// Whether to preserve all classes on HTML elements.
   ///
   /// Default: false
@@ -20,10 +24,6 @@ pub struct ParserOptions {
   ///
   /// Default: 5
   pub n_top_candidates: usize,
-  /// A list of specific class names to preserve when `keep_classes` is false.
-  ///
-  /// Default: \["page"\]
-  pub preserved_classes: Vec<String>,
   /// Whether to extract metadata from JSON-LD.
   ///
   /// Default: true
@@ -40,12 +40,12 @@ impl ParserOptions {
 impl Default for ParserOptions {
   fn default() -> Self {
     Self {
+      classes_to_preserve: vec!["page".to_string()],
       keep_classes: false,
       link_density_bias: 0.0,
       max_elements: None,
       min_text_length: 500,
       n_top_candidates: 5,
-      preserved_classes: vec!["page".to_string()],
       use_json_ld: true,
     }
   }
@@ -70,9 +70,9 @@ impl ParserOptionsBuilder {
   {
     Self {
       inner: ParserOptions {
-        preserved_classes: self
+        classes_to_preserve: self
           .inner
-          .preserved_classes
+          .classes_to_preserve
           .into_iter()
           .chain(classes.into_iter().map(Into::into))
           .collect(),
@@ -152,7 +152,7 @@ mod tests {
       ParserOptions::builder()
         .classes_to_preserve(["foo"])
         .build()
-        .preserved_classes,
+        .classes_to_preserve,
       ["page", "foo"],
     );
   }

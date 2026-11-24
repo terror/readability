@@ -12,7 +12,7 @@ impl Stage for CleanClasses {
       return Ok(());
     };
 
-    let preserved = &context.options.preserved_classes;
+    let preserved = &context.options.classes_to_preserve;
 
     let mut stack = vec![context.node(article)];
 
