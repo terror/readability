@@ -17,6 +17,104 @@ const TEXTISH_TAGS: &[&str] = &[
   "UL",
 ];
 
+#[derive(Default)]
+struct Descendants<'a> {
+  embeds: Vec<NodeRef<'a>>,
+  has_data_table: bool,
+  hash_links: usize,
+  heading_length: usize,
+  img: usize,
+  input: usize,
+  length: usize,
+  li: usize,
+  links: usize,
+  list_length: usize,
+  p: usize,
+  textish_length: usize,
+}
+
+impl<'a> Descendants<'a> {
+  fn add(
+    &mut self,
+    node: NodeRef<'a>,
+    length: usize,
+    is_data_table: impl Fn(&NodeRef) -> bool,
+  ) {
+    let Some(name) =
+      node.element_ref().map(|element| element.name.local.clone())
+    else {
+      return;
+    };
+
+    let is = |tags: &[&str]| {
+      tags
+        .iter()
+        .any(|tag| name.as_ref().eq_ignore_ascii_case(tag))
+    };
+
+    if is(&["A"]) {
+      if node.is_hash_link() {
+        self.hash_links += length;
+      } else {
+        self.links += length;
+      }
+    } else if is(&["EMBED", "IFRAME", "OBJECT"]) {
+      self.embeds.push(node);
+    } else if is(&["INPUT"]) {
+      self.input += 1;
+    } else if is(&["LI"]) {
+      self.li += 1;
+    }
+
+    if is(&["IMG"]) {
+      self.img += 1;
+    } else if is(&["P"]) {
+      self.p += 1;
+    } else if is(&["TABLE"]) {
+      self.has_data_table |= is_data_table(&node);
+    } else if is(&["OL", "UL"]) {
+      self.list_length += length;
+    }
+
+    if is(HEADING_TAGS) {
+      self.heading_length += length;
+    }
+
+    if is(TEXTISH_TAGS) {
+      self.textish_length += length;
+    }
+  }
+
+  fn new(node: &NodeRef<'a>, is_data_table: impl Fn(&NodeRef) -> bool) -> Self {
+    let mut descendants = Self::default();
+
+    let mut stack =
+      vec![(*node, node.children_it(false), TextLength::from(node))];
+
+    while let Some((_, children, _)) = stack.last_mut() {
+      if let Some(child) = children.next() {
+        stack.push((child, child.children_it(false), TextLength::from(&child)));
+        continue;
+      }
+
+      let Some((node, _, length)) = stack.pop() else {
+        break;
+      };
+
+      let Some((_, _, parent_length)) = stack.last_mut() else {
+        descendants.length = length.length;
+        break;
+      };
+
+      *parent_length = *parent_length + length;
+
+      descendants.add(node, length.length, &is_data_table);
+    }
+
+    descendants
+  }
+}
+
 pub(crate) struct CleanConditionally(pub(crate) &'static str);
 
 impl CleanConditionally {
@@ -24,24 +122,6 @@ impl CleanConditionally {
   fn should_remove(&self, context: &Context<'_>, node: &NodeRef) -> bool {
     let is_data_table =
       |table: &NodeRef| context.extraction.data_tables.contains(&table.id);
-
-    let text = node.text();
-
-    let content_length = node.inner_text_length();
-
-    let is_list = matches!(self.0, "UL" | "OL") || {
-      let list_length = node
-        .elements_with_tags(&["UL", "OL"])
-        .iter()
-        .map(NodeExt::inner_text_length)
-        .sum::<usize>();
-
-      if content_length == 0 {
-        list_length > 0
-      } else {
-        list_length as f64 / content_length as f64 > 0.9
-      }
-    };
 
     if self.0 == "TABLE" && is_data_table(node) {
       return false;
@@ -55,11 +135,9 @@ impl CleanConditionally {
       return false;
     }
 
-    if node
-      .elements_with_tags(&["TABLE"])
-      .iter()
-      .any(is_data_table)
-    {
+    let descendants = Descendants::new(node, is_data_table);
+
+    if descendants.has_data_table {
       return false;
     }
 
@@ -73,36 +151,52 @@ impl CleanConditionally {
       return true;
     }
 
+    let text = node.text();
+
     if text.matches(',').count() >= 10 {
       return false;
     }
 
-    let count = |tag: &str| node.elements_with_tags(&[tag]).len();
-
-    let p = count("P") as f64;
-    let img = count("IMG");
-    let li = count("LI") as f64 - 100.0;
-    let input = count("INPUT");
-
-    let heading_density = Self::text_density(node, HEADING_TAGS);
-
-    let embeds = node.elements_with_tags(&["OBJECT", "EMBED", "IFRAME"]);
-
-    if embeds.iter().any(is_allowed_video) {
+    if descendants.embeds.iter().any(is_allowed_video) {
       return false;
     }
-
-    let embed_count = embeds.len();
 
     if AD_WORDS.is_match(text.trim()) || LOADING_WORDS.is_match(text.trim()) {
       return true;
     }
 
-    let link_density = node.link_density();
+    let content_length = descendants.length;
+
+    let density = |length: usize| {
+      if content_length == 0 {
+        0.0
+      } else {
+        length as f64 / content_length as f64
+      }
+    };
+
+    let is_list = matches!(self.0, "UL" | "OL")
+      || if content_length == 0 {
+        descendants.list_length > 0
+      } else {
+        density(descendants.list_length) > 0.9
+      };
+
+    let p = descendants.p as f64;
+    let img = descendants.img;
+    let li = descendants.li as f64 - 100.0;
+    let input = descendants.input;
+
+    let heading_density = density(descendants.heading_length);
+
+    let embed_count = descendants.embeds.len();
+
+    let link_density =
+      link_density(content_length, descendants.links, descendants.hash_links);
 
     let link_density_modifier = context.options.link_density_bias;
 
-    let text_density = Self::text_density(node, TEXTISH_TAGS);
+    let text_density = density(descendants.textish_length);
 
     let is_figure_child = node.has_ancestor_tag("FIGURE", Some(3), |_| true);
 
@@ -133,29 +227,12 @@ impl CleanConditionally {
         return true;
       }
 
-      if img == count("LI") {
+      if img == descendants.li {
         return false;
       }
     }
 
     remove
-  }
-
-  #[allow(clippy::cast_precision_loss)]
-  fn text_density(node: &NodeRef, tags: &[&str]) -> f64 {
-    let length = node.inner_text_length();
-
-    if length == 0 {
-      return 0.0;
-    }
-
-    let children_length = node
-      .elements_with_tags(tags)
-      .iter()
-      .map(NodeExt::inner_text_length)
-      .sum::<usize>();
-
-    children_length as f64 / length as f64
   }
 }
 
