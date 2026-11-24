@@ -10,7 +10,6 @@ const meta = {
     article,
     duration: 3.2,
     readable: true,
-    url: 'https://harborledger.example/news/riverside-tram-line',
   },
   component: Reader,
   parameters: { layout: 'fullscreen' },

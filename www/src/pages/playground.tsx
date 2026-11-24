@@ -4,30 +4,22 @@ import { useDocument } from '@/hooks/use-document';
 import { useParserOptions } from '@/hooks/use-parser-options';
 import { usePersistedState } from '@/hooks/use-persisted-state';
 import { useUnclutter } from '@/hooks/use-unclutter';
-import { hostname } from '@/lib/format';
 import { SAMPLE_BASE_URL, sampleNames } from '@/lib/samples';
 import { Button } from '@/ui/button';
 import { Combobox } from '@/ui/combobox';
 import { IconButton } from '@/ui/icon-button';
 import { CodeIcon, InfoIcon, SpinnerIcon } from '@/ui/icons';
-import { LinkField } from '@/ui/link-field';
 import { Notice } from '@/ui/notice';
 import { Popover } from '@/ui/popover';
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
 
 import { AppearancePanel } from '../components/appearance-panel';
 import { DetailsPanel } from '../components/details-panel';
 import { Reader } from '../components/reader';
 import { SourcePanel } from '../components/source-panel';
 import { TopBar } from '../components/top-bar';
-import type { Source } from '../hooks/use-document';
 
 const SOURCE_STORAGE_KEY = 'unclutter:source';
-
-const describe = (source: Source) =>
-  source.kind === 'url'
-    ? (hostname(source.url) ?? source.url)
-    : `the ${source.name} test page`;
 
 const Message = ({ children }: { children: ReactNode }) => (
   <div className='mx-auto max-w-[668px] px-6 pt-14'>{children}</div>
@@ -37,36 +29,20 @@ const Playground = () => {
   const unclutter = useUnclutter();
   const { appearance, updateAppearance } = useAppearance();
   const { options, updateOptions } = useParserOptions();
-  const { document, edit, open, openSample, openUrl, request } = useDocument();
+  const { document, edit, open, request } = useDocument();
 
   const [source, setSource] = usePersistedState(SOURCE_STORAGE_KEY, 'closed');
   const sourceOpen = source === 'open';
 
-  const [link, setLink] = useState(
-    () =>
-      new URLSearchParams(window.location.search).get('url') ??
-      (document?.source.kind === 'url' ? document.source.url : '')
-  );
-
-  const url = document?.source.kind === 'url' ? document.source.url : undefined;
-
-  const selected =
-    document?.source.kind === 'sample' ? document.source.name : '';
-
-  const sample = sampleNames.includes(selected) ? selected : '';
+  const sample =
+    document && sampleNames.includes(document.sample) ? document.sample : '';
 
   const { error, result } = useArticle(
     unclutter.status === 'ready' && document ? unclutter.client : undefined,
     document?.html ?? '',
-    url ?? SAMPLE_BASE_URL,
+    SAMPLE_BASE_URL,
     options
   );
-
-  const read = async (value: string) => {
-    const final = await openUrl(value);
-
-    if (final?.kind === 'url') setLink(final.url);
-  };
 
   const content = () => {
     if (unclutter.status === 'error') {
@@ -84,7 +60,7 @@ const Playground = () => {
         <Message>
           <p className='text-ink-3 flex items-center gap-2 text-sm'>
             <SpinnerIcon size={16} />
-            Loading {describe(request.source)}
+            Loading the {request.sample} test page
           </p>
         </Message>
       );
@@ -95,21 +71,14 @@ const Playground = () => {
         <Message>
           <Notice
             tone='danger'
-            title={`Couldn’t load ${describe(request.source)}.`}
+            title={`Couldn’t load the ${request.sample} test page.`}
             actions={
-              <>
-                <Button variant='primary' onClick={() => open(request.source)}>
-                  Try again
-                </Button>
-                {request.source.kind === 'url' && (
-                  <Button onClick={() => setSource('open')}>Paste HTML</Button>
-                )}
-              </>
+              <Button variant='primary' onClick={() => open(request.sample)}>
+                Try again
+              </Button>
             }
           >
             {request.message}
-            {request.source.kind === 'url' &&
-              ' Some sites block automated requests; you can save the page and paste its HTML instead.'}
           </Notice>
         </Message>
       );
@@ -133,7 +102,6 @@ const Playground = () => {
         article={result.article}
         duration={result.duration}
         readable={result.readable}
-        url={url}
       />
     );
   };
@@ -141,32 +109,17 @@ const Playground = () => {
   return (
     <div className='flex h-dvh flex-col'>
       <TopBar
-        field={
-          <div className='flex gap-2'>
-            <div className='min-w-0 flex-1'>
-              <LinkField
-                value={link}
-                onChange={setLink}
-                onSubmit={read}
-                loading={
-                  request.status === 'loading' && request.source.kind === 'url'
-                }
-              />
-            </div>
-            <Combobox
-              className='w-36 shrink-0 sm:w-44'
-              empty='No test page found.'
-              label='Test page'
-              onChange={(name) => {
-                setLink('');
-                openSample(name);
-              }}
-              options={sampleNames}
-              placeholder='Test pages'
-              search='Search test pages'
-              value={sample}
-            />
-          </div>
+        center={
+          <Combobox
+            className='w-full md:w-56'
+            empty='No test page found.'
+            label='Test page'
+            onChange={open}
+            options={sampleNames}
+            placeholder='Test pages'
+            search='Search test pages'
+            value={sample}
+          />
         }
         actions={
           <>
