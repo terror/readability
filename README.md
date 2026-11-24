@@ -1,6 +1,9 @@
 ## unclutter
 
+[![release](https://img.shields.io/github/release/terror/unclutter.svg?label=release&style=flat&labelColor=1d1d1d&color=424242&logo=github)](https://github.com/terror/unclutter/releases/latest)
+[![crates.io](https://img.shields.io/crates/v/unclutter.svg?style=flat&labelColor=1d1d1d&color=424242&logo=rust)](https://crates.io/crates/unclutter)
 [![build](https://img.shields.io/github/actions/workflow/status/terror/unclutter/ci.yaml?branch=master&style=flat&labelColor=1d1d1d&color=424242&logo=GitHub%20Actions&logoColor=white&label=build)](https://github.com/terror/unclutter/actions/workflows/ci.yaml)
+[![downloads](https://img.shields.io/github/downloads/terror/unclutter/total.svg?style=flat&labelColor=1d1d1d&color=424242)](https://github.com/terror/unclutter/releases)
 
 **unclutter** is a Rust port of [mozilla/readability](https://github.com/mozilla/readability).
 
