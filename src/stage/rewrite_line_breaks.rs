@@ -39,7 +39,7 @@ impl RewriteLineBreaks {
   }
 
   fn next_significant<'a>(start: Option<&NodeRef<'a>>) -> Option<NodeRef<'a>> {
-    iter::successors(start.cloned(), NodeRef::next_sibling).find(|node| {
+    iter::successors(start.copied(), NodeRef::next_sibling).find(|node| {
       node.is_element() || (node.is_text() && !node.text().trim().is_empty())
     })
   }

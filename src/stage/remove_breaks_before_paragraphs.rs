@@ -11,9 +11,8 @@ impl Stage for RemoveBreaksBeforeParagraphs {
     for br in context.node(article).elements_with_tags(&["BR"]) {
       let mut next = br.next_sibling();
 
-      while let Some(node) = next
-        .clone()
-        .filter(|node| !node.is_element() && node.text().trim().is_empty())
+      while let Some(node) =
+        next.filter(|node| !node.is_element() && node.text().trim().is_empty())
       {
         next = node.next_sibling();
       }
