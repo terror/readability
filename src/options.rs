@@ -75,7 +75,12 @@ impl ParserOptionsBuilder {
   {
     Self {
       inner: ParserOptions {
-        preserved_classes: classes.into_iter().map(Into::into).collect(),
+        preserved_classes: self
+          .inner
+          .preserved_classes
+          .into_iter()
+          .chain(classes.into_iter().map(Into::into))
+          .collect(),
         ..self.inner
       },
     }
@@ -149,5 +154,21 @@ impl ParserOptionsBuilder {
         ..self.inner
       },
     }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn classes_to_preserve_keeps_defaults() {
+    assert_eq!(
+      ParserOptions::builder()
+        .classes_to_preserve(["foo"])
+        .build()
+        .preserved_classes,
+      ["page", "foo"],
+    );
   }
 }
