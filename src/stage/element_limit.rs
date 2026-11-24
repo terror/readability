@@ -9,7 +9,8 @@ pub(crate) struct ElementLimit;
 
 impl Stage for ElementLimit {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(limit) = context.options().max_elements else {
+    let Some(limit) = context.options().max_elements.filter(|limit| *limit > 0)
+    else {
       return Ok(());
     };
 
@@ -23,5 +24,24 @@ impl Stage for ElementLimit {
     }
 
     Ok(())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn zero_disables_limit() {
+    let mut document = dom_query::Document::from("<p>foo</p>");
+
+    let options = ParserOptions {
+      max_elements: Some(0),
+      ..ParserOptions::default()
+    };
+
+    ElementLimit
+      .run(&mut Context::new(&mut document, &options))
+      .unwrap();
   }
 }
