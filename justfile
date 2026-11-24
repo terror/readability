@@ -10,6 +10,10 @@ default:
 
 ci: fmt-check clippy test
 
+[group: 'dev']
+bench:
+  cargo bench
+
 [group: 'check']
 clippy:
   cargo clippy
