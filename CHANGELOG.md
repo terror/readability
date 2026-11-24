@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.1.1](https://github.com/terror/unclutter/releases/tag/0.1.1) - 2026-11-24
+
+### Added
+
+- Add --version flag ([#81](https://github.com/terror/unclutter/pull/81) by [terror](https://github.com/terror))
+
+### Fixed
+
+- Grant release workflow write access to contents ([#80](https://github.com/terror/unclutter/pull/80) by [terror](https://github.com/terror))
+
+### Misc
+
+- Bump url from 2.5.8 to 2.5.9 ([#85](https://github.com/terror/unclutter/pull/85) by [app/dependabot](https://github.com/app/dependabot))
+- Bump dom_query from 0.12.0 to 0.28.0 ([#86](https://github.com/terror/unclutter/pull/86) by [app/dependabot](https://github.com/app/dependabot))
+- Bump anyhow from 1.0.100 to 1.0.104 ([#88](https://github.com/terror/unclutter/pull/88) by [app/dependabot](https://github.com/app/dependabot))
+- Bump clap from 4.5.54 to 4.5.60 ([#89](https://github.com/terror/unclutter/pull/89) by [app/dependabot](https://github.com/app/dependabot))
+- Bump assert-html-eq from `b754f20` to `abeb7ce` ([#87](https://github.com/terror/unclutter/pull/87) by [app/dependabot](https://github.com/app/dependabot))
+- Add zizmor check to CI ([#90](https://github.com/terror/unclutter/pull/90) by [terror](https://github.com/terror))
+- Track coverage with Codecov ([#84](https://github.com/terror/unclutter/pull/84) by [terror](https://github.com/terror))
+- Configure dependabot ([#83](https://github.com/terror/unclutter/pull/83) by [terror](https://github.com/terror))
+- Add release, crates.io and downloads badges ([#82](https://github.com/terror/unclutter/pull/82) by [terror](https://github.com/terror))
+
 ## [0.1.0](https://github.com/terror/unclutter/releases/tag/0.1.0) - 2026-11-24
 
 ### Added
