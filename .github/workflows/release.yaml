@@ -10,8 +10,7 @@ on:
         required: true
         type: string
 
-permissions:
-  contents: write
+permissions: {}
 
 defaults:
   run:
@@ -39,6 +38,9 @@ jobs:
         fi
 
   package:
+    permissions:
+      contents: write
+
     strategy:
       fail-fast: false
       matrix:
@@ -97,8 +99,9 @@ jobs:
     needs: prerelease
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
       with:
+        persist-credentials: false
         ref: refs/tags/${{ env.RELEASE_TAG }}
 
     - name: Install AArch64 Toolchain
@@ -159,7 +162,7 @@ jobs:
         ' CHANGELOG.md > RELEASE_NOTES.md
 
     - name: Publish Archive
-      uses: softprops/action-gh-release@v3.0.3
+      uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
       with:
         draft: false
         files: ${{ steps.package.outputs.archive }}
@@ -170,6 +173,9 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   checksum:
+    permissions:
+      contents: write
+
     runs-on: ubuntu-latest
 
     needs:
@@ -194,7 +200,7 @@ jobs:
         shasum -a 256 ./* > ../SHA256SUMS
 
     - name: Publish Checksums
-      uses: softprops/action-gh-release@v3.0.3
+      uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64
       with:
         draft: false
         files: SHA256SUMS
