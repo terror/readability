@@ -1,0 +1,55 @@
+name: Web
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - '*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./www
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      with:
+        persist-credentials: false
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+      with:
+        bun-version: 1.4.5
+
+    - name: Install dependencies
+      run: bun install --frozen-lockfile
+
+    - name: Format
+      run: bun run format-check
+
+    - name: Lint
+      run: bun run lint
+
+    - name: Test
+      run: bun run test
+
+    - name: Build
+      run: bun run build
+
+    - name: Build Storybook
+      run: bun run build-storybook

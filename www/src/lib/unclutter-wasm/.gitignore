@@ -1,0 +1,5 @@
+*
+!.gitignore
+!unclutter_wasm.d.ts
+!unclutter_wasm.js
+!unclutter_wasm_bg.wasm

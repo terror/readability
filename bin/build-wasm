@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -euxo pipefail
+
+cd "$(dirname "${BASH_SOURCE[0]}")/.."
+
+version=$(cargo pkgid --package wasm-bindgen)
+version=${version##*@}
+
+if [[ "$(wasm-bindgen --version 2>/dev/null)" != "wasm-bindgen $version" ]]; then
+  cargo install wasm-bindgen-cli --version "$version" --locked --force
+fi
+
+cargo build \
+  --package unclutter-wasm \
+  --target wasm32-unknown-unknown \
+  --release \
+  --locked
+
+wasm-bindgen \
+  --target web \
+  --out-dir www/src/lib/unclutter-wasm \
+  target/wasm32-unknown-unknown/release/unclutter_wasm.wasm
