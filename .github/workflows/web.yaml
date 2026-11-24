@@ -54,3 +54,77 @@ jobs:
 
     - name: Build Storybook
       run: bun run build-storybook
+
+  deploy:
+    if: >-
+      github.repository == 'terror/unclutter' &&
+      ((github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'pull_request' &&
+      github.actor != 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository))
+    needs: build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: .
+
+    env:
+      VERCEL_ENVIRONMENT: ${{ github.event_name == 'push' && 'production' || 'preview' }}
+      VERCEL_ORG_ID: team_04PzWPep1jOkiNGZfFZhAJht
+      VERCEL_PROJECT_ID: prj_I3nEzMza9z1eUJK6Zc4VHHuKod4l
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+
+    environment:
+      name: ${{ github.event_name == 'push' && 'production' || 'preview' }}
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      with:
+        persist-credentials: false
+        submodules: true
+
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+      with:
+        bun-version: 1.4.5
+
+    - name: Setup Node.js
+      uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+      with:
+        node-version: '24'
+
+    - name: Install Vercel CLI
+      run: npm install --global vercel@65.16.0
+
+    - name: Pull Vercel configuration
+      run: |
+        args=(
+          --yes
+          --environment="$VERCEL_ENVIRONMENT"
+          --token="${VERCEL_TOKEN:?Set the VERCEL_TOKEN repository secret}"
+        )
+
+        if [[ "$VERCEL_ENVIRONMENT" == preview ]]; then
+          args+=(--git-branch="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}")
+        fi
+
+        vercel pull "${args[@]}"
+
+    - name: Build deployment
+      run: vercel build --environment="$VERCEL_ENVIRONMENT" --token="$VERCEL_TOKEN"
+
+    - name: Deploy
+      id: deploy
+      run: |
+        trap 'cat deploy.log >&2' EXIT
+
+        if url=$(vercel deploy --prebuilt --environment="$VERCEL_ENVIRONMENT" --token="$VERCEL_TOKEN" 2> deploy.log); then
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+        elif grep -q api-deployments-free-per-day deploy.log; then
+          echo '::warning::Vercel deployment limit reached, skipping deployment'
+        else
+          exit 1
+        fi
