@@ -50,11 +50,14 @@ impl FixRelativeUris {
 
 impl Stage for FixRelativeUris {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let (Some(article), Some(document_url)) =
-      (context.extraction.article, context.url.clone())
-    else {
+    let Some(article) = context.extraction.article else {
       return Ok(());
     };
+
+    let document_url = context
+      .url
+      .clone()
+      .unwrap_or_else(|| Url::parse("about:blank").unwrap());
 
     let base_url = context
       .document
@@ -122,14 +125,14 @@ mod tests {
   use super::*;
 
   #[track_caller]
-  fn case(html: &str, expected: &str) {
+  fn case(url: Option<&str>, html: &str, expected: &str) {
     let mut document = dom_query::Document::from(html);
 
     let options = ParserOptions::default();
 
     let mut context = Context::new(&mut document, &options);
 
-    context.url = Some(Url::parse("http://foo.com/bar/baz.html").unwrap());
+    context.url = url.map(|url| Url::parse(url).unwrap());
 
     context.extraction.article = context
       .document
@@ -151,6 +154,7 @@ mod tests {
   #[test]
   fn normalizes_windows_drive_letters() {
     case(
+      Some("http://foo.com/bar/baz.html"),
       r#"<img src="file:///C|/foo.gif">"#,
       r#"<img src="file:///C:/foo.gif">"#,
     );
@@ -159,6 +163,7 @@ mod tests {
   #[test]
   fn resolves_against_base_element() {
     case(
+      Some("http://foo.com/bar/baz.html"),
       r##"<html><head><base href="/qux/"></head><body><a href="foo">bar</a><a href="#baz">qux</a></body></html>"##,
       r#"<a href="http://foo.com/qux/foo">bar</a><a href="http://foo.com/qux/#baz">qux</a>"#,
     );
@@ -167,6 +172,7 @@ mod tests {
   #[test]
   fn resolves_links_and_media() {
     case(
+      Some("http://foo.com/bar/baz.html"),
       r##"<a href="qux">foo</a><a href="#bar">baz</a><img src="/qux.png" srcset="a.png 1x, b.png 2x"><video poster="c.png"></video>"##,
       r##"<a href="http://foo.com/bar/qux">foo</a><a href="#bar">baz</a><img src="http://foo.com/qux.png" srcset="http://foo.com/bar/a.png 1x, http://foo.com/bar/b.png 2x"><video poster="http://foo.com/bar/c.png"></video>"##,
     );
@@ -175,8 +181,18 @@ mod tests {
   #[test]
   fn unwraps_javascript_links() {
     case(
+      Some("http://foo.com/bar/baz.html"),
       r#"<a href="javascript:foo()">bar</a><a href="javascript:baz()"><b>qux</b></a>"#,
       "bar<span><b>qux</b></span>",
+    );
+  }
+
+  #[test]
+  fn unwraps_javascript_links_without_url() {
+    case(
+      None,
+      r#"<a href="javascript:foo()">bar</a><a href="baz">qux</a>"#,
+      r#"bar<a href="baz">qux</a>"#,
     );
   }
 }
