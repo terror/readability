@@ -1,4 +1,3 @@
-import type { Article } from '../types';
 import init, { isReadable, parse } from '../unclutter-wasm/unclutter_wasm';
 import type { UnclutterRequest, UnclutterResponse } from './protocol';
 
@@ -16,11 +15,7 @@ function execute(request: UnclutterRequest): UnclutterResponse {
       const readable = isReadable(request.html);
 
       try {
-        const article = parse(
-          request.html,
-          request.baseUrl,
-          request.options
-        ) as Article;
+        const article = parse(request.html, request.baseUrl, request.options);
 
         return {
           id,

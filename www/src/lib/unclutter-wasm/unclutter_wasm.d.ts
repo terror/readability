@@ -1,16 +1,39 @@
 /* tslint:disable */
 /* eslint-disable */
+export interface Article {
+    byline?: string;
+    content: string;
+    dir?: string;
+    excerpt?: string;
+    lang?: string;
+    length: number;
+    publishedTime?: string;
+    siteName?: string;
+    textContent: string;
+    title: string;
+}
+
+export interface Options {
+    classesToPreserve?: string[];
+    keepClasses?: boolean | undefined;
+    linkDensityBias?: number | undefined;
+    maxElements?: number | undefined;
+    minTextLength?: number | undefined;
+    nTopCandidates?: number | undefined;
+    useJsonLd?: boolean | undefined;
+}
+
 
 export function isReadable(html: string): boolean;
 
-export function parse(html: string, base_url: string | null | undefined, options: any): any;
+export function parse(html: string, base_url?: string | null, options?: Options | null): Article;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly isReadable: (a: number, b: number) => number;
-    readonly parse: (a: number, b: number, c: number, d: number, e: any) => [number, number, number];
+    readonly parse: (a: number, b: number, c: number, d: number, e: number) => [number, number, number];
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
     readonly __wbindgen_free: (a: number, b: number, c: number) => void;
