@@ -1,5 +1,49 @@
 # Changelog
 
+## [0.2.0](https://github.com/terror/unclutter/releases/tag/0.2.0) - 2026-11-24
+
+### Added
+
+- Accept parser options in wasm `parse` ([#126](https://github.com/terror/unclutter/pull/126) by [terror](https://github.com/terror))
+- Decode non-UTF-8 input ([#125](https://github.com/terror/unclutter/pull/125) by [terror](https://github.com/terror))
+- Add `--json` option ([#123](https://github.com/terror/unclutter/pull/123) by [terror](https://github.com/terror))
+- Add `--url` option ([#121](https://github.com/terror/unclutter/pull/121) by [terror](https://github.com/terror))
+- Read HTML from standard input ([#117](https://github.com/terror/unclutter/pull/117) by [terror](https://github.com/terror))
+
+### Changed
+
+- Rename `preserved_classes` to `classes_to_preserve` ([#122](https://github.com/terror/unclutter/pull/122) by [terror](https://github.com/terror))
+- Make `link_density_bias` an `f64` ([#120](https://github.com/terror/unclutter/pull/120) by [terror](https://github.com/terror))
+- Remove unused `debug` option and `InvalidSelector` error ([#116](https://github.com/terror/unclutter/pull/116) by [terror](https://github.com/terror))
+- Consume `Parser` in `parse` ([#106](https://github.com/terror/unclutter/pull/106) by [terror](https://github.com/terror))
+- Keep default preserved classes in builder ([#103](https://github.com/terror/unclutter/pull/103) by [terror](https://github.com/terror))
+
+### Fixed
+
+- Match JSON-LD `@context` exactly ([#119](https://github.com/terror/unclutter/pull/119) by [terror](https://github.com/terror))
+- Extract meta tags after removing `<noscript>` ([#118](https://github.com/terror/unclutter/pull/118) by [terror](https://github.com/terror))
+- Match hidden styles with regexes ([#113](https://github.com/terror/unclutter/pull/113) by [terror](https://github.com/terror))
+- Walk trees iteratively ([#112](https://github.com/terror/unclutter/pull/112) by [terror](https://github.com/terror))
+- Restore extraction state from best attempt ([#109](https://github.com/terror/unclutter/pull/109) by [terror](https://github.com/terror))
+- Keep `lang` attribute as written ([#108](https://github.com/terror/unclutter/pull/108) by [terror](https://github.com/terror))
+- Treat zero `max_elements` as no limit ([#107](https://github.com/terror/unclutter/pull/107) by [terror](https://github.com/terror))
+- Saturate table row and column counts ([#105](https://github.com/terror/unclutter/pull/105) by [terror](https://github.com/terror))
+- Skip lazy image fixes for SVG placeholders ([#104](https://github.com/terror/unclutter/pull/104) by [terror](https://github.com/terror))
+- Unescape named entities in a single pass ([#102](https://github.com/terror/unclutter/pull/102) by [terror](https://github.com/terror))
+- Unwrap `javascript:` links without a base URL ([#101](https://github.com/terror/unclutter/pull/101) by [terror](https://github.com/terror))
+
+### Misc
+
+- Update benchmark chart ([#127](https://github.com/terror/unclutter/pull/127) by [terror](https://github.com/terror))
+- Collect `CleanConditionally` counts in one pass ([#124](https://github.com/terror/unclutter/pull/124) by [terror](https://github.com/terror))
+- Remove `Context::options` ([#115](https://github.com/terror/unclutter/pull/115) by [terror](https://github.com/terror))
+- Keep only the best article attempt ([#114](https://github.com/terror/unclutter/pull/114) by [terror](https://github.com/terror))
+- Extract meta title lazily ([#111](https://github.com/terror/unclutter/pull/111) by [terror](https://github.com/terror))
+- Reuse `NodeExt` phrasing helpers in `RewriteLineBreaks` ([#110](https://github.com/terror/unclutter/pull/110) by [terror](https://github.com/terror))
+- Move rules into `src/rule` ([#100](https://github.com/terror/unclutter/pull/100) by [terror](https://github.com/terror))
+- Bump assert-html-eq to `1e4a188` ([#99](https://github.com/terror/unclutter/pull/99) by [terror](https://github.com/terror))
+- Use absolute image URLs in readme ([#98](https://github.com/terror/unclutter/pull/98) by [terror](https://github.com/terror))
+
 ## [0.1.1](https://github.com/terror/unclutter/releases/tag/0.1.1) - 2026-11-24
 
 ### Added
