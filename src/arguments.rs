@@ -17,13 +17,15 @@ pub(crate) struct Arguments {
 
 impl Arguments {
   fn execute(self, mut stdin: impl Read, mut stdout: impl Write) -> Result {
-    let html = if let Some(path) = &self.input {
-      fs::read_to_string(path)?
+    let bytes = if let Some(path) = &self.input {
+      fs::read(path)?
     } else {
-      let mut html = String::new();
-      stdin.read_to_string(&mut html)?;
-      html
+      let mut bytes = Vec::new();
+      stdin.read_to_end(&mut bytes)?;
+      bytes
     };
+
+    let html = decode(bytes)?;
 
     let parser = unclutter::Parser::new(
       &html,

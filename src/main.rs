@@ -1,17 +1,24 @@
 use {
+  anyhow::anyhow,
   arguments::Arguments,
   clap::Parser,
+  decode::decode,
+  encoding_rs::{Encoding, WINDOWS_1252},
+  regex::bytes::Regex,
   std::{
     backtrace::BacktraceStatus,
+    borrow::Cow,
     fs,
     io::{self, Read, Write},
     path::PathBuf,
     process,
+    sync::LazyLock,
   },
   unclutter::ParserOptions,
 };
 
 mod arguments;
+mod decode;
 
 type Result<T = (), E = anyhow::Error> = std::result::Result<T, E>;
 
