@@ -10,6 +10,12 @@ pub(crate) struct GrabArticle {
   stages: Vec<Box<dyn Stage>>,
 }
 
+impl GrabArticle {
+  pub(crate) fn new(stages: Vec<Box<dyn Stage>>) -> Self {
+    Self { stages }
+  }
+}
+
 impl Stage for GrabArticle {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let cache = context.document.html().to_string();
@@ -69,12 +75,6 @@ impl Stage for GrabArticle {
     context.extraction.article = Some(best.article);
 
     Ok(())
-  }
-}
-
-impl GrabArticle {
-  pub(crate) fn new(stages: Vec<Box<dyn Stage>>) -> Self {
-    Self { stages }
   }
 }
 

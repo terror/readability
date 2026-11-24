@@ -4,23 +4,6 @@ const MAX_PLACEHOLDER_BASE64_LENGTH: usize = 133;
 
 pub(crate) struct FixLazyImages;
 
-impl Stage for FixLazyImages {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(article) = context.extraction.article else {
-      return Ok(());
-    };
-
-    for element in context
-      .node(article)
-      .elements_with_tags(&["IMG", "PICTURE", "FIGURE"])
-    {
-      Self::fix(&element);
-    }
-
-    Ok(())
-  }
-}
-
 impl FixLazyImages {
   fn fix(element: &NodeRef) {
     let tag = element.tag();
@@ -95,6 +78,23 @@ impl FixLazyImages {
     {
       element.remove_attr("src");
     }
+  }
+}
+
+impl Stage for FixLazyImages {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    let Some(article) = context.extraction.article else {
+      return Ok(());
+    };
+
+    for element in context
+      .node(article)
+      .elements_with_tags(&["IMG", "PICTURE", "FIGURE"])
+    {
+      Self::fix(&element);
+    }
+
+    Ok(())
   }
 }
 

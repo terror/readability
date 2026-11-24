@@ -5,6 +5,49 @@ const MEDIA_TAGS: &[&str] =
 
 pub(crate) struct FixRelativeUris;
 
+impl FixRelativeUris {
+  fn normalize_drive_letter(mut url: Url) -> Url {
+    if url.scheme() != "file" {
+      return url;
+    }
+
+    let path = url.path();
+
+    let bytes = path.as_bytes();
+
+    if bytes.len() >= 3
+      && bytes[0] == b'/'
+      && bytes[1].is_ascii_alphabetic()
+      && bytes[2] == b'|'
+      && (bytes.len() == 3 || bytes[3] == b'/')
+    {
+      let path = format!("/{}:{}", char::from(bytes[1]), &path[3..]);
+      url.set_path(&path);
+    }
+
+    url
+  }
+
+  fn unwrap_link(link: &NodeRef) {
+    let children = link.children();
+
+    if let [child] = children.as_slice()
+      && child.is_text()
+    {
+      link.replace_with(&link.tree.new_text(link.text()));
+      return;
+    }
+
+    let span = create_element(link.tree, "span");
+
+    for child in children {
+      span.append_child(&child);
+    }
+
+    link.replace_with(&span);
+  }
+}
+
 impl Stage for FixRelativeUris {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
     let (Some(article), Some(document_url)) =
@@ -71,49 +114,6 @@ impl Stage for FixRelativeUris {
     }
 
     Ok(())
-  }
-}
-
-impl FixRelativeUris {
-  fn normalize_drive_letter(mut url: Url) -> Url {
-    if url.scheme() != "file" {
-      return url;
-    }
-
-    let path = url.path();
-
-    let bytes = path.as_bytes();
-
-    if bytes.len() >= 3
-      && bytes[0] == b'/'
-      && bytes[1].is_ascii_alphabetic()
-      && bytes[2] == b'|'
-      && (bytes.len() == 3 || bytes[3] == b'/')
-    {
-      let path = format!("/{}:{}", char::from(bytes[1]), &path[3..]);
-      url.set_path(&path);
-    }
-
-    url
-  }
-
-  fn unwrap_link(link: &NodeRef) {
-    let children = link.children();
-
-    if let [child] = children.as_slice()
-      && child.is_text()
-    {
-      link.replace_with(&link.tree.new_text(link.text()));
-      return;
-    }
-
-    let span = create_element(link.tree, "span");
-
-    for child in children {
-      span.append_child(&child);
-    }
-
-    link.replace_with(&span);
   }
 }
 

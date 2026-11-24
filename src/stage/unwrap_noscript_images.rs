@@ -13,22 +13,6 @@ const SOURCE_ATTRIBUTES: &[&str] =
 /// with `data-old-` when the new image already has a different value.
 pub(crate) struct UnwrapNoscriptImages;
 
-impl Stage for UnwrapNoscriptImages {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    for image in context.document.select("img").nodes() {
-      if !Self::has_image_source(image) {
-        image.remove_from_parent();
-      }
-    }
-
-    for noscript in context.document.select("noscript").nodes() {
-      Self::unwrap(noscript);
-    }
-
-    Ok(())
-  }
-}
-
 impl UnwrapNoscriptImages {
   fn first_image<'a>(node: &NodeRef<'a>) -> Option<NodeRef<'a>> {
     if node.tag() == "IMG" {
@@ -107,6 +91,22 @@ impl UnwrapNoscriptImages {
     }
 
     previous.replace_with(&replacement);
+  }
+}
+
+impl Stage for UnwrapNoscriptImages {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    for image in context.document.select("img").nodes() {
+      if !Self::has_image_source(image) {
+        image.remove_from_parent();
+      }
+    }
+
+    for noscript in context.document.select("noscript").nodes() {
+      Self::unwrap(noscript);
+    }
+
+    Ok(())
   }
 }
 

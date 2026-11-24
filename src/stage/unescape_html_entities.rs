@@ -8,22 +8,6 @@ use super::*;
 /// Invalid code points are replaced with U+FFFD.
 pub(crate) struct UnescapeHtmlEntities;
 
-impl Stage for UnescapeHtmlEntities {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let metadata = mem::take(&mut context.metadata);
-
-    context.metadata = Metadata {
-      byline: metadata.byline.map(|s| Self::unescape(&s)),
-      excerpt: metadata.excerpt.map(|s| Self::unescape(&s)),
-      published_time: metadata.published_time.map(|s| Self::unescape(&s)),
-      site_name: metadata.site_name.map(|s| Self::unescape(&s)),
-      title: metadata.title.map(|s| Self::unescape(&s)),
-    };
-
-    Ok(())
-  }
-}
-
 impl UnescapeHtmlEntities {
   fn unescape(s: &str) -> String {
     Self::unescape_numeric(&Self::unescape_named(s))
@@ -58,6 +42,22 @@ impl UnescapeHtmlEntities {
         c.to_string()
       })
       .into_owned()
+  }
+}
+
+impl Stage for UnescapeHtmlEntities {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    let metadata = mem::take(&mut context.metadata);
+
+    context.metadata = Metadata {
+      byline: metadata.byline.map(|s| Self::unescape(&s)),
+      excerpt: metadata.excerpt.map(|s| Self::unescape(&s)),
+      published_time: metadata.published_time.map(|s| Self::unescape(&s)),
+      site_name: metadata.site_name.map(|s| Self::unescape(&s)),
+      title: metadata.title.map(|s| Self::unescape(&s)),
+    };
+
+    Ok(())
   }
 }
 

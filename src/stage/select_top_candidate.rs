@@ -6,37 +6,6 @@ const MIN_ALTERNATIVE_CANDIDATES: usize = 3;
 
 pub(crate) struct SelectTopCandidate;
 
-impl Stage for SelectTopCandidate {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let top_candidates = Self::top_candidates(context);
-
-    let top_candidate = top_candidates
-      .first()
-      .copied()
-      .filter(|id| context.node(*id).tag() != "BODY");
-
-    let Some(top_candidate) = top_candidate else {
-      Self::create_top_candidate(context);
-      return Ok(());
-    };
-
-    let top_candidate =
-      Self::common_ancestor(context, top_candidate, &top_candidates);
-
-    Self::initialize(context, top_candidate);
-
-    let top_candidate = Self::higher_scoring_ancestor(context, top_candidate);
-
-    let top_candidate = Self::only_child_ancestor(context, top_candidate);
-
-    Self::initialize(context, top_candidate);
-
-    context.extraction.top_candidate = Some(top_candidate);
-
-    Ok(())
-  }
-}
-
 impl SelectTopCandidate {
   fn common_ancestor(
     context: &Context<'_>,
@@ -181,6 +150,37 @@ impl SelectTopCandidate {
     }
 
     top_candidates
+  }
+}
+
+impl Stage for SelectTopCandidate {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    let top_candidates = Self::top_candidates(context);
+
+    let top_candidate = top_candidates
+      .first()
+      .copied()
+      .filter(|id| context.node(*id).tag() != "BODY");
+
+    let Some(top_candidate) = top_candidate else {
+      Self::create_top_candidate(context);
+      return Ok(());
+    };
+
+    let top_candidate =
+      Self::common_ancestor(context, top_candidate, &top_candidates);
+
+    Self::initialize(context, top_candidate);
+
+    let top_candidate = Self::higher_scoring_ancestor(context, top_candidate);
+
+    let top_candidate = Self::only_child_ancestor(context, top_candidate);
+
+    Self::initialize(context, top_candidate);
+
+    context.extraction.top_candidate = Some(top_candidate);
+
+    Ok(())
   }
 }
 

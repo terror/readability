@@ -5,16 +5,6 @@ pub(crate) struct Flags {
   pub(crate) weight_classes: bool,
 }
 
-impl Default for Flags {
-  fn default() -> Self {
-    Self {
-      clean_conditionally: true,
-      strip_unlikelys: true,
-      weight_classes: true,
-    }
-  }
-}
-
 impl Flags {
   pub(crate) fn disable_next(&mut self) -> bool {
     if self.strip_unlikelys {
@@ -28,6 +18,16 @@ impl Flags {
     }
 
     true
+  }
+}
+
+impl Default for Flags {
+  fn default() -> Self {
+    Self {
+      clean_conditionally: true,
+      strip_unlikelys: true,
+      weight_classes: true,
+    }
   }
 }
 

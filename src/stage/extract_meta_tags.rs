@@ -31,36 +31,6 @@ const TITLE_KEYS: &[&str] = &[
 
 pub(crate) struct ExtractMetaTags;
 
-impl Stage for ExtractMetaTags {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let values = Self::collect_meta_values(context.document);
-
-    let article_author = values
-      .get("article:author")
-      .filter(|value| Url::parse(value).is_err())
-      .cloned();
-
-    let metadata = mem::take(&mut context.metadata);
-
-    let extract =
-      |keys: &[&str]| keys.iter().find_map(|key| values.get(*key).cloned());
-
-    context.metadata = Metadata {
-      title: metadata.title.or(extract(TITLE_KEYS)),
-      byline: metadata
-        .byline
-        .or_else(|| extract(BYLINE_KEYS).or(article_author)),
-      excerpt: metadata.excerpt.or_else(|| extract(EXCERPT_KEYS)),
-      site_name: metadata.site_name.or_else(|| extract(SITE_NAME_KEYS)),
-      published_time: metadata
-        .published_time
-        .or_else(|| extract(PUBLISHED_TIME_KEYS)),
-    };
-
-    Ok(())
-  }
-}
-
 impl ExtractMetaTags {
   fn collect_meta_values(
     document: &dom_query::Document,
@@ -111,6 +81,36 @@ impl ExtractMetaTags {
     }
 
     values
+  }
+}
+
+impl Stage for ExtractMetaTags {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    let values = Self::collect_meta_values(context.document);
+
+    let article_author = values
+      .get("article:author")
+      .filter(|value| Url::parse(value).is_err())
+      .cloned();
+
+    let metadata = mem::take(&mut context.metadata);
+
+    let extract =
+      |keys: &[&str]| keys.iter().find_map(|key| values.get(*key).cloned());
+
+    context.metadata = Metadata {
+      title: metadata.title.or(extract(TITLE_KEYS)),
+      byline: metadata
+        .byline
+        .or_else(|| extract(BYLINE_KEYS).or(article_author)),
+      excerpt: metadata.excerpt.or_else(|| extract(EXCERPT_KEYS)),
+      site_name: metadata.site_name.or_else(|| extract(SITE_NAME_KEYS)),
+      published_time: metadata
+        .published_time
+        .or_else(|| extract(PUBLISHED_TIME_KEYS)),
+    };
+
+    Ok(())
   }
 }
 

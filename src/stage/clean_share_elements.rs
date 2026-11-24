@@ -4,20 +4,6 @@ const SHARE_ELEMENT_THRESHOLD: usize = 500;
 
 pub(crate) struct CleanShareElements;
 
-impl Stage for CleanShareElements {
-  fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let Some(article) = context.extraction.article else {
-      return Ok(());
-    };
-
-    for child in context.node(article).element_children() {
-      Self::clean(&child);
-    }
-
-    Ok(())
-  }
-}
-
 impl CleanShareElements {
   fn clean(node: &NodeRef) {
     for child in node.element_children() {
@@ -29,6 +15,20 @@ impl CleanShareElements {
         Self::clean(&child);
       }
     }
+  }
+}
+
+impl Stage for CleanShareElements {
+  fn run(&mut self, context: &mut Context<'_>) -> Result {
+    let Some(article) = context.extraction.article else {
+      return Ok(());
+    };
+
+    for child in context.node(article).element_children() {
+      Self::clean(&child);
+    }
+
+    Ok(())
   }
 }
 

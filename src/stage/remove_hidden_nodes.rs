@@ -11,16 +11,6 @@ use super::*;
 /// - it carries both `aria-modal="true"` and `role="dialog"`
 pub(crate) struct RemoveHiddenNodes;
 
-impl Rule for RemoveHiddenNodes {
-  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
-    if Self::is_hidden(&context.node(node)) {
-      Action::Remove
-    } else {
-      Action::Continue
-    }
-  }
-}
-
 impl RemoveHiddenNodes {
   fn is_hidden(node: &NodeRef) -> bool {
     if node.attr("hidden").is_some() {
@@ -58,6 +48,16 @@ impl RemoveHiddenNodes {
       && node
         .attr("role")
         .is_some_and(|value| value.as_ref() == "dialog")
+  }
+}
+
+impl Rule for RemoveHiddenNodes {
+  fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
+    if Self::is_hidden(&context.node(node)) {
+      Action::Remove
+    } else {
+      Action::Continue
+    }
   }
 }
 

@@ -4,6 +4,16 @@ pub(crate) struct Pipeline {
   stages: Vec<Box<dyn Stage>>,
 }
 
+impl Pipeline {
+  pub(crate) fn run(&mut self, context: &mut Context<'_>) -> Result {
+    for stage in &mut self.stages {
+      stage.run(context)?;
+    }
+
+    Ok(())
+  }
+}
+
 impl Default for Pipeline {
   fn default() -> Self {
     Self {
@@ -64,15 +74,5 @@ impl Default for Pipeline {
         Box::new(ExtractExcerpt),
       ],
     }
-  }
-}
-
-impl Pipeline {
-  pub(crate) fn run(&mut self, context: &mut Context<'_>) -> Result {
-    for stage in &mut self.stages {
-      stage.run(context)?;
-    }
-
-    Ok(())
   }
 }
