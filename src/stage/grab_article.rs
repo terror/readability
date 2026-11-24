@@ -18,7 +18,7 @@ impl GrabArticle {
 
 impl Stage for GrabArticle {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    let cache = context.document.html().to_string();
+    let cache = context.document.clone();
 
     let mut attempts = Vec::new();
 
@@ -40,10 +40,7 @@ impl Stage for GrabArticle {
         return Ok(());
       }
 
-      let document = mem::replace(
-        &mut *context.document,
-        dom_query::Document::from(cache.as_str()),
-      );
+      let document = mem::replace(&mut *context.document, cache.clone());
 
       attempts.push(Attempt {
         article,
