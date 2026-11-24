@@ -5,14 +5,14 @@ import { useParserOptions } from '@/hooks/use-parser-options';
 import { usePersistedState } from '@/hooks/use-persisted-state';
 import { useUnclutter } from '@/hooks/use-unclutter';
 import { hostname } from '@/lib/format';
-import { SAMPLE_BASE_URL, samples } from '@/lib/samples';
+import { SAMPLE_BASE_URL, sampleNames } from '@/lib/samples';
 import { Button } from '@/ui/button';
+import { Combobox } from '@/ui/combobox';
 import { IconButton } from '@/ui/icon-button';
 import { CodeIcon, InfoIcon, SpinnerIcon } from '@/ui/icons';
 import { LinkField } from '@/ui/link-field';
 import { Notice } from '@/ui/notice';
 import { Popover } from '@/ui/popover';
-import { Select } from '@/ui/select';
 import { ReactNode, useState } from 'react';
 
 import { AppearancePanel } from '../components/appearance-panel';
@@ -53,7 +53,7 @@ const Playground = () => {
   const selected =
     document?.source.kind === 'sample' ? document.source.name : '';
 
-  const sample = samples.some(({ name }) => name === selected) ? selected : '';
+  const sample = sampleNames.includes(selected) ? selected : '';
 
   const { error, result } = useArticle(
     unclutter.status === 'ready' && document ? unclutter.client : undefined,
@@ -153,24 +153,19 @@ const Playground = () => {
                 }
               />
             </div>
-            <Select
-              aria-label='Test page'
+            <Combobox
               className='w-36 shrink-0 sm:w-44'
-              value={sample}
-              onChange={(event) => {
+              empty='No test page found.'
+              label='Test page'
+              onChange={(name) => {
                 setLink('');
-                openSample(event.target.value);
+                openSample(name);
               }}
-            >
-              <option value='' disabled>
-                Test pages
-              </option>
-              {samples.map(({ name }) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </Select>
+              options={sampleNames}
+              placeholder='Test pages'
+              search='Search test pages'
+              value={sample}
+            />
           </div>
         }
         actions={

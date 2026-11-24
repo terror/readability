@@ -14,6 +14,8 @@ export const samples = Object.entries(pages)
   }))
   .sort((a, b) => a.name.localeCompare(b.name));
 
+export const sampleNames = samples.map(({ name }) => name);
+
 export async function loadSample(name: string): Promise<string> {
   const sample = samples.find((sample) => sample.name === name);
 
