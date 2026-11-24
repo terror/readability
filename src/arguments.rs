@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Parser)]
-#[command(name = "unclutter")]
+#[command(name = "unclutter", version)]
 #[command(about = "Extract readable content from HTML files", long_about = None)]
 pub(crate) struct Arguments {
   #[arg(value_name = "FILE", help = "Path to the HTML file to parse")]
@@ -18,5 +18,25 @@ impl Arguments {
     println!("{}", parser.parse()?.content);
 
     Ok(())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use {super::*, clap::error::ErrorKind};
+
+  #[test]
+  fn version() {
+    let Err(error) = Arguments::try_parse_from(["unclutter", "--version"])
+    else {
+      panic!("expected version error");
+    };
+
+    assert_eq!(error.kind(), ErrorKind::DisplayVersion);
+
+    assert_eq!(
+      error.to_string(),
+      format!("unclutter {}\n", env!("CARGO_PKG_VERSION")),
+    );
   }
 }
