@@ -100,7 +100,7 @@ impl CleanConditionally {
 
     let link_density = node.link_density();
 
-    let link_density_modifier = f64::from(context.options.link_density_bias);
+    let link_density_modifier = context.options.link_density_bias;
 
     let text_density = Self::text_density(node, TEXTISH_TAGS);
 
