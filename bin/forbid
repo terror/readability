@@ -8,4 +8,6 @@ which rg
   --color always \
   --ignore-case \
   --glob !bin/forbid \
+  --glob !www/bun.lock \
+  --glob !www/src/lib/unclutter-wasm \
   'dbg!|fixme|todo|xxx'

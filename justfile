@@ -14,6 +14,10 @@ ci: fmt-check clippy test
 bench:
   cargo bench
 
+[group: 'dev']
+build-wasm:
+  ./bin/build-wasm
+
 [group: 'check']
 clippy:
   cargo clippy
@@ -49,3 +53,28 @@ update-changelog:
 [group: 'dev']
 watch +COMMAND='test':
   cargo watch --clear --exec "{{ COMMAND }}"
+
+[group: 'web']
+[working-directory: 'www']
+web-build: build-wasm
+  bun run build
+
+[group: 'web']
+[working-directory: 'www']
+web-dev: build-wasm
+  bun run dev
+
+[group: 'web']
+[working-directory: 'www']
+web-fmt:
+  bun run format
+
+[group: 'web']
+[working-directory: 'www']
+web-install:
+  bun install
+
+[group: 'web']
+[working-directory: 'www']
+web-storybook:
+  bun run storybook
