@@ -16,7 +16,7 @@ impl Rule for RemoveEmptyContainers {
   fn apply(&mut self, context: &mut Context<'_>, node: NodeId) -> Action {
     let node = context.node(node);
 
-    if EMPTY_CONTAINER_TAGS.contains(&node.tag().as_str())
+    if node.has_any_tag(EMPTY_CONTAINER_TAGS)
       && node.is_element_without_content()
     {
       Action::Remove

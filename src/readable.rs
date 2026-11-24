@@ -33,7 +33,7 @@ pub(crate) fn is_readable(document: &dom_query::Document) -> bool {
 }
 
 fn is_list_paragraph(node: &NodeRef) -> bool {
-  node.tag() == "P" && node.has_ancestor_tag("LI", None, |_| true)
+  node.has_tag("P") && node.has_ancestor_tag("LI", None, |_| true)
 }
 
 fn is_unlikely(node: &NodeRef) -> bool {

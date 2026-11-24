@@ -60,6 +60,8 @@ pub(crate) trait NodeExt {
   where
     Self: Sized;
 
+  fn has_any_tag(&self, tags: &[&str]) -> bool;
+
   fn has_child_block_element(&self) -> bool;
 
   fn has_single_tag_inside_element(&self, tag: &str) -> bool;
@@ -108,7 +110,7 @@ impl NodeExt for NodeRef<'_> {
   fn elements_with_tags(&self, tags: &[&str]) -> Vec<Self> {
     self
       .descendants_it()
-      .filter(|node| tags.iter().any(|tag| node.has_tag(tag)))
+      .filter(|node| node.has_any_tag(tags))
       .collect()
   }
 
@@ -125,10 +127,17 @@ impl NodeExt for NodeRef<'_> {
       .any(|(_, ancestor)| ancestor.has_tag(tag) && filter(&ancestor))
   }
 
+  fn has_any_tag(&self, tags: &[&str]) -> bool {
+    self.element_ref().is_some_and(|element| {
+      tags
+        .iter()
+        .any(|tag| element.name.local.as_ref().eq_ignore_ascii_case(tag))
+    })
+  }
+
   fn has_child_block_element(&self) -> bool {
     self.children_it(false).any(|child| {
-      DIV_TO_P_ELEMS.iter().any(|tag| child.has_tag(tag))
-        || child.has_child_block_element()
+      child.has_any_tag(DIV_TO_P_ELEMS) || child.has_child_block_element()
     })
   }
 
@@ -146,9 +155,7 @@ impl NodeExt for NodeRef<'_> {
   }
 
   fn has_tag(&self, tag: &str) -> bool {
-    self.element_ref().is_some_and(|element| {
-      element.name.local.as_ref().eq_ignore_ascii_case(tag)
-    })
+    self.has_any_tag(&[tag])
   }
 
   fn initial_score(&self, weight_classes: bool) -> f64 {
@@ -202,7 +209,11 @@ impl NodeExt for NodeRef<'_> {
   }
 
   fn is_element_without_content(&self) -> bool {
-    if !self.is_element() || self.inner_text_length() > 0 {
+    if !self.is_element()
+      || iter::once(*self)
+        .chain(self.descendants_it())
+        .any(|node| node.is_nonempty_text())
+    {
       return false;
     }
 
@@ -216,8 +227,8 @@ impl NodeExt for NodeRef<'_> {
       return true;
     }
 
-    PHRASING_ELEMS.iter().any(|tag| self.has_tag(tag))
-      || (["A", "DEL", "INS"].iter().any(|tag| self.has_tag(tag))
+    self.has_any_tag(PHRASING_ELEMS)
+      || (self.has_any_tag(&["A", "DEL", "INS"])
         && self
           .children_it(false)
           .all(|child| child.is_phrasing_content()))
@@ -330,6 +341,20 @@ mod tests {
       Some(3),
       true,
     );
+  }
+
+  #[test]
+  fn has_any_tag() {
+    #[track_caller]
+    fn case(html: &str, tags: &[&str], expected: bool) {
+      let document = dom_query::Document::from(html);
+      let node = document.select("div").nodes()[0];
+      assert_eq!(node.has_any_tag(tags), expected);
+    }
+
+    case("<div></div>", &["P", "DIV"], true);
+    case("<div></div>", &["P", "SPAN"], false);
+    case("<div></div>", &[], false);
   }
 
   #[test]
