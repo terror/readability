@@ -1,7 +1,19 @@
 [package]
 name = "unclutter"
 version = "0.1.0"
+description = "A Rust port of Mozilla's Readability"
+authors = ["Liam <liam@scalzulli.com>"]
+license = "CC0-1.0"
+repository = "https://github.com/terror/unclutter"
 edition = "2024"
+categories = ["command-line-utilities", "text-processing", "web-programming"]
+keywords = ["readability", "html", "article", "extraction", "reader-mode"]
+
+include = [
+  "/LICENSE",
+  "/README.md",
+  "/src/",
+]
 
 [workspace]
 members = [".", "crates/*"]
@@ -29,6 +41,10 @@ wildcard_imports = "allow"
 
 [lints]
 workspace = true
+
+[profile.release]
+codegen-units = 1
+lto = true
 
 [[bench]]
 name = "parse"
