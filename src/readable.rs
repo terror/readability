@@ -5,7 +5,7 @@ const MIN_CONTENT_LENGTH: usize = 140;
 const MIN_SCORE: f64 = 20.0;
 
 #[allow(clippy::cast_precision_loss)]
-pub(crate) fn is_probably_readerable(document: &dom_query::Document) -> bool {
+pub(crate) fn is_readable(document: &dom_query::Document) -> bool {
   let mut seen = HashSet::new();
 
   let score = document
@@ -63,13 +63,10 @@ mod tests {
   use super::*;
 
   #[test]
-  fn readerable() {
+  fn readable() {
     #[track_caller]
     fn case(html: &str, expected: bool) {
-      assert_eq!(
-        is_probably_readerable(&dom_query::Document::from(html)),
-        expected
-      );
+      assert_eq!(is_readable(&dom_query::Document::from(html)), expected);
     }
 
     let paragraph =
