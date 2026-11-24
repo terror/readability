@@ -13,7 +13,7 @@ impl Stage for ExtractDir {
 
     let parent = context.node(parent);
 
-    let dir = [parent.clone(), context.node(top_candidate)]
+    let dir = [parent, context.node(top_candidate)]
       .into_iter()
       .chain(parent.ancestors(None))
       .filter(NodeRef::is_element)

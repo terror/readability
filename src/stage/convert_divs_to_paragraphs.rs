@@ -14,12 +14,10 @@ impl ConvertDivsToParagraphs {
         continue;
       }
 
-      let mut run = vec![node.clone()];
+      let mut run = vec![node];
       let mut next = node.next_sibling();
 
-      while let Some(sibling) =
-        next.clone().filter(NodeExt::is_phrasing_content)
-      {
+      while let Some(sibling) = next.filter(NodeExt::is_phrasing_content) {
         next = sibling.next_sibling();
         run.push(sibling);
       }
@@ -66,7 +64,7 @@ impl Rule for ConvertDivsToParagraphs {
     if div.has_single_tag_inside_element("P")
       && div.link_density() < MAX_LINK_DENSITY
     {
-      let paragraph = div.element_children()[0].clone();
+      let paragraph = div.element_children()[0];
       div.replace_with(&paragraph);
       return Action::Replace(paragraph.id);
     }

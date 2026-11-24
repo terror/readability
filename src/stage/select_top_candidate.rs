@@ -53,7 +53,7 @@ impl SelectTopCandidate {
   }
 
   fn create_top_candidate(context: &mut Context<'_>) {
-    let Some(body) = context.document.select("body").nodes().first().cloned()
+    let Some(body) = context.document.select("body").nodes().first().copied()
     else {
       return;
     };

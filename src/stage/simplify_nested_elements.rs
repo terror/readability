@@ -18,7 +18,7 @@ impl SimplifyNestedElements {
       if node.has_single_tag_inside_element("DIV")
         || node.has_single_tag_inside_element("SECTION")
       {
-        let child = node.element_children()[0].clone();
+        let child = node.element_children()[0];
 
         for attribute in node.attrs() {
           child.set_attr(&attribute.name.local, &attribute.value);

@@ -10,22 +10,22 @@ impl Stage for UnwrapSingleCellTables {
 
     for table in context.node(article).elements_with_tags(&["TABLE"]) {
       let body = if table.has_single_tag_inside_element("TBODY") {
-        table.element_children()[0].clone()
+        table.element_children()[0]
       } else {
-        table.clone()
+        table
       };
 
       if !body.has_single_tag_inside_element("TR") {
         continue;
       }
 
-      let row = body.element_children()[0].clone();
+      let row = body.element_children()[0];
 
       if !row.has_single_tag_inside_element("TD") {
         continue;
       }
 
-      let cell = row.element_children()[0].clone();
+      let cell = row.element_children()[0];
 
       if cell.children().iter().all(NodeExt::is_phrasing_content) {
         cell.set_tag("p");

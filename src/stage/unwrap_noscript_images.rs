@@ -16,7 +16,7 @@ pub(crate) struct UnwrapNoscriptImages;
 impl UnwrapNoscriptImages {
   fn first_image<'a>(node: &NodeRef<'a>) -> Option<NodeRef<'a>> {
     if node.tag() == "IMG" {
-      Some(node.clone())
+      Some(*node)
     } else {
       node.elements_with_tags(&["IMG"]).into_iter().next()
     }
@@ -30,7 +30,7 @@ impl UnwrapNoscriptImages {
   }
 
   fn is_single_image(node: &NodeRef) -> bool {
-    let mut node = node.clone();
+    let mut node = *node;
 
     loop {
       if node.tag() == "IMG" {
@@ -43,7 +43,7 @@ impl UnwrapNoscriptImages {
         return false;
       }
 
-      node = children[0].clone();
+      node = children[0];
     }
   }
 

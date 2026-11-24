@@ -269,7 +269,7 @@ mod tests {
     #[track_caller]
     fn case(html: &str, expected: f64) {
       let document = dom_query::Document::from(html);
-      let node = document.select("div").nodes()[0].clone();
+      let node = document.select("div").nodes()[0];
       assert_eq!(node.class_weight(), expected);
     }
 
@@ -284,7 +284,7 @@ mod tests {
   fn create_element() {
     let document = dom_query::Document::from("<html><body></body></html>");
 
-    let body = document.select("body").nodes()[0].clone();
+    let body = document.select("body").nodes()[0];
 
     body.append_child(&super::create_element(&document.tree, "img"));
 
@@ -297,7 +297,7 @@ mod tests {
       "<div><p><b>foo</b></p><i></i></div><span></span>",
     );
 
-    let node = document.select("div").nodes()[0].clone();
+    let node = document.select("div").nodes()[0];
 
     assert_eq!(
       node
@@ -314,7 +314,7 @@ mod tests {
     #[track_caller]
     fn case(html: &str, max_depth: Option<usize>, expected: bool) {
       let document = dom_query::Document::from(html);
-      let node = document.select("span").nodes()[0].clone();
+      let node = document.select("span").nodes()[0];
       assert_eq!(
         node.has_ancestor_tag("TABLE", max_depth, |_| true),
         expected
@@ -337,7 +337,7 @@ mod tests {
     #[track_caller]
     fn case(html: &str, expected: bool) {
       let document = dom_query::Document::from(html);
-      let node = document.select("div").nodes()[0].clone();
+      let node = document.select("div").nodes()[0];
       assert_eq!(node.has_child_block_element(), expected);
     }
 
@@ -350,7 +350,7 @@ mod tests {
     #[track_caller]
     fn case(html: &str, expected: bool) {
       let document = dom_query::Document::from(html);
-      let node = document.select("div").nodes()[0].clone();
+      let node = document.select("div").nodes()[0];
       assert_eq!(node.has_single_tag_inside_element("P"), expected);
     }
 
@@ -365,7 +365,7 @@ mod tests {
     #[track_caller]
     fn case(html: &str, selector: &str, weight_classes: bool, expected: f64) {
       let document = dom_query::Document::from(html);
-      let node = document.select(selector).nodes()[0].clone();
+      let node = document.select(selector).nodes()[0];
       assert_eq!(node.initial_score(weight_classes), expected);
     }
 
@@ -380,7 +380,7 @@ mod tests {
   #[test]
   fn inner_text() {
     let document = dom_query::Document::from("<p>  foo \n\n bar  </p>");
-    let node = document.select("p").nodes()[0].clone();
+    let node = document.select("p").nodes()[0];
     assert_eq!(node.inner_text(), "foo bar");
   }
 
@@ -389,7 +389,7 @@ mod tests {
     #[track_caller]
     fn case(html: &str, expected: bool) {
       let document = dom_query::Document::from(html);
-      let node = document.select("div").nodes()[0].clone();
+      let node = document.select("div").nodes()[0];
       assert_eq!(node.is_element_without_content(), expected);
     }
 
@@ -405,7 +405,7 @@ mod tests {
     #[track_caller]
     fn case(html: &str, selector: &str, expected: bool) {
       let document = dom_query::Document::from(html);
-      let node = document.select(selector).nodes()[0].clone();
+      let node = document.select(selector).nodes()[0];
       assert_eq!(node.is_phrasing_content(), expected);
     }
 
@@ -420,7 +420,7 @@ mod tests {
     #[track_caller]
     fn case(html: &str, expected: f64) {
       let document = dom_query::Document::from(html);
-      let node = document.select("div").nodes()[0].clone();
+      let node = document.select("div").nodes()[0];
       assert_eq!(node.link_density(), expected);
     }
 
@@ -435,8 +435,8 @@ mod tests {
     let document =
       dom_query::Document::from(r#"<div class="foo" id="bar"></div><p></p>"#);
 
-    let div = document.select("div").nodes()[0].clone();
-    let paragraph = document.select("p").nodes()[0].clone();
+    let div = document.select("div").nodes()[0];
+    let paragraph = document.select("p").nodes()[0];
 
     assert_eq!(div.match_string(), "foo bar");
     assert_eq!(paragraph.match_string(), " ");
@@ -448,7 +448,7 @@ mod tests {
       r#"<html><body><div class="foo">bar</div></body></html>"#,
     );
 
-    let node = document.select("div").nodes()[0].clone();
+    let node = document.select("div").nodes()[0];
 
     node.set_tag("p");
 

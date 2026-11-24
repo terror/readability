@@ -60,7 +60,7 @@ fn next_element<'a>(
     return Some(child);
   }
 
-  iter::once(node.clone())
+  iter::once(*node)
     .chain(node.ancestors(None))
     .find_map(|node| node.next_element_sibling())
 }

@@ -12,7 +12,7 @@ pub(crate) fn is_readable(document: &dom_query::Document) -> bool {
     .select("p, pre, article")
     .nodes()
     .iter()
-    .cloned()
+    .copied()
     .chain(
       document
         .select("div > br")
