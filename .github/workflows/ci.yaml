@@ -73,3 +73,18 @@ jobs:
 
     - name: Test
       run: cargo test --all
+
+  wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+      with:
+        target: wasm32-unknown-unknown
+
+    - uses: Swatinem/rust-cache@v2
+
+    - name: Build
+      run: cargo build --package unclutter-wasm --target wasm32-unknown-unknown --locked

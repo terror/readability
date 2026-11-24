@@ -3,11 +3,14 @@ name = "unclutter"
 version = "0.1.0"
 edition = "2024"
 
-[lints.rust]
+[workspace]
+members = [".", "crates/*"]
+
+[workspace.lints.rust]
 mismatched_lifetime_syntaxes = "allow"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(fuzzing)'] }
 
-[lints.clippy]
+[workspace.lints.clippy]
 all = { level = "deny", priority = -1 }
 arbitrary_source_item_ordering = "deny"
 enum_glob_use = "allow"
@@ -23,6 +26,9 @@ type_complexity = "allow"
 undocumented_unsafe_blocks = "deny"
 unnecessary_wraps = "allow"
 wildcard_imports = "allow"
+
+[lints]
+workspace = true
 
 [[bench]]
 name = "parse"
