@@ -4,11 +4,7 @@ pub(crate) struct ExtractLang;
 
 impl Stage for ExtractLang {
   fn run(&mut self, context: &mut Context<'_>) -> Result {
-    context.lang = context
-      .document()
-      .attribute("html", "lang")
-      .map(|lang| lang.trim().to_string())
-      .filter(|lang| !lang.is_empty());
+    context.lang = context.document().attribute("html", "lang");
 
     Ok(())
   }
@@ -48,11 +44,11 @@ mod tests {
   }
 
   #[test]
-  fn returns_none_when_lang_empty() {
+  fn keeps_lang_untrimmed() {
     Test::new()
       .stage(ExtractLang)
-      .document(r#"<html lang=""><head></head><body></body></html>"#)
-      .expected_lang(None)
+      .document(r#"<html lang=" "><head></head><body></body></html>"#)
+      .expected_lang(Some(" "))
       .run();
   }
 
