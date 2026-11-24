@@ -85,6 +85,20 @@ mod tests {
   use super::*;
 
   #[test]
+  fn ignores_meta_tags_in_noscript() {
+    let html = r#"<html><head><noscript><meta property="og:title" content="foo"></noscript><title>bar</title></head><body><p>baz</p></body></html>"#;
+
+    assert_eq!(
+      Parser::new(html, None, ParserOptions::default())
+        .unwrap()
+        .parse()
+        .unwrap()
+        .title,
+      "bar",
+    );
+  }
+
+  #[test]
   fn deeply_nested_elements() {
     let depth = 10_000;
 
