@@ -35,8 +35,4 @@ impl<'a> Context<'a> {
   pub(crate) fn node(&self, id: NodeId) -> NodeRef<'_> {
     self.document.tree.get_unchecked(&id)
   }
-
-  pub(crate) fn options(&self) -> &ParserOptions {
-    self.options
-  }
 }
