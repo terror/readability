@@ -100,7 +100,7 @@ impl TestFixture {
 
   fn test_metadata(&self) {
     assert_eq!(
-      self.parser().is_probably_readerable(),
+      self.parser().is_readable(),
       self.expected_metadata.readerable,
       "Readerable mismatch"
     );

@@ -8,8 +8,8 @@ pub struct Parser {
 
 impl Parser {
   #[must_use]
-  pub fn is_probably_readerable(&self) -> bool {
-    readerable::is_probably_readerable(&self.html)
+  pub fn is_readable(&self) -> bool {
+    readable::is_readable(&self.html)
   }
 
   /// Creates a new parser instance.

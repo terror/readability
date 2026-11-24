@@ -59,7 +59,7 @@ mod options;
 mod parser;
 mod pipeline;
 mod re;
-mod readerable;
+mod readable;
 mod rule;
 mod stage;
 mod text_similarity;

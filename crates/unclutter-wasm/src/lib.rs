@@ -38,11 +38,9 @@ impl From<unclutter::Article> for Article {
   }
 }
 
-#[wasm_bindgen(js_name = isProbablyReaderable)]
-pub fn is_probably_readerable(html: &str) -> Result<bool, JsError> {
-  Ok(
-    Parser::new(html, None, ParserOptions::default())?.is_probably_readerable(),
-  )
+#[wasm_bindgen(js_name = isReadable)]
+pub fn is_readable(html: &str) -> Result<bool, JsError> {
+  Ok(Parser::new(html, None, ParserOptions::default())?.is_readable())
 }
 
 #[wasm_bindgen]
