@@ -9,6 +9,10 @@ impl FixLazyImages {
     let tag = element.tag();
 
     if tag == "IMG" {
+      if Self::is_svg_placeholder(element) {
+        return;
+      }
+
       Self::remove_placeholder_src(element);
     }
 
@@ -54,6 +58,14 @@ impl FixLazyImages {
     }
   }
 
+  fn is_svg_placeholder(element: &NodeRef) -> bool {
+    element.attr("src").is_some_and(|src| {
+      B64_DATA_URL
+        .captures(&src)
+        .is_some_and(|captures| &captures[1] == "image/svg+xml")
+    })
+  }
+
   fn remove_placeholder_src(element: &NodeRef) {
     let Some(src) = element.attr("src") else {
       return;
@@ -62,10 +74,6 @@ impl FixLazyImages {
     let Some(captures) = B64_DATA_URL.captures(&src) else {
       return;
     };
-
-    if &captures[1] == "image/svg+xml" {
-      return;
-    }
 
     let has_other_image = element.attrs().iter().any(|attribute| {
       attribute.name.local.as_ref() != "src"
@@ -122,10 +130,10 @@ mod tests {
       .stage(FixLazyImages)
       .article()
       .document(
-        r#"<html><body><img src="data:image/png;base64,AAAA" data-src="foo.jpg"><img src="data:image/svg+xml;base64,AAAA" data-src="foo.jpg"></body></html>"#,
+        r#"<html><body><img src="data:image/png;base64,AAAA" data-src="foo.jpg"><img class="lazy" src="data:image/svg+xml;base64,AAAA" data-src="foo.jpg"></body></html>"#,
       )
       .expected_html(
-        r#"<html><head></head><body><img data-src="foo.jpg" src="foo.jpg"><img src="data:image/svg+xml;base64,AAAA" data-src="foo.jpg"></body></html>"#,
+        r#"<html><head></head><body><img data-src="foo.jpg" src="foo.jpg"><img class="lazy" src="data:image/svg+xml;base64,AAAA" data-src="foo.jpg"></body></html>"#,
       )
       .run();
   }
