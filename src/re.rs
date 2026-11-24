@@ -94,3 +94,6 @@ pub(crate) static UNLIKELY_CANDIDATE: LazyLock<Regex> = re!(
 pub(crate) static VIDEOS: LazyLock<Regex> = re!(
   r"(?i)//(www\.)?((dailymotion|youtube|youtube-nocookie|player\.vimeo|v\.qq|bilibili|live.bilibili)\.com|(archive|upload\.wikimedia)\.org|player\.twitch\.tv)"
 );
+
+pub(crate) static VISIBILITY_HIDDEN: LazyLock<Regex> =
+  re!(r"(?i)(^|;)\s*visibility\s*:\s*hidden\s*(!important\s*)?(;|$)");
