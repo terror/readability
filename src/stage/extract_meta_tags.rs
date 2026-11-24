@@ -99,7 +99,7 @@ impl Stage for ExtractMetaTags {
       |keys: &[&str]| keys.iter().find_map(|key| values.get(*key).cloned());
 
     context.metadata = Metadata {
-      title: metadata.title.or(extract(TITLE_KEYS)),
+      title: metadata.title.or_else(|| extract(TITLE_KEYS)),
       byline: metadata
         .byline
         .or_else(|| extract(BYLINE_KEYS).or(article_author)),
