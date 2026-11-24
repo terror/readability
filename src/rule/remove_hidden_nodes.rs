@@ -17,17 +17,9 @@ impl RemoveHiddenNodes {
       return true;
     }
 
-    let style = node
-      .attr("style")
-      .map_or_default(|style| style.to_lowercase());
-
-    if style.contains("display:none") || style.contains("display: none") {
-      return true;
-    }
-
-    if style.contains("visibility:hidden")
-      || style.contains("visibility: hidden")
-    {
+    if node.attr("style").is_some_and(|style| {
+      DISPLAY_NONE.is_match(&style) || VISIBILITY_HIDDEN.is_match(&style)
+    }) {
       return true;
     }
 
@@ -64,6 +56,26 @@ impl Rule for RemoveHiddenNodes {
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  #[test]
+  fn hidden_styles() {
+    #[track_caller]
+    fn case(style: &str, expected: bool) {
+      let document = dom_query::Document::from(
+        format!(r#"<div style="{style}"></div>"#).as_str(),
+      );
+
+      assert_eq!(
+        RemoveHiddenNodes::is_hidden(&document.select("div").nodes()[0]),
+        expected,
+      );
+    }
+
+    case("display : none", true);
+    case("color: red;display:\tnone !important", true);
+    case("visibility :hidden", true);
+    case("--foo-display:none", false);
+  }
 
   #[test]
   fn keeps_aria_hidden_false() {
