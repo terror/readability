@@ -14,11 +14,16 @@ impl UnescapeHtmlEntities {
   }
 
   fn unescape_named(s: &str) -> String {
-    s.replace("&quot;", "\"")
-      .replace("&amp;", "&")
-      .replace("&apos;", "'")
-      .replace("&lt;", "<")
-      .replace("&gt;", ">")
+    NAMED_HTML_ENTITY
+      .replace_all(s, |captures: &Captures| match &captures[1] {
+        "quot" => "\"",
+        "amp" => "&",
+        "apos" => "'",
+        "lt" => "<",
+        "gt" => ">",
+        _ => unreachable!(),
+      })
+      .into_owned()
   }
 
   fn unescape_numeric(s: &str) -> String {
@@ -97,6 +102,7 @@ mod tests {
     assert_eq!(UnescapeHtmlEntities::unescape_named("&apos;"), "'");
     assert_eq!(UnescapeHtmlEntities::unescape_named("&lt;"), "<");
     assert_eq!(UnescapeHtmlEntities::unescape_named("&gt;"), ">");
+    assert_eq!(UnescapeHtmlEntities::unescape_named("&amp;lt;"), "&lt;");
   }
 
   #[test]
