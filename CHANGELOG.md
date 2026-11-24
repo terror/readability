@@ -12,6 +12,11 @@
 
 ### Misc
 
+- Update benchmark chart ([#96](https://github.com/terror/unclutter/pull/96) by [terror](https://github.com/terror))
+- Compute candidate link densities in one pass ([#95](https://github.com/terror/unclutter/pull/95) by [terror](https://github.com/terror))
+- Measure text without normalizing it ([#94](https://github.com/terror/unclutter/pull/94) by [terror](https://github.com/terror))
+- Clone document instead of reparsing for article retries ([#93](https://github.com/terror/unclutter/pull/93) by [terror](https://github.com/terror))
+- Avoid allocations in node helpers ([#92](https://github.com/terror/unclutter/pull/92) by [terror](https://github.com/terror))
 - Bump url from 2.5.8 to 2.5.9 ([#85](https://github.com/terror/unclutter/pull/85) by [app/dependabot](https://github.com/app/dependabot))
 - Bump dom_query from 0.12.0 to 0.28.0 ([#86](https://github.com/terror/unclutter/pull/86) by [app/dependabot](https://github.com/app/dependabot))
 - Bump anyhow from 1.0.100 to 1.0.104 ([#88](https://github.com/terror/unclutter/pull/88) by [app/dependabot](https://github.com/app/dependabot))
