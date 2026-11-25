@@ -1,4 +1,4 @@
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct ParserOptions {
   /// A list of specific class names to preserve when `keep_classes` is false.
   ///

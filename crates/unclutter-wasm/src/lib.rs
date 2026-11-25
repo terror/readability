@@ -113,26 +113,29 @@ mod tests {
 
   #[test]
   fn options() {
-    let options = ParserOptions::from(
-      serde_json::from_value::<Options>(serde_json::json!({
-        "classesToPreserve": ["foo"],
-        "keepClasses": true,
-        "linkDensityBias": 0.5,
-        "maxElements": 1,
-        "minTextLength": 2,
-        "nTopCandidates": 3,
-        "useJsonLd": false,
-      }))
-      .unwrap(),
+    assert_eq!(
+      ParserOptions::from(
+        serde_json::from_value::<Options>(serde_json::json!({
+          "classesToPreserve": ["foo"],
+          "keepClasses": true,
+          "linkDensityBias": 0.5,
+          "maxElements": 1,
+          "minTextLength": 2,
+          "nTopCandidates": 3,
+          "useJsonLd": false,
+        }))
+        .unwrap(),
+      ),
+      ParserOptions {
+        classes_to_preserve: vec!["page".into(), "foo".into()],
+        keep_classes: true,
+        link_density_bias: 0.5,
+        max_elements: Some(1),
+        min_text_length: 2,
+        n_top_candidates: 3,
+        use_json_ld: false,
+      },
     );
-
-    assert_eq!(options.classes_to_preserve, ["page", "foo"]);
-    assert!(options.keep_classes);
-    assert_eq!(options.link_density_bias, 0.5);
-    assert_eq!(options.max_elements, Some(1));
-    assert_eq!(options.min_text_length, 2);
-    assert_eq!(options.n_top_candidates, 3);
-    assert!(!options.use_json_ld);
   }
 
   #[test]
