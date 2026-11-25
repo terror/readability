@@ -121,7 +121,10 @@ mod tests {
 
     let (result, _) = grab("<html><body></body></html>", &flags);
 
-    assert!(matches!(result, Err(Error::MissingArticleContent)));
+    assert_eq!(
+      result.unwrap_err().to_string(),
+      "failed to identify article content",
+    );
   }
 
   #[test]
@@ -135,15 +138,26 @@ mod tests {
 
     assert_eq!(article, "<div><div><p>foo</p></div></div>");
 
-    assert_eq!(flags.borrow().len(), 4);
-
     assert_eq!(
-      flags.borrow()[3],
-      Flags {
-        clean_conditionally: false,
-        strip_unlikelys: false,
-        weight_classes: false,
-      }
+      *flags.borrow(),
+      vec![
+        Flags::default(),
+        Flags {
+          clean_conditionally: true,
+          strip_unlikelys: false,
+          weight_classes: true,
+        },
+        Flags {
+          clean_conditionally: true,
+          strip_unlikelys: false,
+          weight_classes: false,
+        },
+        Flags {
+          clean_conditionally: false,
+          strip_unlikelys: false,
+          weight_classes: false,
+        },
+      ],
     );
   }
 
