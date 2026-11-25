@@ -40,12 +40,26 @@ mod tests {
     let mut flags = Flags::default();
 
     assert!(flags.disable_next());
-    assert!(!flags.strip_unlikelys);
-    assert!(flags.weight_classes);
+
+    assert_eq!(
+      flags,
+      Flags {
+        clean_conditionally: true,
+        strip_unlikelys: false,
+        weight_classes: true,
+      }
+    );
 
     assert!(flags.disable_next());
-    assert!(!flags.weight_classes);
-    assert!(flags.clean_conditionally);
+
+    assert_eq!(
+      flags,
+      Flags {
+        clean_conditionally: true,
+        strip_unlikelys: false,
+        weight_classes: false,
+      }
+    );
 
     assert!(flags.disable_next());
 
